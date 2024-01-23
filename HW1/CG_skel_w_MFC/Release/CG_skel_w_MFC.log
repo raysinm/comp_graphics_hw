@@ -1,0 +1,18 @@
+﻿  stdafx.cpp
+  CG_skel_w_MFC.cpp
+C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\CG_skel_w_MFC\mat.h(544,19): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+  InitShader.cpp
+C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\CG_skel_w_MFC\InitShader.cpp(11,16): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  MeshModel.cpp
+C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\CG_skel_w_MFC\mat.h(544,19): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+  Renderer.cpp
+C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\CG_skel_w_MFC\mat.h(544,19): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+  Scene.cpp
+C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\CG_skel_w_MFC\mat.h(544,19): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  966 of 980 functions (98.6%) were compiled, the rest were copied from previous compilation.
+    31 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  CG_skel_w_MFC.vcxproj -> C:\Users\Yonatan\OneDrive\Technion\SemesterG\ComputerGraphics\HW\comp_graphics_hw\HW1\Release\CG_skel_w_MFC.exe
