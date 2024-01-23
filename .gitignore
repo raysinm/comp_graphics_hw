@@ -32,3 +32,9 @@
 *.app
 
 .vs/
+*Debug/
+*Release/
+
+*.pdb
+*.tlog
+*.idb
