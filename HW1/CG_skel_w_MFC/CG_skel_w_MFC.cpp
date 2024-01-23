@@ -50,19 +50,19 @@ void reshape( int width, int height )
 
 void keyboard( unsigned char key, int x, int y )
 {
-#ifdef CG_DEBUG
+#ifdef _DEBUG
 	printf("keyboard called! key = %c   mouse (x,y) = (%d, %d)\n", key, x, y);
 #endif
 	switch ( key ) {
 	case 033: /* ESC key*/
 		exit( EXIT_SUCCESS );
 		break;
-#ifdef CG_DEBUG
+#ifdef _DEBUG
 	case 'a': /* Debug only !!! */
 		debug_PlayWithVectors();
 		break;
+#endif
 	}
-#endif // CG_DEBUG
 
 }
 
@@ -149,7 +149,7 @@ int my_main( int argc, char **argv )
 	glutInitWindowSize( 512, 512 );
 	glutInitContextVersion( 3, 2 );
 	glutInitContextProfile( GLUT_CORE_PROFILE );
-#ifdef CG_DEBUG
+#ifdef _DEBUG
 	glutCreateWindow( "CG - DEBUG STATE !!!" );
 #else
 	glutCreateWindow( "CG" );
@@ -209,7 +209,7 @@ int main( int argc, char **argv )
 	return nRetCode;
 }
 
-#ifdef CG_DEBUG
+#ifdef _DEBUG
 void debug_PlayWithVectors()
 {
 	vec2 a = vec2(1);
