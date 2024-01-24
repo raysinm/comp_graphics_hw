@@ -154,10 +154,11 @@ inline
 GLfloat dot(const vec2& u, const vec2& v)
 {
     return ((u.x * v.x) + (u.y * v.y)); /*BUG - fixed*/
+
 }
 
 inline
-GLfloat length(const vec2& v)
+GLfloat length(const vec2& v)   // norm1?
 {
     return std::sqrt(dot(v, v)); /*BUG - fixed*/
 }
@@ -165,7 +166,7 @@ GLfloat length(const vec2& v)
 inline
 vec2 normalize(const vec2& v)
 {
-    return v / length(v); /*BUG - fixed*/
+    return v / length(v); /*BUG - fixed*/   
 }
 
 //////////////////////////////////////////////////////////////////////////////

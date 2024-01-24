@@ -11,4 +11,6 @@ void mainMenu(int id);
 void initMenu();
 #ifdef _DEBUG
 void debug_PlayWithVectors();
+void debug_PlayWithMatrices();
+
 #endif

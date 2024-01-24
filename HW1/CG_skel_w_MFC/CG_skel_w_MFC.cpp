@@ -61,6 +61,9 @@ void keyboard( unsigned char key, int x, int y )
 	case 'a': /* Debug only !!! */
 		debug_PlayWithVectors();
 		break;
+	case 'b':
+		debug_PlayWithMatrices();
+		break;
 #endif
 	}
 
@@ -167,8 +170,8 @@ int my_main( int argc, char **argv )
 
 	
 	
-	renderer = new Renderer(512,512);
-	scene = new Scene(renderer);
+	//renderer = new Renderer(512,512);
+	//scene = new Scene(renderer);
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks
 
@@ -181,8 +184,8 @@ int my_main( int argc, char **argv )
 	
 
 	glutMainLoop();
-	delete scene;
-	delete renderer;
+	//delete scene;
+	//delete renderer;
 	return 0;
 }
 
@@ -226,5 +229,71 @@ void debug_PlayWithVectors()
 	cout << "normalized b = " << normalize(b) << endl;
 
 	cout << "debug_PlayWithVectors finished" << endl;
+}
+
+void debug_PlayWithMatrices()
+{
+	// mat2
+	mat2 m2;
+	mat3 m3;
+	mat4 m4;
+	cout << "debug_PlayWithVectors started" << endl;
+	cout << "Initial mat2: " << m2;
+	cout << "Initial mat3: " << m3;
+	cout << "Initial mat4: " << m4;
+	
+	cout << "Test 1.1: mat2 operator*" << endl;
+	mat2 m2a = mat2(1, 2, 1, 2);
+	mat2 m2b = mat2(1, 1, 1, 1);
+	cout << "m2a: " << m2a << endl;
+	cout << "m2b: " << m2b << endl;
+	cout << "result m2a * m2b: " << m2a * m2b << endl;
+	cout << "result m2b * m2a: " << m2b * m2a << endl;
+	
+	cout << "Test 1.2: mat2 operator*=" << endl;
+	m2b *= m2b;
+	cout << "result m2b*=m2b: " << m2b << endl;
+
+	cout << "Test 2.1: mat3 m*v, where m=I" << endl;
+	vec3 v3 = vec3(1, 2, 3);
+	cout << m3 * v3 << endl;
+	
+	cout << "Test 2.2: mat3 m*v, where m!=I" << endl;
+	vec3 v3a = vec3(1, 1, 1);
+	m3 = mat3(v3a, v3a, v3a);
+	cout << m3 * v3 << endl;
+
+	cout << "Test 3: row/col/transpose" << endl;
+	mat2 m2c = mat2(1, 2, 3, 4);
+	cout << "m2c: " << m2c << endl;
+	cout << "m2c transposed: " << transpose(m2c) << endl;
+
+	mat3 m3a = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	cout << "m3a: " << m3a << endl;
+	cout << "m3a transposed: " << transpose(m3a) << endl;
+
+
+	cout << "Test 4: transformations" << endl;
+	mat4 scale = Scale(2, 2, 2);
+	cout << "Scale mat: " << scale << endl;
+	vec4 v4 = vec4(1, 1, 1, 1);
+	cout << "Scaling by (2,2,2): " << Scale(2,2,2) * v4 << endl;
+	cout << "Scaling by (1,2,3): " << Scale(1, 2, 3) * v4 << endl;
+
+	mat4 rotate = RotateX(45);
+	cout << "Rotate mat: " << rotate << endl;
+	cout << "Rotating by 45: " << RotateX(45) * v4 << endl;
+	cout << "Rotating by 360: " << RotateX(360) * v4 << endl;
+	cout << "Rotating by 0: " << RotateX(0) * v4 << endl;
+	cout << "Rotating by 180: " << RotateX(180) * v4 << endl;	// BUG? M: result is (1,-1,-1) but not (-1,-1,-1)
+
+	mat4 trsl = Translate(2, 2, 2);
+	cout << "Translate mat: " << trsl << endl;
+	cout << "Translating by (2,2,2): " << Translate(2, 2, 2) * v4 << endl;
+	cout << "Translating by (0,0,0): " << Translate(0,0,0) * v4 << endl;
+	cout << "Translating by (-0.5,-0.5,0): " << Translate(-0.5, -0.5, 0) * v4 << endl;
+
+	
+	cout << "debug_PlayWithMatrices finished" << endl;
 }
 #endif
