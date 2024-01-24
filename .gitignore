@@ -32,10 +32,8 @@
 *.app
 
 .vs/
-*Debug/
-*Release/
-*Debug\
-*Release\
+**/Debug/
+**/Release/
 
 *.pdb
 *.tlog
