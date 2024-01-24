@@ -34,6 +34,8 @@
 .vs/
 *Debug/
 *Release/
+*Debug\
+*Release\
 
 *.pdb
 *.tlog
