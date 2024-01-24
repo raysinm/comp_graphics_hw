@@ -10,9 +10,9 @@ using namespace std;
 
 struct FaceIdcs
 {
-	int v[4];
-	int vn[4];
-	int vt[4];
+	int v[4];   //vertex index
+	int vn[4];  //vertex index from vertex normals array
+	int vt[4];  //vertex texture i guess?...
 
 	FaceIdcs()
 	{
@@ -67,6 +67,7 @@ MeshModel::MeshModel(string fileName)
 
 MeshModel::~MeshModel(void)
 {
+	delete[] vertex_positions;
 }
 
 void MeshModel::loadFile(string fileName)
@@ -74,7 +75,9 @@ void MeshModel::loadFile(string fileName)
 	ifstream ifile(fileName.c_str());
 	vector<FaceIdcs> faces;
 	vector<vec3> vertices;
-	// while not end of file
+	vector<vec3> verticesNormals;
+
+
 	while (!ifile.eof())
 	{
 		// get line
@@ -88,19 +91,28 @@ void MeshModel::loadFile(string fileName)
 		issLine >> std::ws >> lineType;
 
 		// based on the type parse data
-		if (lineType == "?") /*BUG*/
+		if (lineType == "v") //Vertex  /*BUG - fixed*/
+		{
 			vertices.push_back(vec3fFromStream(issLine));
-		else if (lineType == "?") /*BUG*/
+		}
+		else if (lineType == "f") //Face   /*BUG - fixed*/
+		{
 			faces.push_back(issLine);
+		}
+		else if (lineType == "vn") //Vector Normal
+		{
+			verticesNormals.push_back(vec3fFromStream(issLine));
+		}
 		else if (lineType == "#" || lineType == "")
 		{
 			// comment / empty line
 		}
 		else
 		{
-			cout<< "Found unknown line Type \"" << lineType << "\"";
+			cout << "Found unknown line Type \"" << lineType << "\"";
 		}
 	}
+	
 	//Vertex_positions is an array of vec3. Every three elements define a triangle in 3D.
 	//If the face part of the obj is
 	//f 1 2 3
@@ -108,14 +120,15 @@ void MeshModel::loadFile(string fileName)
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
-	vertex_positions = new vec3[7]; /*BUG*/
+	vertex_positions = new vec3[3 * faces.capacity()]; /*BUG - fixed: worst case is each face is made of 3 different vertecies.*/
 	// iterate through all stored faces and create triangles
 	int k=0;
 	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
 	{
+		FaceIdcs current = *it;
 		for (int i = 0; i < 3; i++)
 		{
-			vertex_positions[k++] = vec3(); /*BUG*/
+			vertex_positions[k++] = vertices[current.v[i] - 1];
 		}
 	}
 }

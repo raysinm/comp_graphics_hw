@@ -10,8 +10,10 @@ class MeshModel : public Model
 {
 protected :
 	MeshModel() {}
-	vec3 *vertex_positions;
-	//add more attributes
+	vec3* vertex_positions;
+	vec3* vertex_normals;
+
+	
 	mat4 _world_transform;
 	mat3 _normal_transform;
 
