@@ -4,31 +4,37 @@
 #include "InitShader.h"
 #include "GL\freeglut.h"
 
-#define INDEX(width,x,y,c) (x+y*width)*3+c
+#define INDEX(width,x,y,c) (x+y*width)*3 + c
+#define RED   0
+#define GREEN 1
+#define BLUE  2
 
 Renderer::Renderer() :m_width(512), m_height(512)
 {
 	InitOpenGLRendering();
-	CreateBuffers(512,512);
+	CreateBuffers(m_width, m_height);
 }
+
 Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 {
 	InitOpenGLRendering();
-	CreateBuffers(width,height);
+	CreateBuffers(m_width, m_height);
 }
 
 Renderer::~Renderer(void)
 {
+	if(m_outBuffer)
+		delete[] (m_outBuffer);
 }
-
-
 
 void Renderer::CreateBuffers(int width, int height)
 {
-	m_width=width;
-	m_height=height;	
+	m_width = width;
+	m_height = height;
 	CreateOpenGLBuffer(); //Do not remove this line.
-	m_outBuffer = new float[3*m_width*m_height];
+	m_outBuffer = new float[3 * m_width * m_height];
+	for (int i = 0; i < 3 * m_width * m_height; i++)
+		m_outBuffer[i] = 1.0; //Set all pixels to pure white.
 }
 
 void Renderer::SetDemoBuffer()
@@ -36,16 +42,22 @@ void Renderer::SetDemoBuffer()
 	//vertical line
 	for(int i=0; i<m_width; i++)
 	{
-		m_outBuffer[INDEX(m_width,256,i,0)]=1;	m_outBuffer[INDEX(m_width,256,i,1)]=0;	m_outBuffer[INDEX(m_width,256,i,2)]=0;
+		m_outBuffer[INDEX(m_width,256,i,RED)]   =1;
+		m_outBuffer[INDEX(m_width,256,i,GREEN)] =0;
+		m_outBuffer[INDEX(m_width,256,i,BLUE)]  =0;
 
 	}
 	//horizontal line
 	for(int i=0; i<m_width; i++)
 	{
-		m_outBuffer[INDEX(m_width,i,256,0)]=1;	m_outBuffer[INDEX(m_width,i,256,1)]=0;	m_outBuffer[INDEX(m_width,i,256,2)]=1;
+		m_outBuffer[INDEX(m_width,i,256,RED)]=0;
+		m_outBuffer[INDEX(m_width,i,256,GREEN)]=0;
+		m_outBuffer[INDEX(m_width,i,256,BLUE)]=1;
 
 	}
 }
+
+
 
 
 

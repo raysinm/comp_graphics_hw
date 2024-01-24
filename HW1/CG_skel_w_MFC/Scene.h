@@ -40,7 +40,7 @@ class Scene {
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
-	Renderer *m_renderer;
+	Renderer* m_renderer;
 
 public:
 	Scene() {};

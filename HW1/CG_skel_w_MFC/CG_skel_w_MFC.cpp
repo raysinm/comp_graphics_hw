@@ -32,8 +32,8 @@
 Scene *scene;
 Renderer *renderer;
 
-int last_x,last_y;
-bool lb_down,rb_down,mb_down;
+int last_x, last_y;
+bool lb_down, rb_down, mb_down;
 
 //----------------------------------------------------------------------------
 // Callbacks
@@ -48,10 +48,11 @@ void reshape( int width, int height )
 //update the renderer's buffers
 }
 
+/* (x, y) is the mouse position in screen-space. TOP-LEFT corner is (0,0) */
 void keyboard( unsigned char key, int x, int y )
 {
 #ifdef _DEBUG
-	printf("keyboard called! key = %c   mouse (x,y) = (%d, %d)\n", key, x, y);
+	printf("keyboard called! key = %c   mouse (x, y) = (%d, %d)\n", key, x, y);
 #endif
 	switch ( key ) {
 	case 033: /* ESC key*/
@@ -109,7 +110,7 @@ void fileMenu(int id)
 			if(dlg.DoModal()==IDOK)
 			{
 				std::string s((LPCTSTR)dlg.GetPathName());
-				scene->loadOBJModel((LPCTSTR)dlg.GetPathName());
+				scene->loadOBJModel(s);
 			}
 			break;
 	}
@@ -170,8 +171,8 @@ int my_main( int argc, char **argv )
 
 	
 	
-	//renderer = new Renderer(512,512);
-	//scene = new Scene(renderer);
+	renderer = new Renderer(512,512);
+	scene = new Scene(renderer);
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks
 
@@ -184,8 +185,8 @@ int my_main( int argc, char **argv )
 	
 
 	glutMainLoop();
-	//delete scene;
-	//delete renderer;
+	delete scene;
+	delete renderer;
 	return 0;
 }
 
@@ -242,56 +243,86 @@ void debug_PlayWithMatrices()
 	cout << "Initial mat3: " << m3;
 	cout << "Initial mat4: " << m4;
 	
-	cout << "Test 1.1: mat2 operator*" << endl;
-	mat2 m2a = mat2(1, 2, 1, 2);
-	mat2 m2b = mat2(1, 1, 1, 1);
-	cout << "m2a: " << m2a << endl;
-	cout << "m2b: " << m2b << endl;
-	cout << "result m2a * m2b: " << m2a * m2b << endl;
-	cout << "result m2b * m2a: " << m2b * m2a << endl;
-	
-	cout << "Test 1.2: mat2 operator*=" << endl;
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	cout << endl << "Test 1.1: mat2 operator*" << endl;
+	mat2 m2a = mat2(1, 2, 3, 4);
+	mat2 m2b = mat2(1, 2, 0, 1);
+	cout << "m2a: " << m2a;
+	cout << "m2b: " << m2b;
+	cout << "result m2a * m2b: " << m2a * m2b;
+	cout << "result m2b * m2a: " << m2b * m2a;
+		
+	cout << endl <<"Test 1.2: mat2 operator*=" << endl;
 	m2b *= m2b;
-	cout << "result m2b*=m2b: " << m2b << endl;
+	cout << "result m2b*=m2b: " << m2b;
 
-	cout << "Test 2.1: mat3 m*v, where m=I" << endl;
-	vec3 v3 = vec3(1, 2, 3);
-	cout << m3 * v3 << endl;
-	
-	cout << "Test 2.2: mat3 m*v, where m!=I" << endl;
-	vec3 v3a = vec3(1, 1, 1);
-	m3 = mat3(v3a, v3a, v3a);
-	cout << m3 * v3 << endl;
+	cout << endl << "Test 1.3: mat2 transpose" << endl;
+	cout << "result m2a^T:" << transpose(m2a);
 
-	cout << "Test 3: row/col/transpose" << endl;
-	mat2 m2c = mat2(1, 2, 3, 4);
-	cout << "m2c: " << m2c << endl;
-	cout << "m2c transposed: " << transpose(m2c) << endl;
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	mat3 m3a = mat3(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	cout << endl << "Test 2.1: mat3 m*v:" << endl;
+	vec3 v3a = vec3(1, 2, 3);
+	mat3 m3a = mat3(1,2,3,
+					4,5,6,
+					7,8,9);
 	cout << "m3a: " << m3a << endl;
-	cout << "m3a transposed: " << transpose(m3a) << endl;
+	cout << "v3a: " << endl << v3a << endl;
+	cout << "m3a * v3a : " << endl << m3a * v3a << endl;
+
+	cout << endl << "Test 2.2: mat3 operator*" << endl;
+	mat3 m3b = mat3(2); // 2 * Identity
+	cout << "m3b: " << m3b << endl;
+	cout << "result m3a * m3b: " << m3a * m3b << endl;
+	cout << "result m3b * m3a: " << m3b * m3a << endl;
+	
+	cout << endl << "Test 2.3: m3a transpose" << endl;
+	cout << "result m3a^T:" << transpose(m3a) << endl;
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	cout << endl << "Test 3.1: mat4 m*v:" << endl;
+	vec4 v4a = vec4(1, 2, 3, 4);
+	mat4 m4a = mat4(1, 2, 3, 4,
+					5, 6, 7, 8,
+					9, 10, 11, 12,
+				    13, 14, 15, 16);
+	cout << "m4a: " << m4a << endl;
+	cout << "v4a: " << endl << v4a << endl;
+	cout << "m4a * v4a : " << endl << m4a * v4a << endl;
+
+	cout << endl << "Test 3.2: mat4 operator*" << endl;
+	mat4 m4b = mat4(2); // 2 * Identity
+	cout << "m4b: " << m4b << endl;
+	cout << "result m4a * m4b: " << m4a * m4b << endl;
+	cout << "result m4b * m4a: " << m4b * m4a << endl;
+
+	cout << endl << "Test 3.3: m4a transpose" << endl;
+	cout << "result m4a^T:" << transpose(m4a) << endl;
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-	cout << "Test 4: transformations" << endl;
-	mat4 scale = Scale(2, 2, 2);
-	cout << "Scale mat: " << scale << endl;
-	vec4 v4 = vec4(1, 1, 1, 1);
-	cout << "Scaling by (2,2,2): " << Scale(2,2,2) * v4 << endl;
-	cout << "Scaling by (1,2,3): " << Scale(1, 2, 3) * v4 << endl;
+	//cout << "Test 4: transformations" << endl;
+	//mat4 scale = Scale(2, 2, 2);
+	//cout << "Scale mat: " << scale << endl;
+	//vec4 v4 = vec4(1, 1, 1, 1);
+	//cout << "Scaling by (2,2,2): " << Scale(2,2,2) * v4 << endl;
+	//cout << "Scaling by (1,2,3): " << Scale(1, 2, 3) * v4 << endl;
 
-	mat4 rotate = RotateX(45);
-	cout << "Rotate mat: " << rotate << endl;
-	cout << "Rotating by 45: " << RotateX(45) * v4 << endl;
-	cout << "Rotating by 360: " << RotateX(360) * v4 << endl;
-	cout << "Rotating by 0: " << RotateX(0) * v4 << endl;
-	cout << "Rotating by 180: " << RotateX(180) * v4 << endl;	// BUG? M: result is (1,-1,-1) but not (-1,-1,-1)
+	//mat4 rotate = RotateX(45);
+	//cout << "Rotate mat: " << rotate << endl;
+	//cout << "Rotating by 45: " << RotateX(45) * v4 << endl;
+	//cout << "Rotating by 360: " << RotateX(360) * v4 << endl;
+	//cout << "Rotating by 0: " << RotateX(0) * v4 << endl;
+	//cout << "Rotating by 180: " << RotateX(180) * v4 << endl;	// BUG? M: result is (1,-1,-1) but not (-1,-1,-1)
 
-	mat4 trsl = Translate(2, 2, 2);
-	cout << "Translate mat: " << trsl << endl;
-	cout << "Translating by (2,2,2): " << Translate(2, 2, 2) * v4 << endl;
-	cout << "Translating by (0,0,0): " << Translate(0,0,0) * v4 << endl;
-	cout << "Translating by (-0.5,-0.5,0): " << Translate(-0.5, -0.5, 0) * v4 << endl;
+	//mat4 trsl = Translate(2, 2, 2);
+	//cout << "Translate mat: " << trsl << endl;
+	//cout << "Translating by (2,2,2): " << Translate(2, 2, 2) * v4 << endl;
+	//cout << "Translating by (0,0,0): " << Translate(0,0,0) * v4 << endl;
+	//cout << "Translating by (-0.5,-0.5,0): " << Translate(-0.5, -0.5, 0) * v4 << endl;
 
 	
 	cout << "debug_PlayWithMatrices finished" << endl;

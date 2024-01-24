@@ -6,7 +6,7 @@
 using namespace std;
 void Scene::loadOBJModel(string fileName)
 {
-	MeshModel *model = new MeshModel(fileName);
+	MeshModel* model = new MeshModel(fileName);
 	models.push_back(model);
 }
 
