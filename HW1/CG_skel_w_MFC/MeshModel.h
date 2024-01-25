@@ -4,6 +4,8 @@
 #include "mat.h"
 #include <string>
 
+#define FINDEX(face) face*3
+
 using namespace std;
 
 class MeshModel : public Model

@@ -68,6 +68,8 @@ MeshModel::MeshModel(string fileName)
 MeshModel::~MeshModel(void)
 {
 	delete[] vertex_positions;
+	delete[] vertex_normals;
+
 }
 
 void MeshModel::loadFile(string fileName)
@@ -76,7 +78,6 @@ void MeshModel::loadFile(string fileName)
 	vector<FaceIdcs> faces;
 	vector<vec3> vertices;
 	vector<vec3> verticesNormals;
-
 
 	while (!ifile.eof())
 	{
@@ -120,7 +121,8 @@ void MeshModel::loadFile(string fileName)
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
-	vertex_positions = new vec3[3 * faces.capacity()]; /*BUG - fixed: worst case is each face is made of 3 different vertecies.*/
+	vertex_positions = new vec3[3 * faces.capacity()]; /*BUG - fixed: each face is made of 3 vertecies.*/
+	vertex_normals =   new vec3[3 * faces.capacity()];
 	// iterate through all stored faces and create triangles
 	int k=0;
 	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
@@ -128,9 +130,13 @@ void MeshModel::loadFile(string fileName)
 		FaceIdcs current = *it;
 		for (int i = 0; i < 3; i++)
 		{
-			vertex_positions[k++] = vertices[current.v[i] - 1];
+			vertex_positions[k] = vertices[current.v[i] - 1];
+			vertex_normals[k] = verticesNormals[current.vn[i] - 1];
+			k++;
 		}
 	}
+
+	//[0] = vec3(-0.3, 0.6, 0.9)
 }
 
 
