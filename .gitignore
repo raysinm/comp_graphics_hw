@@ -38,3 +38,4 @@
 *.pdb
 *.tlog
 *.idb
+*.glsl
