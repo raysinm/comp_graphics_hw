@@ -3,6 +3,7 @@
 #include "CG_skel_w_MFC.h"
 #include "InitShader.h"
 #include "GL\freeglut.h"
+#include "Button.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
 #define RED   0
@@ -54,6 +55,14 @@ void Renderer::SetDemoBuffer()
 		m_outBuffer[INDEX(m_width,i,256,GREEN)]=0;
 		m_outBuffer[INDEX(m_width,i,256,BLUE)]=1;
 
+	}
+}
+
+void Renderer::DrawBtns()
+{
+	for (int i = 0; i < buttons.capacity(); i++)
+	{
+		buttons[i].Draw(m_outBuffer, m_width, m_height);
 	}
 }
 

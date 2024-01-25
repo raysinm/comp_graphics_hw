@@ -36,4 +36,5 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
+	void DrawBtns();
 };

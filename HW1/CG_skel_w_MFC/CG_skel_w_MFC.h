@@ -1,6 +1,7 @@
 #pragma once
-
+#include "Button.h"
 #include "resource.h"
+#include <vector>
 
 void display( void );
 void reshape( int width, int height );
@@ -12,5 +13,9 @@ void initMenu();
 #ifdef _DEBUG
 void debug_PlayWithVectors();
 void debug_PlayWithMatrices();
-
 #endif
+
+//----------------------------------------------------------------------------
+// ---------------------- Global Variables -----------------------------------
+//----------------------------------------------------------------------------
+extern std::vector<Button> buttons;

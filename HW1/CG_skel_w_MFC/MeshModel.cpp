@@ -139,8 +139,6 @@ void MeshModel::loadFile(string fileName)
 	//[0] = vec3(-0.3, 0.6, 0.9)
 }
 
-
-
 void MeshModel::draw()
 {
 	

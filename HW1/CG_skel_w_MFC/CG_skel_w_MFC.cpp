@@ -1,17 +1,8 @@
-// CG_skel_w_MFC.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include "CG_skel_w_MFC.h"
-
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-
-// The one and only application object
-
 #include "GL/glew.h"
 #include "GL/freeglut.h"
 #include "GL/freeglut_ext.h"
@@ -22,25 +13,38 @@
 #include "Renderer.h"
 #include <string>
 
-#define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
+//----------------------------------------------------------------------------
+// ---------------------- Global variables  ---------------------------------
+//----------------------------------------------------------------------------
+std::vector<Button> buttons;
+Scene* scene;
+Renderer* renderer;
+int last_x, last_y; // mouse positions
+bool lb_down, rb_down, mb_down; //mouse buttons (left/right/middle)
 
+
+//----------------------------------------------------------------------------
+// ---------------------- Constants defines  ---------------------------------
+//----------------------------------------------------------------------------
+#define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define FILE_OPEN 1
 #define MAIN_DEMO 1
 #define MAIN_ABOUT 2
-#define DebugButton 2
 
-Scene *scene;
-Renderer *renderer;
-
-int last_x, last_y;
-bool lb_down, rb_down, mb_down;
 
 //----------------------------------------------------------------------------
-// Callbacks
+// ---------------------- Callbacks functions --------------------------------
+//----------------------------------------------------------------------------
+void btn_b1_clicked()
+{
+	cout << "B1 Clicked!" << endl;
+}
 
 void display( void )
 {
 //Call the scene and ask it to draw itself
+	//cout << "display called" << endl;
+	scene->draw();
 }
 
 void reshape( int width, int height )
@@ -48,9 +52,9 @@ void reshape( int width, int height )
 //update the renderer's buffers
 }
 
-/* (x, y) is the mouse position in screen-space. TOP-LEFT corner is (0,0) */
 void keyboard( unsigned char key, int x, int y )
 {
+/* (x, y) is the mouse position in screen-space. TOP-LEFT corner is (0,0) */
 #ifdef _DEBUG
 	printf("keyboard called! key = %c   mouse (x, y) = (%d, %d)\n", key, x, y);
 #endif
@@ -59,7 +63,7 @@ void keyboard( unsigned char key, int x, int y )
 		exit( EXIT_SUCCESS );
 		break;
 #ifdef _DEBUG
-	case 'a': /* Debug only !!! */
+	case 'a':
 		debug_PlayWithVectors();
 		break;
 	case 'b':
@@ -67,7 +71,6 @@ void keyboard( unsigned char key, int x, int y )
 		break;
 #endif
 	}
-
 }
 
 void mouse(int button, int state, int x, int y)
@@ -75,10 +78,25 @@ void mouse(int button, int state, int x, int y)
 	//button = {GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, GLUT_RIGHT_BUTTON}
 	//state = {GLUT_DOWN,GLUT_UP}
 	
+	vec2 mPos(x, y);
 	//set down flags
-	switch(button) {
+	switch(button)
+	{
 		case GLUT_LEFT_BUTTON:
 			lb_down = (state==GLUT_UP)?0:1;
+			
+			if (state == GLUT_UP) //just released the left click.
+			{
+				//Check for any button clicked:
+				for (int i = 0; i < buttons.capacity(); i++)
+				{
+					if (buttons[i].isInside(mPos))
+					{
+						buttons[i].BtnClick();
+						break;
+					}
+				}
+			}
 			break;
 		case GLUT_RIGHT_BUTTON:
 			rb_down = (state==GLUT_UP)?0:1;
@@ -87,8 +105,10 @@ void mouse(int button, int state, int x, int y)
 			mb_down = (state==GLUT_UP)?0:1;	
 			break;
 	}
-
-	// add your code
+	
+#ifdef _DEBUG
+	//std::cout << "Mouse callback called. (x, y):" << mPos << endl;
+#endif
 }
 
 void motion(int x, int y)
@@ -96,9 +116,16 @@ void motion(int x, int y)
 	// calc difference in mouse movement
 	int dx=x-last_x;
 	int dy=y-last_y;
+
 	// update last x,y
 	last_x=x;
 	last_y=y;
+
+#ifdef _DEBUG
+	vec2 mPos(x, y);
+	//std::cout << "motion callback called. (x, y):" << mPos << endl;
+#endif
+
 }
 
 void fileMenu(int id)
@@ -133,16 +160,141 @@ void initMenu()
 {
 
 	int menuFile = glutCreateMenu(fileMenu);
-	glutAddMenuEntry("Open..",FILE_OPEN);
+	glutAddMenuEntry("Open..", FILE_OPEN);
+
 	glutCreateMenu(mainMenu);
-	glutAddSubMenu("File",menuFile);
-	glutAddMenuEntry("Demo",MAIN_DEMO);
-	glutAddMenuEntry("About",MAIN_ABOUT);
+	glutAddSubMenu("File", menuFile);
+	glutAddMenuEntry("Demo", MAIN_DEMO);
+	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
-//----------------------------------------------------------------------------
+
+void initButtons()
+{
+	//Use this func to add all GUI buttons
+
+	Button* b1 = new Button(vec2(10, 10), vec2(30, 30));
+	b1->SetCallbackFunc(btn_b1_clicked);
+
+	buttons.push_back(*b1);
+	
+}
+
+#ifdef _DEBUG
+void debug_PlayWithVectors()
+{
+	vec2 a = vec2(1);
+	vec2 b = vec2(3, 4);
+	cout << "debug_PlayWithVectors started" << endl;
+
+	cout << "2d vector a = " << a << endl;
+	cout << "2d vector b = " << b << endl;
+	cout << "2d vector a+b = " << a + b << endl;
+	a += b;
+	cout << "a+=b. a = " << a << endl;
+	cout << "a dot b = " << dot(a, b) << endl;
+	cout << "length(b) = " << length(b) << endl;
+	cout << "normalized b = " << normalize(b) << endl;
+
+	cout << "debug_PlayWithVectors finished" << endl;
+}
+
+void debug_PlayWithMatrices()
+{
+	// mat2
+	mat2 m2;
+	mat3 m3;
+	mat4 m4;
+	cout << "debug_PlayWithVectors started" << endl;
+	cout << "Initial mat2: " << m2;
+	cout << "Initial mat3: " << m3;
+	cout << "Initial mat4: " << m4;
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	cout << endl << "Test 1.1: mat2 operator*" << endl;
+	mat2 m2a = mat2(1, 2, 3, 4);
+	mat2 m2b = mat2(1, 2, 0, 1);
+	cout << "m2a: " << m2a;
+	cout << "m2b: " << m2b;
+	cout << "result m2a * m2b: " << m2a * m2b;
+	cout << "result m2b * m2a: " << m2b * m2a;
+
+	cout << endl << "Test 1.2: mat2 operator*=" << endl;
+	m2b *= m2b;
+	cout << "result m2b*=m2b: " << m2b;
+
+	cout << endl << "Test 1.3: mat2 transpose" << endl;
+	cout << "result m2a^T:" << transpose(m2a);
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	cout << endl << "Test 2.1: mat3 m*v:" << endl;
+	vec3 v3a = vec3(1, 2, 3);
+	mat3 m3a = mat3(1, 2, 3,
+		4, 5, 6,
+		7, 8, 9);
+	cout << "m3a: " << m3a << endl;
+	cout << "v3a: " << endl << v3a << endl;
+	cout << "m3a * v3a : " << endl << m3a * v3a << endl;
+
+	cout << endl << "Test 2.2: mat3 operator*" << endl;
+	mat3 m3b = mat3(2); // 2 * Identity
+	cout << "m3b: " << m3b << endl;
+	cout << "result m3a * m3b: " << m3a * m3b << endl;
+	cout << "result m3b * m3a: " << m3b * m3a << endl;
+
+	cout << endl << "Test 2.3: m3a transpose" << endl;
+	cout << "result m3a^T:" << transpose(m3a) << endl;
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	cout << endl << "Test 3.1: mat4 m*v:" << endl;
+	vec4 v4a = vec4(1, 2, 3, 4);
+	mat4 m4a = mat4(1, 2, 3, 4,
+		5, 6, 7, 8,
+		9, 10, 11, 12,
+		13, 14, 15, 16);
+	cout << "m4a: " << m4a << endl;
+	cout << "v4a: " << endl << v4a << endl;
+	cout << "m4a * v4a : " << endl << m4a * v4a << endl;
+
+	cout << endl << "Test 3.2: mat4 operator*" << endl;
+	mat4 m4b = mat4(2); // 2 * Identity
+	cout << "m4b: " << m4b << endl;
+	cout << "result m4a * m4b: " << m4a * m4b << endl;
+	cout << "result m4b * m4a: " << m4b * m4a << endl;
+
+	cout << endl << "Test 3.3: m4a transpose" << endl;
+	cout << "result m4a^T:" << transpose(m4a) << endl;
+
+	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+	//cout << "Test 4: transformations" << endl;
+	//mat4 scale = Scale(2, 2, 2);
+	//cout << "Scale mat: " << scale << endl;
+	//vec4 v4 = vec4(1, 1, 1, 1);
+	//cout << "Scaling by (2,2,2): " << Scale(2,2,2) * v4 << endl;
+	//cout << "Scaling by (1,2,3): " << Scale(1, 2, 3) * v4 << endl;
+
+	//mat4 rotate = RotateX(45);
+	//cout << "Rotate mat: " << rotate << endl;
+	//cout << "Rotating by 45: " << RotateX(45) * v4 << endl;
+	//cout << "Rotating by 360: " << RotateX(360) * v4 << endl;
+	//cout << "Rotating by 0: " << RotateX(0) * v4 << endl;
+	//cout << "Rotating by 180: " << RotateX(180) * v4 << endl;	// BUG? M: result is (1,-1,-1) but not (-1,-1,-1)
+
+	//mat4 trsl = Translate(2, 2, 2);
+	//cout << "Translate mat: " << trsl << endl;
+	//cout << "Translating by (2,2,2): " << Translate(2, 2, 2) * v4 << endl;
+	//cout << "Translating by (0,0,0): " << Translate(0,0,0) * v4 << endl;
+	//cout << "Translating by (-0.5,-0.5,0): " << Translate(-0.5, -0.5, 0) * v4 << endl;
+
+
+	cout << "debug_PlayWithMatrices finished" << endl;
+}
+#endif
 
 int my_main( int argc, char **argv )
 {
@@ -182,13 +334,18 @@ int my_main( int argc, char **argv )
 	glutMotionFunc ( motion );
 	glutReshapeFunc( reshape );
 	initMenu();
-	
+	initButtons();
 
 	glutMainLoop();
 	delete scene;
 	delete renderer;
 	return 0;
 }
+
+//----------------------------------------------------------------------------
+// ---------------------- Don't touch below ----------------------------------
+//----------------------------------------------------------------------------
+
 
 CWinApp theApp;
 
@@ -212,119 +369,3 @@ int main( int argc, char **argv )
 	
 	return nRetCode;
 }
-
-#ifdef _DEBUG
-void debug_PlayWithVectors()
-{
-	vec2 a = vec2(1);
-	vec2 b = vec2(3, 4);
-	cout << "debug_PlayWithVectors started" << endl;
-
-	cout << "2d vector a = " << a << endl;
-	cout << "2d vector b = " << b << endl;
-	cout << "2d vector a+b = " << a+b << endl;
-	a += b;
-	cout << "a+=b. a = " << a << endl;
-	cout << "a dot b = " << dot(a, b) << endl;
-	cout << "length(b) = " << length(b) << endl;
-	cout << "normalized b = " << normalize(b) << endl;
-
-	cout << "debug_PlayWithVectors finished" << endl;
-}
-
-void debug_PlayWithMatrices()
-{
-	// mat2
-	mat2 m2;
-	mat3 m3;
-	mat4 m4;
-	cout << "debug_PlayWithVectors started" << endl;
-	cout << "Initial mat2: " << m2;
-	cout << "Initial mat3: " << m3;
-	cout << "Initial mat4: " << m4;
-	
-	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	cout << endl << "Test 1.1: mat2 operator*" << endl;
-	mat2 m2a = mat2(1, 2, 3, 4);
-	mat2 m2b = mat2(1, 2, 0, 1);
-	cout << "m2a: " << m2a;
-	cout << "m2b: " << m2b;
-	cout << "result m2a * m2b: " << m2a * m2b;
-	cout << "result m2b * m2a: " << m2b * m2a;
-		
-	cout << endl <<"Test 1.2: mat2 operator*=" << endl;
-	m2b *= m2b;
-	cout << "result m2b*=m2b: " << m2b;
-
-	cout << endl << "Test 1.3: mat2 transpose" << endl;
-	cout << "result m2a^T:" << transpose(m2a);
-
-	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	cout << endl << "Test 2.1: mat3 m*v:" << endl;
-	vec3 v3a = vec3(1, 2, 3);
-	mat3 m3a = mat3(1,2,3,
-					4,5,6,
-					7,8,9);
-	cout << "m3a: " << m3a << endl;
-	cout << "v3a: " << endl << v3a << endl;
-	cout << "m3a * v3a : " << endl << m3a * v3a << endl;
-
-	cout << endl << "Test 2.2: mat3 operator*" << endl;
-	mat3 m3b = mat3(2); // 2 * Identity
-	cout << "m3b: " << m3b << endl;
-	cout << "result m3a * m3b: " << m3a * m3b << endl;
-	cout << "result m3b * m3a: " << m3b * m3a << endl;
-	
-	cout << endl << "Test 2.3: m3a transpose" << endl;
-	cout << "result m3a^T:" << transpose(m3a) << endl;
-
-	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	cout << endl << "Test 3.1: mat4 m*v:" << endl;
-	vec4 v4a = vec4(1, 2, 3, 4);
-	mat4 m4a = mat4(1, 2, 3, 4,
-					5, 6, 7, 8,
-					9, 10, 11, 12,
-				    13, 14, 15, 16);
-	cout << "m4a: " << m4a << endl;
-	cout << "v4a: " << endl << v4a << endl;
-	cout << "m4a * v4a : " << endl << m4a * v4a << endl;
-
-	cout << endl << "Test 3.2: mat4 operator*" << endl;
-	mat4 m4b = mat4(2); // 2 * Identity
-	cout << "m4b: " << m4b << endl;
-	cout << "result m4a * m4b: " << m4a * m4b << endl;
-	cout << "result m4b * m4a: " << m4b * m4a << endl;
-
-	cout << endl << "Test 3.3: m4a transpose" << endl;
-	cout << "result m4a^T:" << transpose(m4a) << endl;
-
-	cout << endl << endl; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-	//cout << "Test 4: transformations" << endl;
-	//mat4 scale = Scale(2, 2, 2);
-	//cout << "Scale mat: " << scale << endl;
-	//vec4 v4 = vec4(1, 1, 1, 1);
-	//cout << "Scaling by (2,2,2): " << Scale(2,2,2) * v4 << endl;
-	//cout << "Scaling by (1,2,3): " << Scale(1, 2, 3) * v4 << endl;
-
-	//mat4 rotate = RotateX(45);
-	//cout << "Rotate mat: " << rotate << endl;
-	//cout << "Rotating by 45: " << RotateX(45) * v4 << endl;
-	//cout << "Rotating by 360: " << RotateX(360) * v4 << endl;
-	//cout << "Rotating by 0: " << RotateX(0) * v4 << endl;
-	//cout << "Rotating by 180: " << RotateX(180) * v4 << endl;	// BUG? M: result is (1,-1,-1) but not (-1,-1,-1)
-
-	//mat4 trsl = Translate(2, 2, 2);
-	//cout << "Translate mat: " << trsl << endl;
-	//cout << "Translating by (2,2,2): " << Translate(2, 2, 2) * v4 << endl;
-	//cout << "Translating by (0,0,0): " << Translate(0,0,0) * v4 << endl;
-	//cout << "Translating by (-0.5,-0.5,0): " << Translate(-0.5, -0.5, 0) * v4 << endl;
-
-	
-	cout << "debug_PlayWithMatrices finished" << endl;
-}
-#endif

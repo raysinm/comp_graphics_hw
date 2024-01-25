@@ -97,6 +97,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="CG_skel_w_MFC.cpp" />
     <ClCompile Include="InitShader.cpp" />
     <ClCompile Include="MeshModel.cpp" />
@@ -108,6 +109,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Button.h" />
     <ClInclude Include="CG_skel_w_MFC.h" />
     <ClInclude Include="InitShader.h" />
     <ClInclude Include="mat.h" />
