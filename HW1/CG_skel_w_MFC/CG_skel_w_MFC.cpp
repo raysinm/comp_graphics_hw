@@ -11,6 +11,7 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
+
 #include <string>
 
 //----------------------------------------------------------------------------
@@ -21,15 +22,23 @@ Scene* scene;
 Renderer* renderer;
 int last_x, last_y; // mouse positions
 bool lb_down, rb_down, mb_down; //mouse buttons (left/right/middle)
+bool cam_mode;	// Camera mode ON/OFF
 
 
 //----------------------------------------------------------------------------
 // ---------------------- Constants defines  ---------------------------------
 //----------------------------------------------------------------------------
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
-#define FILE_OPEN 1
-#define MAIN_DEMO 1
-#define MAIN_ABOUT 2
+
+// Menu entry types
+enum MenuEntry {
+	MAIN_DEMO,
+	MAIN_ABOUT,
+	FILE_OPEN,
+	SELECT_OBJECT,
+	SELECT_CAMERA
+};
+
 
 
 //----------------------------------------------------------------------------
@@ -70,6 +79,14 @@ void keyboard( unsigned char key, int x, int y )
 		debug_PlayWithMatrices();
 		break;
 #endif
+	case 'r':	// Rotation
+		break;
+	case 't':	// Translate
+		break;
+	case 's':	// Scale
+		break;
+	case 'c':	// Camera mode
+		break;
 	}
 }
 
@@ -143,6 +160,25 @@ void fileMenu(int id)
 	}
 }
 
+void selectMenu(int id)
+{
+	switch (id)
+	{
+	case SELECT_OBJECT:
+		//TODO
+#ifdef _DEBUG
+		cout << "Object selection" << endl;
+#endif
+		break;
+	case SELECT_CAMERA:
+		//TODO
+#ifdef _DEBUG
+		cout << "Camera selection" << endl;
+#endif
+		break;
+	}
+}
+
 void mainMenu(int id)
 {
 	switch (id)
@@ -159,14 +195,22 @@ void mainMenu(int id)
 void initMenu()
 {
 
+	
 	int menuFile = glutCreateMenu(fileMenu);
-	glutAddMenuEntry("Open..", FILE_OPEN);
+	glutAddMenuEntry("Open..", MenuEntry{ FILE_OPEN });
+	
+	int menuSelect = glutCreateMenu(selectMenu);
+	glutAddMenuEntry("Object...", MenuEntry{ SELECT_OBJECT });
+	glutAddMenuEntry("Camera...", MenuEntry{ SELECT_CAMERA });
 
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("File", menuFile);
-	glutAddMenuEntry("Demo", MAIN_DEMO);
-	glutAddMenuEntry("About", MAIN_ABOUT);
+	glutAddSubMenu("Selection", menuSelect);
+	glutAddMenuEntry("Demo", MenuEntry{ MAIN_DEMO });
+	glutAddMenuEntry("About", MenuEntry{ MAIN_ABOUT });
+	
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	
 }
 
 void initButtons()
