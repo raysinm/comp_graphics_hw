@@ -36,12 +36,15 @@ enum MenuEntry {
 	MAIN_ABOUT,
 	FILE_OPEN,
 	SELECT_OBJECT,
-	SELECT_CAMERA
+	SELECT_CAMERA,
+	OPTION_VNORM
 };
 
 // Window Title
 
 string base_title;
+string mode_title;
+string op_title;
 
 void set_window_title()
 {
@@ -89,15 +92,31 @@ void keyboard( unsigned char key, int x, int y )
 	case 'b':
 		debug_PlayWithMatrices();
 		break;
+	case 'v':
+		glutEstablishOverlay();
+		break;
 #endif
 	case 'r':	// Rotation
+		op_title = " - Rotation";
+		glutSetWindowTitle((base_title + mode_title + op_title).c_str());
 		break;
 	case 't':	// Translate
+		op_title = " - Translation";
+		glutSetWindowTitle((base_title + mode_title + op_title).c_str());
 		break;
 	case 's':	// Scale
+		op_title = " - Scale";
+		glutSetWindowTitle((base_title + mode_title + op_title).c_str());
 		break;
 	case 'c':	// Camera mode
+		op_title.clear();
+		mode_title = " - CAMERA Mode";
+		glutSetWindowTitle((base_title + mode_title + op_title).c_str());
 		break;
+	case 'o':
+		op_title.clear();
+		mode_title = " - OBJECT Mode";
+		glutSetWindowTitle((base_title + mode_title + op_title).c_str());
 	}
 }
 
@@ -190,6 +209,15 @@ void selectMenu(int id)
 	}
 }
 
+void optionMenu(int id)
+{
+	switch (id)
+	{
+	case OPTION_VNORM:
+		//TODO
+		break;
+	}
+}
 void mainMenu(int id)
 {
 	switch (id)
@@ -212,9 +240,14 @@ void initMenu()
 	glutAddMenuEntry("Object...", MenuEntry{ SELECT_OBJECT });
 	glutAddMenuEntry("Camera...", MenuEntry{ SELECT_CAMERA });
 
+	int menuOption = glutCreateMenu(optionMenu);
+	glutAddMenuEntry("Toggle vertex normals", MenuEntry{ OPTION_VNORM });
+
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("File", menuFile);
 	glutAddSubMenu("Selection", menuSelect);
+	glutAddSubMenu("Options", menuOption);
+
 	glutAddMenuEntry("Demo", MenuEntry{ MAIN_DEMO });
 	glutAddMenuEntry("About", MenuEntry{ MAIN_ABOUT });
 	
