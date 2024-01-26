@@ -39,7 +39,18 @@ enum MenuEntry {
 	SELECT_CAMERA
 };
 
+// Window Title
 
+string base_title;
+
+void set_window_title()
+{
+	base_title = "CG";
+#ifdef _DEBUG
+	base_title += " - DEBUG!";
+#endif
+		
+}
 
 //----------------------------------------------------------------------------
 // ---------------------- Callbacks functions --------------------------------
@@ -194,8 +205,6 @@ void mainMenu(int id)
 
 void initMenu()
 {
-
-	
 	int menuFile = glutCreateMenu(fileMenu);
 	glutAddMenuEntry("Open..", MenuEntry{ FILE_OPEN });
 	
@@ -344,16 +353,15 @@ int my_main( int argc, char **argv )
 {
 	//----------------------------------------------------------------------------
 	// Initialize window
+	set_window_title();
 	glutInit( &argc, argv );
 	glutInitDisplayMode( GLUT_RGBA| GLUT_DOUBLE);
 	glutInitWindowSize( 512, 512 );
 	glutInitContextVersion( 3, 2 );
 	glutInitContextProfile( GLUT_CORE_PROFILE );
-#ifdef _DEBUG
-	glutCreateWindow( "CG - DEBUG STATE !!!" );
-#else
-	glutCreateWindow( "CG" );
-#endif
+
+	glutCreateWindow( base_title.c_str() );
+
 	glewExperimental = GL_TRUE;
 	glewInit();
 	GLenum err = glewInit();
