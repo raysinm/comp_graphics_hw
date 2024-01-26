@@ -1,7 +1,10 @@
 #include "StdAfx.h"
 #include "Renderer.h"
-#include "CG_skel_w_MFC.h"
+//#include "CG_skel_w_MFC.h"
+#include "CG_skel_w_glfw.h"
 #include "InitShader.h"
+//#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 #include "GL\freeglut.h"
 #include "Button.h"
 
@@ -10,14 +13,15 @@
 #define GREEN 1
 #define BLUE  2
 
-Renderer::Renderer() :m_width(512), m_height(512)
+Renderer::Renderer() :m_width(512), m_height(512), m_window(NULL)	// Need to think about default window
 {
 	InitOpenGLRendering();
 	CreateBuffers(m_width, m_height);
 }
 
-Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
+Renderer::Renderer(int width, int height, GLFWwindow* window) :m_width(width), m_height(height)
 {
+	m_window = window;
 	InitOpenGLRendering();
 	CreateBuffers(m_width, m_height);
 }
@@ -77,10 +81,19 @@ void Renderer::DrawBtns()
 
 void Renderer::InitOpenGLRendering()
 {
-	int a = glGetError();
+	GLenum a = glGetError();
+#ifdef _DEBUG
+	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
+#endif
 	a = glGetError();
+#ifdef _DEBUG
+	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
+#endif
 	glGenTextures(1, &gScreenTex);
 	a = glGetError();
+#ifdef _DEBUG
+	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
+#endif
 	glGenVertexArrays(1, &gScreenVtc);
 	GLuint buffer;
 	glBindVertexArray(gScreenVtc);
@@ -145,6 +158,7 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	a = glGetError();
-	glutSwapBuffers();
+	//glutSwapBuffers();
+	glfwSwapBuffers(m_window);
 	a = glGetError();
 }
