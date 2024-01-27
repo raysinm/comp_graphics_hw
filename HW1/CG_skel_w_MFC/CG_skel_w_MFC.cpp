@@ -17,7 +17,6 @@
 //----------------------------------------------------------------------------
 // ---------------------- Global variables  ---------------------------------
 //----------------------------------------------------------------------------
-std::vector<Button> buttons;
 Scene* scene;
 Renderer* renderer;
 int last_x, last_y; // mouse positions
@@ -58,16 +57,24 @@ void set_window_title()
 //----------------------------------------------------------------------------
 // ---------------------- Callbacks functions --------------------------------
 //----------------------------------------------------------------------------
-void btn_b1_clicked()
-{
-	cout << "B1 Clicked!" << endl;
+void RenderString(float x, float y, void* font, unsigned char* string, vec3 const& rgb)
+{;
+
+	glColor3f(rgb.x, rgb.y, rgb.z);
+	glRasterPos2f(x, y);
+
+	glutBitmapString(font, (const unsigned char*)string);
 }
 
 void display( void )
 {
-//Call the scene and ask it to draw itself
-	//cout << "display called" << endl;
+	//Call the scene and ask it to draw itself
+
+	RenderString(0, 0, GLUT_BITMAP_TIMES_ROMAN_10, (unsigned char*)"Hello", vec3(0.0f, 1.0f, 0.0f));
 	scene->draw();
+	cout << "display called" << endl;
+
+
 }
 
 void reshape( int width, int height )
@@ -88,6 +95,7 @@ void keyboard( unsigned char key, int x, int y )
 #ifdef _DEBUG
 	case 'a':
 		debug_PlayWithVectors();
+		glutSetWindowTitle("testing the title change :)");
 		break;
 	case 'b':
 		debug_PlayWithMatrices();
@@ -131,19 +139,6 @@ void mouse(int button, int state, int x, int y)
 	{
 		case GLUT_LEFT_BUTTON:
 			lb_down = (state==GLUT_UP)?0:1;
-			
-			if (state == GLUT_UP) //just released the left click.
-			{
-				//Check for any button clicked:
-				for (int i = 0; i < buttons.capacity(); i++)
-				{
-					if (buttons[i].isInside(mPos))
-					{
-						buttons[i].BtnClick();
-						break;
-					}
-				}
-			}
 			break;
 		case GLUT_RIGHT_BUTTON:
 			rb_down = (state==GLUT_UP)?0:1;
@@ -252,17 +247,6 @@ void initMenu()
 	glutAddMenuEntry("About", MenuEntry{ MAIN_ABOUT });
 	
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
-	
-}
-
-void initButtons()
-{
-	//Use this func to add all GUI buttons
-
-	Button* b1 = new Button(vec2(10, 10), vec2(30, 30));
-	b1->SetCallbackFunc(btn_b1_clicked);
-
-	buttons.push_back(*b1);
 	
 }
 
@@ -388,7 +372,7 @@ int my_main( int argc, char **argv )
 	// Initialize window
 	set_window_title();
 	glutInit( &argc, argv );
-	glutInitDisplayMode( GLUT_RGBA| GLUT_DOUBLE);
+	glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize( 512, 512 );
 	glutInitContextVersion( 3, 2 );
 	glutInitContextProfile( GLUT_CORE_PROFILE );
@@ -419,7 +403,6 @@ int my_main( int argc, char **argv )
 	glutMotionFunc ( motion );
 	glutReshapeFunc( reshape );
 	initMenu();
-	initButtons();
 
 	glutMainLoop();
 	delete scene;

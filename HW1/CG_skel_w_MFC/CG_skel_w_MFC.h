@@ -18,8 +18,3 @@ void initMenu();
 void debug_PlayWithVectors();
 void debug_PlayWithMatrices();
 #endif
-
-//----------------------------------------------------------------------------
-// ---------------------- Global Variables -----------------------------------
-//----------------------------------------------------------------------------
-extern std::vector<Button> buttons;
