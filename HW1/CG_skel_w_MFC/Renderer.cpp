@@ -62,15 +62,6 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::DrawBtns()
-{
-	for (int i = 0; i < buttons.capacity(); i++)
-	{
-		buttons[i].Draw(m_outBuffer, m_width, m_height);
-	}
-}
-
-
 
 
 
