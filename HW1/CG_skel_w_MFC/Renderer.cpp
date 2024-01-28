@@ -3,10 +3,9 @@
 //#include "CG_skel_w_MFC.h"
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
-//#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "GL\freeglut.h"
-#include "Button.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
 #define RED   0

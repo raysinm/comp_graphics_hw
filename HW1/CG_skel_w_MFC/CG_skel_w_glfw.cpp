@@ -1,9 +1,9 @@
-//CG_skel_w_glfw.h
+//CG_skel_w_glfw.cpp
 
 #include "stdafx.h"
 #include "CG_skel_w_glfw.h"
 
-//#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "GL/glew.h"
 #include "imgui.h"
@@ -15,7 +15,6 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
-#include "Button.h"
 
 #include <string>
 
@@ -24,7 +23,6 @@ using namespace std;
 //----------------------------------------------------------------------------
 // ---------------------- Global variables  ---------------------------------
 //----------------------------------------------------------------------------
-std::vector<Button> buttons;
 Scene* scene;
 Renderer* renderer;
 int last_x, last_y; // mouse positions
