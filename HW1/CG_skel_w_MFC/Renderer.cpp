@@ -45,11 +45,11 @@ void Renderer::CreateBuffers(int width, int height)
 void Renderer::SetDemoBuffer()
 {
 	//vertical line
-	for(int i=0; i<m_width; i++)
+	for(int i=0; i<m_height; i++)
 	{
-		m_outBuffer[INDEX(m_width,256,i,RED)]   =1;
-		m_outBuffer[INDEX(m_width,256,i,GREEN)] =0;
-		m_outBuffer[INDEX(m_width,256,i,BLUE)]  =0;
+		m_outBuffer[INDEX(m_height,256,i,RED)]   =1;
+		m_outBuffer[INDEX(m_height,256,i,GREEN)] =0;
+		m_outBuffer[INDEX(m_height,256,i,BLUE)]  =0;
 
 	}
 	//horizontal line
@@ -82,13 +82,8 @@ void Renderer::DrawBtns()
 void Renderer::InitOpenGLRendering()
 {
 	GLenum a = glGetError();
-#ifdef _DEBUG
-	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
-#endif
+
 	a = glGetError();
-#ifdef _DEBUG
-	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
-#endif
 	glGenTextures(1, &gScreenTex);
 	a = glGetError();
 #ifdef _DEBUG
