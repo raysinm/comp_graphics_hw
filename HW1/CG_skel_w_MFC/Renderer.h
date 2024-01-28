@@ -1,11 +1,10 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 #include <vector>
-//#include "CG_skel_w_MFC.h"
 #include "CG_skel_w_glfw.h"
 #include "vec.h"
 #include "mat.h"
-//#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include "GL/glew.h"
 
 

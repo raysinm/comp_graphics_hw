@@ -1,15 +1,11 @@
-//CG_skel_w_glfw.cpp
-
-#include "stdafx.h"
-#include "CG_skel_w_glfw.h"
-
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include "stdafx.h"
+#include "CG_skel_w_glfw.h"
 #include "GL/glew.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 #include "vec.h"
 #include "mat.h"
 #include "InitShader.h"

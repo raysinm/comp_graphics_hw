@@ -1,7 +1,4 @@
 #pragma once
-
-//CG_skel_w_glfw.h
-
 #include "resource.h"
 #include <vector>
 #include "GLFW/glfw3.h"

@@ -1,10 +1,7 @@
 #include "StdAfx.h"
 #include "Renderer.h"
-//#include "CG_skel_w_MFC.h"
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include "GL\freeglut.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
@@ -143,7 +140,6 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	a = glGetError();
-	//glutSwapBuffers();
 	glfwSwapBuffers(m_window);
 	a = glGetError();
 }
