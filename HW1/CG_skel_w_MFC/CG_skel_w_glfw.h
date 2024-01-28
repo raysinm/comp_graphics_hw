@@ -2,7 +2,7 @@
 #include "resource.h"
 #include <vector>
 #include "GLFW/glfw3.h"
-
+#include "imgui.h"
 
 //void display(void);
 //void reshape(int width, int height);
@@ -18,6 +18,7 @@ void initMenu();
 //void debug_PlayWithVectors();
 //void debug_PlayWithMatrices();
 void debug_func();
+void imguiDemoRun(ImGuiIO& io);
 
 #endif
 
