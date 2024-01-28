@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "Scene.h"
 #include "MeshModel.h"
-#include "CG_skel_w_MFC.h"
+//#include "CG_skel_w_MFC.h"
+#include "CG_skel_w_glfw.h"
 #include <string>
 #include <GL/freeglut_std.h>
 

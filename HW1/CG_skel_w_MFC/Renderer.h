@@ -1,9 +1,13 @@
 #pragma once
 #include <vector>
-#include "CG_skel_w_MFC.h"
+//#include "CG_skel_w_MFC.h"
+#include "CG_skel_w_glfw.h"
 #include "vec.h"
 #include "mat.h"
+//#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 #include "GL/glew.h"
+
 
 using namespace std;
 class Renderer
@@ -11,6 +15,8 @@ class Renderer
 	float *m_outBuffer; // 3*width*height
 	float *m_zbuffer; // width*height
 	int m_width, m_height;
+	GLFWwindow* m_window;	// For glfw swap buffers
+
 
 	void CreateBuffers(int width, int height);
 	void CreateLocalBuffer();
@@ -25,7 +31,7 @@ class Renderer
 	//////////////////////////////
 public:
 	Renderer();
-	Renderer(int width, int height);
+	Renderer(int width, int height,GLFWwindow* window);
 	~Renderer(void);
 	void Init();
 	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* normals=NULL);

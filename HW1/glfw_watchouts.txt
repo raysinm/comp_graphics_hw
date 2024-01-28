@@ -1,0 +1,22 @@
+WATCHOUT FOR:
+
+1. glfw openGL version:
+"
+By default, the OpenGL context GLFW creates may have any version. You can require a minimum OpenGL version by setting the GLFW_CONTEXT_VERSION_MAJOR and GLFW_CONTEXT_VERSION_MINOR hints before creation. If the required minimum version is not supported on the machine, context (and window) creation fails.
+
+You can select the OpenGL profile by setting the GLFW_OPENGL_PROFILE hint. 
+"
+
+2. NOTICE- glew does the context initiation in glewInit()
+3. Main loop - glut used its own main loop, in glfw it seems we have to create one.
+
+4. Renderer default c'tor sets window as NULL
+
+5. HARSH LESSON: Must do glfwContextCurrent(window) before initalizing glew
+
+6. Visual studio project properties:
+	* Add include folder of glfw to include_directories (where all the rest is) BOTH under "C/CPP" and "Linker" (General, Input, anywhere possible)
+	* Same with imgui/ folder
+	* disable precompiled headers under C/CPP->Precompiled Headers-> [first option]
+
+7. Important to remember glew and some Renderer funcs handle openGL stuff - buffers, etc. They use functions starting with "gl"
