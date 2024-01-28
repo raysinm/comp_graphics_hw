@@ -47,7 +47,9 @@ public:
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawDemo();
-	
+	void drawGUI();
+	friend void imguiDemoRun();
+
 	int activeModel;
 	int activeLight;
 	int activeCamera;

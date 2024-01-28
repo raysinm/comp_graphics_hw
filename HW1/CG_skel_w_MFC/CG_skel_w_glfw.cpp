@@ -165,7 +165,6 @@ int my_main(int argc, char** argv)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -181,6 +180,7 @@ int my_main(int argc, char** argv)
 	//----------------------------------------------------------------------------
 	// Initialize Callbacks
 	glfwSetKeyCallback(window, key_callback);
+	
 	//----------------------------------------------------------------------------
 	// Loop
 	bool imgui_show_demo = true;
@@ -239,7 +239,7 @@ int my_main(int argc, char** argv)
 		// 2. scene
 		//scene->drawGUI();
 		//scene->drawSCENE();
-		//scene->drawDemo();
+		scene->drawDemo();
 		//ImGui::Text("Hello World imgui test");'
 
 	

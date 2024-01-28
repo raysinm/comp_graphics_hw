@@ -24,3 +24,14 @@ void Scene::drawDemo()
 	m_renderer->SetDemoBuffer();
 	//m_renderer->SwapBuffers();
 }
+
+void Scene::drawGUI()
+{
+
+}
+
+void imguiDemoRun()
+{
+	ImGuiIO& io = ImGui::GetIO();
+
+}
