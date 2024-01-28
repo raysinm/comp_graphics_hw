@@ -2,7 +2,6 @@
 
 //CG_skel_w_glfw.h
 
-#include "Button.h"
 #include "resource.h"
 #include <vector>
 #include "GLFW/glfw3.h"
@@ -25,7 +24,3 @@ void debug_func();
 
 #endif
 
-//----------------------------------------------------------------------------
-// ---------------------- Global Variables -----------------------------------
-//----------------------------------------------------------------------------
-extern std::vector<Button> buttons;

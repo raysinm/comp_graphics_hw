@@ -15,7 +15,6 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
-#include "Button.h"
 
 #include <string>
 
@@ -24,7 +23,6 @@ using namespace std;
 //----------------------------------------------------------------------------
 // ---------------------- Global variables  ---------------------------------
 //----------------------------------------------------------------------------
-std::vector<Button> buttons;
 Scene* scene;
 Renderer* renderer;
 int last_x, last_y; // mouse positions
