@@ -10,6 +10,10 @@ class Model {
 protected:
 	virtual ~Model() {}
 	void virtual draw()=0;
+
+public:
+	bool selected = false;
+	string name = "Model1";
 };
 
 
@@ -32,6 +36,9 @@ public:
 		const float zNear, const float zFar );
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);
+
+	bool selected = false;
+	string name = "Camera1";
 };
 
 class Scene {
@@ -39,7 +46,11 @@ class Scene {
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
+	vector<bool> cameras_selected;
 	Renderer* m_renderer;
+
+private:
+	void AddCamera();
 
 public:
 	Scene() {};

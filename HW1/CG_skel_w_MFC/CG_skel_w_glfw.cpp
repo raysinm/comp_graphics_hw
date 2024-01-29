@@ -70,7 +70,6 @@ void mouse_move_callback(GLFWwindow* window, double x, double y)
 	//Our callback:
 	mouse_pos_prev = mouse_pos;
 	mouse_pos = vec2(x, y);
-	std::cout << "Mouse moved to:" << mouse_pos << std::endl;
 }
 
 //mouse click
@@ -198,17 +197,21 @@ int my_main(int argc, char** argv)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glfwPollEvents();
 
-		// Start the Dear ImGui frame
 		ImGui_ImplGlfw_NewFrame();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		scene->draw();     //draw scene
+		scene->drawGUI();
+
+#ifdef _DEBUG
 
 		// 1. Show the big demo window
 		ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
 		/*
+		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 		{
 			static float f = 0.0f;
@@ -242,36 +245,14 @@ int my_main(int argc, char** argv)
 		}
 		*/
 
+#endif
 
-		//Rendering:
-		// 1. GUI
-		// 2. scene
-		//scene->drawGUI();
-		//scene->drawSCENE();
-		scene->drawDemo();
-		//ImGui::Text("Hello World imgui test");'
 
-	
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Open..."))
-				{
-					//Do something
-				}
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMainMenuBar();
-		}
 		
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-
 		renderer->SwapBuffers();
-		glfwPollEvents();
+		
 	}
 	
 //----------------------------------------------------------------------------
