@@ -12,13 +12,10 @@
 //void mainMenu(int id);
 //void selectMenu(int id);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_move_callback(GLFWwindow* window, double x, double y);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-void initMenu();
 #ifdef _DEBUG
-//void debug_PlayWithVectors();
-//void debug_PlayWithMatrices();
 void debug_func();
-void imguiDemoRun(ImGuiIO& io);
-
 #endif
 
