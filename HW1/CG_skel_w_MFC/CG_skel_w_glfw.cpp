@@ -11,6 +11,7 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
+#include "FrameBuffer.h"
 
 #include <string>
 
@@ -21,6 +22,7 @@ using namespace std;
 //----------------------------------------------------------------------------
 Scene* scene;
 Renderer* renderer;
+FrameBuffer* renderer_test;
 bool lb_down, rb_down, mb_down; //mouse buttons (left/right/middle)
 bool cam_mode;	// Camera mode ON/OFF
 vec2 mouse_pos, mouse_pos_prev;
@@ -173,8 +175,10 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 //------------------------ Renderer + Scene init -----------------------------
 //----------------------------------------------------------------------------
-	renderer = new Renderer(512, 512, window);
-	scene = new Scene(renderer);
+	//renderer = new Renderer(512, 512, window);
+	renderer_test = new FrameBuffer(512, 512);
+	//scene = new Scene(renderer);
+	scene = new Scene(renderer_test);
 
 //----------------------------------------------------------------------------
 //--------------------------- Bind Callbacks ---------------------------------
@@ -194,18 +198,21 @@ int my_main(int argc, char** argv)
 	bool show_another_window = true;
 	while (!glfwWindowShouldClose(window))
 	{
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glfwPollEvents();
+		glfwPollEvents(); //consider using glfwWaitEvents() ...
 
 		ImGui_ImplGlfw_NewFrame();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-		scene->draw();     //draw scene
+
 		scene->drawGUI();
 
+
+/*
 #ifdef _DEBUG
 
 		// 1. Show the big demo window
@@ -245,13 +252,19 @@ int my_main(int argc, char** argv)
 		}
 		*/
 
-#endif
 
 
-		
+
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		renderer->SwapBuffers();
+
+
+		renderer_test->Bind();
+		scene->draw();     //draw scene
+		renderer_test->Unbind();
+		
+		
+		glfwSwapBuffers(window);
 		
 	}
 	

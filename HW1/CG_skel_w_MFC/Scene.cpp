@@ -19,13 +19,13 @@ void Scene::loadOBJModel(string fileName)
 	/*TODO: Ask for user input for name? */
 
 	models.push_back(model);
-	cameras_selected.push_back(false);
 }
 
 void Scene::draw()
 {
 	// 1. Send the renderer the current camera transform and the projection
 	// 2. Tell all models to draw themselves
+
 }
 
 void Scene::drawDemo()
@@ -35,6 +35,17 @@ void Scene::drawDemo()
 
 void Scene::drawGUI()
 {
+	float width = ImGui::GetContentRegionAvail().x;
+	float height = ImGui::GetContentRegionAvail().y;
+
+	this->m_renderer_test->RescaleFrameBuffer(width, height);
+	glViewport(0, 0, width, height);
+
+	ImGui::Image(
+		(ImTextureID)m_renderer_test->getFrameTexture(),
+		ImGui::GetContentRegionAvail()
+	);
+
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("Add..."))

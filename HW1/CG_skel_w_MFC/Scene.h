@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "Renderer.h"
+#include "FrameBuffer.h"
 using namespace std;
 
 class Model {
@@ -46,15 +47,16 @@ class Scene {
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
-	vector<bool> cameras_selected;
 	Renderer* m_renderer;
+	FrameBuffer* m_renderer_test;
 
 private:
 	void AddCamera();
 
 public:
 	Scene() {};
-	Scene(Renderer *renderer) : m_renderer(renderer) {};
+	Scene(Renderer*   renderer) : m_renderer(renderer) {};
+	Scene(FrameBuffer* renderer) : m_renderer_test(renderer) {};
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawDemo();

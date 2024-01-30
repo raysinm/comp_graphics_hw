@@ -108,6 +108,7 @@
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="InitShader.cpp" />
     <ClCompile Include="MeshModel.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="..\imgui\imstb_textedit.h" />
     <ClInclude Include="..\imgui\imstb_truetype.h" />
     <ClInclude Include="CG_skel_w_glfw.h" />
+    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="InitShader.h" />
     <ClInclude Include="mat.h" />
     <ClInclude Include="MeshModel.h" />

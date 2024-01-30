@@ -131,6 +131,7 @@ void Renderer::SwapBuffers()
 	glActiveTexture(GL_TEXTURE0);
 	a = glGetError();
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
+
 	a = glGetError();
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer);
 	glGenerateMipmap(GL_TEXTURE_2D);
