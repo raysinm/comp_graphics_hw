@@ -11,11 +11,9 @@
 using namespace std;
 class Renderer
 {
-	float *m_outBuffer; // 3*width*height
 	float *m_zbuffer; // width*height
 	int m_width, m_height;
 	GLFWwindow* m_window;	// For glfw swap buffers
-
 
 	void CreateBuffers(int width, int height);
 	void CreateLocalBuffer();
@@ -28,6 +26,7 @@ class Renderer
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
 	//////////////////////////////
+	
 public:
 	Renderer();
 	Renderer(int width, int height,GLFWwindow* window);
@@ -41,4 +40,16 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
+	
+	// New funcs
+	void CreateTexture();
+	vec2 GetBufferSize();
+	void update(int width, int height);
+	void updateTexture();
+	void updateBuffer();
+
+	/// CHANGE BACK TO PRIVATE:
+	float *m_outBuffer; // 3*width*height
+
+	GLuint textureID;
 };

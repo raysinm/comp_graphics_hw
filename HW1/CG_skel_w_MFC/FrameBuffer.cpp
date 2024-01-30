@@ -3,8 +3,8 @@
 
 FrameBuffer::FrameBuffer(float width, float height) : m_width(width), m_height(height)
 {
-	m_outBuffer = new float[(int)(width * height * 3)];
-	for (int i = 0; i < (int)(3 * width * height); i++)
+	m_outBuffer = new float[(int)(m_width * m_height * 3)];
+	for (int i = 0; i < (int)(3 * m_width * m_height); i++)
 		m_outBuffer[i] = 1.0; //Set all pixels to pure white.
 
 	glGenFramebuffers(1, &fbo);
@@ -50,11 +50,13 @@ void FrameBuffer::RescaleFrameBuffer(float width, float height)
 	/* Currently we are overriding the last pixels !!!! */
 	if (width != m_width || height != m_height)
 	{
+		m_width = width;
+		m_height = height;
 		if (m_outBuffer)
 			delete[] m_outBuffer;
 
-		m_outBuffer = new float[(int)(width * height * 3)];
-		for (int i = 0; i < (int)(3 * width * height); i++)
+		m_outBuffer = new float[(int)(m_width * m_height * 3)];
+		for (int i = 0; i < (int)(3 * m_width * m_height); i++)
 			m_outBuffer[i] = 1.0; //Set all pixels to pure white.
 	}
 

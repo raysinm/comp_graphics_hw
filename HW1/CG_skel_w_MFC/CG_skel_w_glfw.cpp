@@ -166,7 +166,7 @@ int my_main(int argc, char** argv)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= (ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
-	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsDark();
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(window, true); // install_callback=true installs GLFW callbacks and chain to existing ones.
@@ -175,10 +175,10 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 //------------------------ Renderer + Scene init -----------------------------
 //----------------------------------------------------------------------------
-	//renderer = new Renderer(512, 512, window);
-	renderer_test = new FrameBuffer(512, 512);
-	//scene = new Scene(renderer);
-	scene = new Scene(renderer_test);
+	renderer = new Renderer(1000, 512, window);
+	//renderer_test = new FrameBuffer(512, 512);
+	scene = new Scene(renderer);
+	//scene = new Scene(renderer_test);
 
 //----------------------------------------------------------------------------
 //--------------------------- Bind Callbacks ---------------------------------
@@ -196,11 +196,13 @@ int my_main(int argc, char** argv)
 	
 	bool imgui_show_demo = true;
 	bool show_another_window = true;
+
+	renderer->CreateTexture();
+
 	while (!glfwWindowShouldClose(window))
 	{
-
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glfwPollEvents(); //consider using glfwWaitEvents() ...
 
@@ -208,9 +210,45 @@ int my_main(int argc, char** argv)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-
+		// Main Menu Bar
 		scene->drawGUI();
 
+		// Get Main Menu Bar window size + glfw window size
+		ImVec2 mainMenuBarSize = ImGui::GetWindowContentRegionMin();
+		int glfwWindowWidth, glfwWindowHeight;
+		glfwGetWindowSize(window, &glfwWindowWidth, &glfwWindowHeight);
+
+
+		// Texture (Buffer)
+		
+		// Set ImGui window size and position according to main menu bar
+		
+		float bufferWidth = static_cast<float>(glfwWindowWidth);
+		float bufferHeight = static_cast<float>(glfwWindowHeight) - mainMenuBarSize.y;
+		ImGui::SetNextWindowSize(ImVec2(bufferWidth, bufferHeight));
+		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarSize.y));	// Be below main menu bar
+
+
+		// Manually change the content of the buffer
+		renderer->update(int(bufferWidth), int(bufferHeight));	//Update buffer+texture for new size;
+		renderer->SetDemoBuffer();	
+		renderer->updateTexture();	//Update buffer+texture for new size;
+
+		
+		ImGui::Begin("Buffer window",NULL, ImGuiWindowFlags_NoTitleBar);
+		
+		//GLuint textureID = renderer->CreateTexture();	//M: needs to be in init
+		//
+		//glBindTexture(GL_TEXTURE_2D, textureID);
+		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, bufferWidth, bufferHeight, GL_RGB, GL_FLOAT, renderer->m_outBuffer);
+
+
+		//auto vecDebug = ImGui::GetContentRegionAvail();
+		// Display the texture in ImGui
+		ImGui::Image((void*)(intptr_t)(renderer->textureID), ImVec2(bufferWidth, bufferHeight));
+
+		//scene->drawGUI();
+		//scene->drawDemo();
 
 /*
 #ifdef _DEBUG
@@ -255,22 +293,28 @@ int my_main(int argc, char** argv)
 
 
 
+
+		ImGui::End();
+
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
-		renderer_test->Bind();
-		scene->draw();     //draw scene
-		renderer_test->Unbind();
+		//renderer_test->Bind();
+		//scene->draw();     //draw scene
+		//renderer_test->Unbind();
 		
 		
-		glfwSwapBuffers(window);
-		
+		//glfwSwapBuffers(window);
+		renderer->SwapBuffers();
 	}
 	
 //----------------------------------------------------------------------------
 //------------------------------- Terminate ----------------------------------
 //----------------------------------------------------------------------------
+	
+	glDeleteTextures(1, &(renderer->textureID));
+
 	glfwDestroyWindow(window);
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

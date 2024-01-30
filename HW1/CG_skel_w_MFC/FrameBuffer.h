@@ -18,5 +18,5 @@ private:
 	unsigned int texture;
 	unsigned int rbo;
 
-	int m_width, m_height;
+	unsigned int m_width, m_height;
 };

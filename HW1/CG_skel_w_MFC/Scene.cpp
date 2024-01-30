@@ -28,23 +28,25 @@ void Scene::draw()
 
 }
 
-void Scene::drawDemo()
-{
-	m_renderer->SetDemoBuffer();
-}
+//void Scene::drawDemo()
+//{
+//	m_renderer->SetDemoBuffer();
+//}
 
 void Scene::drawGUI()
 {
-	float width = ImGui::GetContentRegionAvail().x;
-	float height = ImGui::GetContentRegionAvail().y;
+	//auto width = ImGui::GetContentRegionAvail().x;
+	//auto height = ImGui::GetContentRegionAvail().y;
 
-	this->m_renderer_test->RescaleFrameBuffer(width, height);
-	glViewport(0, 0, width, height);
+	//this->m_renderer_test->RescaleFrameBuffer(width, height);
+	//glViewport(0, 0, width, height);
 
-	ImGui::Image(
-		(ImTextureID)m_renderer_test->getFrameTexture(),
-		ImGui::GetContentRegionAvail()
-	);
+	//ImGui::Image(
+	//	(ImTextureID)m_renderer_test->getFrameTexture(),
+	//	ImGui::GetContentRegionAvail()
+	//);
+
+	//ImGui::SetNextWindowFocus();
 
 	if (ImGui::BeginMainMenuBar())
 	{
