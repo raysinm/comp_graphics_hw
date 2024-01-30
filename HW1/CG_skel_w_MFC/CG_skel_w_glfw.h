@@ -4,6 +4,10 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 
+#define START_WIDTH 512
+#define START_HEIGHT 512
+
+
 //void display(void);
 //void reshape(int width, int height);
 //void keyboard(unsigned char key, int x, int y);

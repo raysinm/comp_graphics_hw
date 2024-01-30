@@ -9,12 +9,6 @@
 #define GREEN 1
 #define BLUE  2
 
-Renderer::Renderer() :m_width(512), m_height(512), m_window(NULL)	// Need to think about default window
-{
-	//InitOpenGLRendering();
-	CreateBuffers(m_width, m_height);
-}
-
 Renderer::Renderer(int width, int height, GLFWwindow* window) :m_width(width), m_height(height)
 {
 	m_window = window;
@@ -31,12 +25,11 @@ Renderer::~Renderer(void)
 
 void Renderer::CreateBuffers(int width, int height)
 {
-	m_width = width;
-	m_height = height;
 	CreateOpenGLBuffer(); //Do not remove this line.
+
 	m_outBuffer = new float[3 * m_width * m_height];
 	for (int i = 0; i < 3 * m_width * m_height; i++)
-		m_outBuffer[i] = 1.0; //Set all pixels to pure white.
+		m_outBuffer[i] = 1.0f; //Set all pixels to pure white.
 }
 
 void Renderer::SetDemoBuffer()
@@ -51,9 +44,6 @@ void Renderer::SetDemoBuffer()
 		m_outBuffer[INDEX(m_width, vert_pos, i, BLUE)] = 0;
 
 	}
-//#ifdef _DEBUG
-//	printf("Renderer: Got to SetDemoBuffer\n");
-//#endif // _DEBUG
 
 	//horizontal line
 	for(int i=0; i<m_width; i++)
@@ -153,16 +143,13 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 }
 
-void Renderer::CreateTexture() {
-	
+void Renderer::CreateTexture()
+{
 	glGenTextures(1, &m_textureID);
-
 	glBindTexture(GL_TEXTURE_2D, m_textureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	return;
 }
 
 void Renderer::updateTexture() {
@@ -178,12 +165,11 @@ void Renderer::updateTexture() {
 	// Set texture parameters (adjust as needed)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);*/
 
 	// Allocate texture storage with the updated buffer data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
 }
+
 vec2 Renderer::GetBufferSize()
 {
 	return vec2(m_width, m_height);
@@ -193,6 +179,7 @@ void Renderer::update(int width, int height)
 {
 	if (m_width != width || m_height != height)
 	{
+		cout << "Debug: update called!" << endl;
 		m_width = width;
 		m_height = height;
 		updateBuffer();

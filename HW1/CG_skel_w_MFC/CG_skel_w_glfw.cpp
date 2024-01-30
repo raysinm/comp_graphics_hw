@@ -11,7 +11,6 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
-#include "FrameBuffer.h"
 
 #include <string>
 
@@ -22,7 +21,6 @@ using namespace std;
 //----------------------------------------------------------------------------
 Scene* scene;
 Renderer* renderer;
-FrameBuffer* renderer_test;
 bool lb_down, rb_down, mb_down; //mouse buttons (left/right/middle)
 bool cam_mode;	// Camera mode ON/OFF
 vec2 mouse_pos, mouse_pos_prev;
@@ -133,7 +131,7 @@ int my_main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	GLFWwindow* window = glfwCreateWindow(1280, 720, title.c_str(), NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(START_WIDTH, START_HEIGHT, title.c_str(), NULL, NULL);
 	if (!window)
 	{
 		// Window or OpenGL context creation failed
@@ -177,10 +175,9 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 //------------------------ Renderer + Scene init -----------------------------
 //----------------------------------------------------------------------------
-	renderer = new Renderer(1000, 512, window);
-	//renderer_test = new FrameBuffer(512, 512);
+	renderer = new Renderer(START_WIDTH, START_HEIGHT, window);
 	scene = new Scene(renderer);
-	//scene = new Scene(renderer_test);
+
 
 //----------------------------------------------------------------------------
 //--------------------------- Bind Callbacks ---------------------------------
@@ -224,7 +221,7 @@ int my_main(int argc, char** argv)
 		// Set ImGui window size and position according to main menu bar
 		
 		float bufferWidth = static_cast<float>(glfwWindowWidth);
-		float bufferHeight = static_cast<float>(glfwWindowHeight) - mainMenuBarSize.y;
+		float bufferHeight = static_cast<float>(glfwWindowHeight - mainMenuBarSize.y);
 		ImGui::SetNextWindowSize(ImVec2(bufferWidth, bufferHeight));
 		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarSize.y));	// Be below main menu bar
 

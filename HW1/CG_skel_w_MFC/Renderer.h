@@ -28,7 +28,7 @@ class Renderer
 	//////////////////////////////
 	
 public:
-	Renderer();
+	//Renderer();
 	Renderer(int width, int height,GLFWwindow* window);
 	~Renderer(void);
 	void Init();
@@ -48,8 +48,8 @@ public:
 	void updateTexture();
 	void updateBuffer();
 
-	/// CHANGE LATER TO PRIVATE:
-	float *m_outBuffer; // 3*width*height
-
 	GLuint m_textureID;
+private:
+	float* m_outBuffer; // 3*width*height
+
 };
