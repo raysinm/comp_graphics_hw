@@ -123,8 +123,8 @@ void MeshModel::loadFile(string fileName)
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
-	vertex_positions = new vec3[3 * faces.capacity()]; /*BUG - fixed: each face is made of 3 vertecies.*/
-	vertex_normals =   new vec3[3 * faces.capacity()];
+	vertex_positions = new vec3[3 * faces.size()]; /*BUG - fixed: each face is made of 3 vertecies.*/
+	vertex_normals =   new vec3[3 * faces.size()];
 	// iterate through all stored faces and create triangles
 	int k=0;
 	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
@@ -142,5 +142,5 @@ void MeshModel::loadFile(string fileName)
 
 void MeshModel::draw()
 {
-	
+	//TODO: implement this function. i guess we should do all the transformation of "model-view" to update the m_outbuffer array...
 }

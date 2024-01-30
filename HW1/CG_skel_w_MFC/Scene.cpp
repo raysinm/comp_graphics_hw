@@ -10,6 +10,11 @@ using namespace std;
 void Scene::AddCamera()
 {
 	//TODO: Add camera using the input x y z ...
+
+
+	Camera* cam = new Camera();
+
+	cameras.push_back(cam);
 }
 
 void Scene::loadOBJModel(string fileName)
@@ -21,38 +26,45 @@ void Scene::loadOBJModel(string fileName)
 	models.push_back(model);
 }
 
+/*  
+	Main draw function.
+	This will draw:
+		1. GUI
+		2. scene models
+*/
 void Scene::draw()
 {
-	// 1. Send the renderer the current camera transform and the projection
-	// 2. Tell all models to draw themselves
+	//1. GUI
+	drawGUI();
+	
+	//2. Update the buffer (if needed) before rasterization.
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	m_renderer->update(viewport->WorkSize.x, viewport->WorkSize.y);
+	
+																	
+	//3. TODO: draw all models
+	for (auto model : models)
+	{
+		model->draw(); //rasterization part goes here ??
+	}
+	m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
 
+	
+	//4. TODO: draw cameras using '+' signs? 
+
+
+	//5. Update the texture. (OpenGL stuff)
+	m_renderer->updateTexture();
 }
-
-//void Scene::drawDemo()
-//{
-//	m_renderer->SetDemoBuffer();
-//}
 
 void Scene::drawGUI()
 {
-	//auto width = ImGui::GetContentRegionAvail().x;
-	//auto height = ImGui::GetContentRegionAvail().y;
-
-	//this->m_renderer_test->RescaleFrameBuffer(width, height);
-	//glViewport(0, 0, width, height);
-
-	//ImGui::Image(
-	//	(ImTextureID)m_renderer_test->getFrameTexture(),
-	//	ImGui::GetContentRegionAvail()
-	//);
-
-	//ImGui::SetNextWindowFocus();
-
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMenu("Add..."))
+		if (ImGui::BeginMenu("Add"))
 		{
-			if (ImGui::MenuItem("Model (.obj)"))
+			if (ImGui::MenuItem("Model (.obj file)"))
 			{
 				CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
 				if (dlg.DoModal() == IDOK)
@@ -68,30 +80,75 @@ void Scene::drawGUI()
 			
 			ImGui::EndMenu();
 		}
-
-		if (ImGui::BeginMenu("Models"))
+		if (ImGui::BeginMenu("Select"))
 		{
-			int len = models.capacity();
-			for (int c = 0; c < len; c++)
+			if (ImGui::BeginMenu("Model"))
 			{
-				if (ImGui::MenuItem(models[c]->name.c_str(), NULL, &models[c]->selected))
+				int len = models.size();
+				for (int c = 0; c < len; c++)
 				{
-					/* Deselect all others */
-					for (int t = 0; t < len; t++)
+					if (ImGui::MenuItem(models[c]->name.c_str(), NULL, &models[c]->selected))
 					{
-						if (t != c)
+						/* Deselect all others */
+						for (int t = 0; t < len; t++)
 						{
-							models[t]->selected = false;
+							if (t != c)
+							{
+								models[t]->selected = false;
+							}
 						}
-					}
 
-					
+						/* Select / Unselect the model */
+						activeModel = models[c]->selected == true ? c : NOT_SELECTED;
+
+						cout << "active model: " << activeModel << endl;
+					}
 				}
+				ImGui::EndMenu();
 			}
 
-			ImGui::EndMenu();
+			if (ImGui::BeginMenu("Camera"))
+			{
+				int len = cameras.size();
+				for (int c = 0; c < len; c++)
+				{
+					if (ImGui::MenuItem(cameras[c]->name.c_str(), NULL, &cameras[c]->selected))
+					{
+						/* Deselect all others */
+						for (int t = 0; t < len; t++)
+						{
+							if (t != c)
+							{
+								cameras[t]->selected = false;
+							}
+						}
+
+						/* Select current camera */
+						cameras[c]->selected = true;
+						activeCamera = c;
+
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenu(); //End select
 		}
 
 		ImGui::EndMainMenuBar();
 	}
+	
+
+	/* Draw the ImGui::Image (Used for displaying our texture) */
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | \
+		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground))
+	{
+		// Display the texture in ImGui:
+		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), viewport->WorkSize);
+	}
+	ImGui::End();
+
 }

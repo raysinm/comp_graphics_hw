@@ -4,15 +4,16 @@
 #include <vector>
 #include <string>
 #include "Renderer.h"
-//#include "FrameBuffer.h"
 using namespace std;
+
+#define NOT_SELECTED -1
 
 class Model {
 protected:
 	virtual ~Model() {}
-	void virtual draw()=0;
 
 public:
+	void virtual draw()=0;
 	bool selected = false;
 	string name = "Model1";
 };
@@ -57,9 +58,7 @@ public:
 	Scene(Renderer*   renderer) : m_renderer(renderer) {};
 	void loadOBJModel(string fileName);
 	void draw();
-	void drawDemo();
 	void drawGUI();
-	friend void imguiDemoRun();
 
 	int activeModel;
 	int activeLight;

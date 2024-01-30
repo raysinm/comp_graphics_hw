@@ -11,7 +11,6 @@
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
-
 #include <string>
 
 using namespace std;
@@ -207,44 +206,17 @@ int my_main(int argc, char** argv)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-		//---- Main Menu Bar
-		scene->drawGUI();
 
-		// Get Main Menu Bar window size + glfw window size
-		ImVec2 mainMenuBarSize = ImGui::GetWindowContentRegionMin();
-		int glfwWindowWidth, glfwWindowHeight;
-		glfwGetWindowSize(window, &glfwWindowWidth, &glfwWindowHeight);
+		/* All the GUI and scene draw will happen from scene->draw fuction*/
+		scene->draw();
 
 
-		//---- Texture (Buffer)
-		
-		// Set ImGui window size and position according to main menu bar
-		
-		float bufferWidth = static_cast<float>(glfwWindowWidth);
-		float bufferHeight = static_cast<float>(glfwWindowHeight - mainMenuBarSize.y);
-		ImGui::SetNextWindowSize(ImVec2(bufferWidth, bufferHeight));
-		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarSize.y));	// Be below main menu bar
-
-
-		// Manually change the content of the buffer
-		renderer->update(int(bufferWidth), int(bufferHeight));	//Update buffer+texture for new size;
-		renderer->SetDemoBuffer();	
-		renderer->updateTexture();
-
-		
-		ImGui::Begin("Buffer window",NULL, ImGuiWindowFlags_NoTitleBar);
-		
-		// Display the texture in ImGui
-		ImGui::Image((void*)(intptr_t)(renderer->m_textureID), ImVec2(bufferWidth, bufferHeight));
-
-		//scene->drawGUI();
-		//scene->drawDemo();
 
 /*
-#ifdef _DEBUG
+//#ifdef _DEBUG
 
 		// 1. Show the big demo window
-		ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
+		//ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
 		/*
 		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
@@ -280,22 +252,11 @@ int my_main(int argc, char** argv)
 		}
 		*/
 
-
-
-
-
-		ImGui::End();
-
+		/* Render the scene */
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-
-		//renderer_test->Bind();
-		//scene->draw();     //draw scene
-		//renderer_test->Unbind();
-		
-		
-		//glfwSwapBuffers(window);
+		/* Swap buffers */
 		renderer->SwapBuffers();
 	}
 	
