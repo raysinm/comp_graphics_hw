@@ -20,6 +20,7 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :m_width(width), m
 	m_window = window;
 	//InitOpenGLRendering();
 	CreateBuffers(m_width, m_height);
+	CreateTexture();
 }
 
 Renderer::~Renderer(void)
@@ -44,9 +45,10 @@ void Renderer::SetDemoBuffer()
 	//vertical line
 	for(int i=0; i<m_height; i++)
 	{
-		m_outBuffer[INDEX(m_height, (m_height / 2), i, RED)] = 1;
-		m_outBuffer[INDEX(m_height, (m_height / 2), i, GREEN)] = 0;
-		m_outBuffer[INDEX(m_height, (m_height / 2), i, BLUE)] = 0;
+		int vert_pos = floor(m_width / 2);
+		m_outBuffer[INDEX(m_width, vert_pos, i, RED)] = 1;
+		m_outBuffer[INDEX(m_width, vert_pos, i, GREEN)] = 0;
+		m_outBuffer[INDEX(m_width, vert_pos, i, BLUE)] = 0;
 
 	}
 //#ifdef _DEBUG
@@ -56,9 +58,10 @@ void Renderer::SetDemoBuffer()
 	//horizontal line
 	for(int i=0; i<m_width; i++)
 	{
-		m_outBuffer[INDEX(m_width, i, (m_width / 2), RED)] = 0;
-		m_outBuffer[INDEX(m_width,i, (m_width / 2),GREEN)]=0;
-		m_outBuffer[INDEX(m_width,i, (m_width / 2),BLUE)]=1;
+		int horz_pos = m_height / 2;
+		m_outBuffer[INDEX(m_width, i, horz_pos, RED)] = 0;
+		m_outBuffer[INDEX(m_width,i, horz_pos,GREEN)]=0;
+		m_outBuffer[INDEX(m_width,i, horz_pos,BLUE)]=1;
 
 	}
 }
@@ -152,10 +155,10 @@ void Renderer::SwapBuffers()
 
 void Renderer::CreateTexture() {
 	
-	glGenTextures(1, &textureID);
+	glGenTextures(1, &m_textureID);
 
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
+	glBindTexture(GL_TEXTURE_2D, m_textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -164,22 +167,22 @@ void Renderer::CreateTexture() {
 
 void Renderer::updateTexture() {
 	// Delete the existing texture
-	glDeleteTextures(1, &textureID);
+	glDeleteTextures(1, &m_textureID);
 
 	// Generate a new texture
-	glGenTextures(1, &textureID);
+	glGenTextures(1, &m_textureID);
 
 	// Bind the new texture
-	glBindTexture(GL_TEXTURE_2D, textureID);
+	glBindTexture(GL_TEXTURE_2D, m_textureID);
 
 	// Set texture parameters (adjust as needed)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);*/
 
 	// Allocate texture storage with the updated buffer data
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
 }
 vec2 Renderer::GetBufferSize()
 {

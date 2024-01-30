@@ -166,7 +166,9 @@ int my_main(int argc, char** argv)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= (ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
-	//ImGui::StyleColorsDark();
+	// Styling
+	//ImGuiStyle& style = ImGui::GetStyle();
+	//style.FramePadding.y = 15.0f;  // Adjust this value to change the main menu bar height
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(window, true); // install_callback=true installs GLFW callbacks and chain to existing ones.
@@ -197,8 +199,6 @@ int my_main(int argc, char** argv)
 	bool imgui_show_demo = true;
 	bool show_another_window = true;
 
-	renderer->CreateTexture();
-
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
@@ -210,7 +210,7 @@ int my_main(int argc, char** argv)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-		// Main Menu Bar
+		//---- Main Menu Bar
 		scene->drawGUI();
 
 		// Get Main Menu Bar window size + glfw window size
@@ -219,7 +219,7 @@ int my_main(int argc, char** argv)
 		glfwGetWindowSize(window, &glfwWindowWidth, &glfwWindowHeight);
 
 
-		// Texture (Buffer)
+		//---- Texture (Buffer)
 		
 		// Set ImGui window size and position according to main menu bar
 		
@@ -232,20 +232,13 @@ int my_main(int argc, char** argv)
 		// Manually change the content of the buffer
 		renderer->update(int(bufferWidth), int(bufferHeight));	//Update buffer+texture for new size;
 		renderer->SetDemoBuffer();	
-		renderer->updateTexture();	//Update buffer+texture for new size;
+		renderer->updateTexture();
 
 		
 		ImGui::Begin("Buffer window",NULL, ImGuiWindowFlags_NoTitleBar);
 		
-		//GLuint textureID = renderer->CreateTexture();	//M: needs to be in init
-		//
-		//glBindTexture(GL_TEXTURE_2D, textureID);
-		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, bufferWidth, bufferHeight, GL_RGB, GL_FLOAT, renderer->m_outBuffer);
-
-
-		//auto vecDebug = ImGui::GetContentRegionAvail();
 		// Display the texture in ImGui
-		ImGui::Image((void*)(intptr_t)(renderer->textureID), ImVec2(bufferWidth, bufferHeight));
+		ImGui::Image((void*)(intptr_t)(renderer->m_textureID), ImVec2(bufferWidth, bufferHeight));
 
 		//scene->drawGUI();
 		//scene->drawDemo();
@@ -313,7 +306,7 @@ int my_main(int argc, char** argv)
 //------------------------------- Terminate ----------------------------------
 //----------------------------------------------------------------------------
 	
-	glDeleteTextures(1, &(renderer->textureID));
+	glDeleteTextures(1, &(renderer->m_textureID));
 
 	glfwDestroyWindow(window);
 	ImGui_ImplOpenGL3_Shutdown();

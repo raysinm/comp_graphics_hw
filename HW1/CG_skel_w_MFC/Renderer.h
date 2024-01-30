@@ -48,8 +48,8 @@ public:
 	void updateTexture();
 	void updateBuffer();
 
-	/// CHANGE BACK TO PRIVATE:
+	/// CHANGE LATER TO PRIVATE:
 	float *m_outBuffer; // 3*width*height
 
-	GLuint textureID;
+	GLuint m_textureID;
 };
