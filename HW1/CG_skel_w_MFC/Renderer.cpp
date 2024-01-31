@@ -12,7 +12,7 @@
 Renderer::Renderer(int width, int height, GLFWwindow* window) :m_width(width), m_height(height)
 {
 	m_window = window;
-	//InitOpenGLRendering();
+	//InitOpenGLRendering();	// Probably needed for later
 	CreateBuffers(m_width, m_height);
 	CreateTexture();
 }
@@ -38,7 +38,7 @@ void Renderer::SetDemoBuffer()
 	//vertical line
 	for(int i=0; i<m_height; i++)
 	{
-		int vert_pos = floor(m_width / 2);
+		int vert_pos = m_width / 2;
 		m_outBuffer[INDEX(m_width, vert_pos, i, RED)] = 1;
 		m_outBuffer[INDEX(m_width, vert_pos, i, GREEN)] = 0;
 		m_outBuffer[INDEX(m_width, vert_pos, i, BLUE)] = 0;

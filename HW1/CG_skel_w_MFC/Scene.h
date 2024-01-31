@@ -14,8 +14,10 @@ protected:
 
 public:
 	void virtual draw()=0;
+	void setName(std::string newName) { name = newName; }
 	bool selected = false;
-	string name = "Model1";
+	string name = "Model";
+
 };
 
 
