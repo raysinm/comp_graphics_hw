@@ -45,24 +45,27 @@ void Scene::draw()
 	m_renderer->update(viewport->WorkSize.x, viewport->WorkSize.y);
 	
 																	
-	//3. TODO: draw all models
-	// For each vertex: model space-> world space-> camera space
+	//3. draw each MeshModel
 	for (auto model : models)
 	{
-		//model->draw(cameras[activeCamera]->cTransform); //rasterization part goes here ??
+		model->draw(cameras[activeCamera]->cTransform);
+
+		//3.5 Projection
+		// Uses camera 
+		// projection =Ortho * vertex
+		// normalized_projection = ST * projection
+
+
+
+		// 4. Resterization
+
+		//This should hold the MeshModel vertices AFTER all Transforms and projection.
+		//values: [-1, 1]
+		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
+		m_renderer->SetBufferOfModel(vertecies); //Rasterazation process...
 	}
-
-	//3.5 Projection
-	// Uses camera 
-	// projection =Ortho * vertex
-	// normalized_projection = ST * projection
-
-	// 4. Resterization
-	// Already 2D, normalized and around 0,0 (Screen space)
-	// For each face define 3 lines and draw them on screen.
-	// Update m_OutBuffer content via algorithm from lec, for each line.
 #ifdef _DEBUG
-	m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
+	//m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
 #endif
 
 	//4. TODO: draw cameras using '+' signs? 

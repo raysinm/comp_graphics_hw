@@ -56,6 +56,10 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
+void Renderer::SetBufferOfModel(vec2* vertecies)
+{
+}
+
 
 
 
