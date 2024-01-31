@@ -3,7 +3,7 @@
 #include "MeshModel.h"
 #include "CG_skel_w_glfw.h"
 #include <string>
-
+#include <math.h>
 
 using namespace std;
 static char nameBuffer[15];	// Supposed to be static?
@@ -11,7 +11,79 @@ static float posBuffer[3] = { 0,0,0 };
 static bool modelOK = false, camOK = false, showModelDialog = false, showCamDialog = false;
 
 
+//-----------------
+//---------- CAMERA
 
+Camera::Camera()
+{
+	// Default camera projection - Perspective
+	Frustum(-1, 1, -1, 1, 1, 15);
+	name = "Default Camera";
+}
+// TODO: Test
+void Camera::Ortho(const float left, const float right,
+	const float bottom, const float top,
+	const float zNear, const float zFar)
+{
+	if (zNear >= zFar)
+	{
+		// Illegal	//TODO
+	}
+	// Sets orthographic projection
+	GLfloat x = right - left;
+	GLfloat y = top - bottom;
+	GLfloat z = zFar - zNear;
+	projection = mat4(2 / x	, 0		, 0		, -(left + right) / x,
+					  0		, 2 / y	, 0		, -(top + bottom) / y,
+					  0		, 0		, -2 / z, -(zFar + zNear) / z,
+					  0		, 0		, 0		, 1	);
+}
+
+// TODO: Test
+void Camera::Frustum(const float left, const float right,
+	const float bottom, const float top,
+	const float zNear, const float zFar) {
+	// Sets user-requested frostum	
+	if (zNear >= zFar)
+	{
+		// Illegal	//TODO
+	}
+
+	GLfloat x = right - left;
+	GLfloat y = top - bottom;
+	GLfloat z = zFar - zNear;
+
+	projection = mat4(2*zNear / x	, 0				, (right+left)/x	, 0,
+					  0				, 2*zNear / y	, (top + bottom) / y, 0,
+					  0				, 0				, -(zFar+zNear) / z	, -(2*zNear*zFar)/z,
+					  0				, 0				, -1				, 0);
+
+}
+
+// TODO: Test
+mat4 Camera::Perspective(const float fovy, const float aspect,
+	const float zNear, const float zFar)
+{
+	if (fovy > 90)
+	{
+		// Not a frustum	//TODO
+	}
+	if (zNear >= zFar)
+	{
+		// Illegal	//TODO
+	}
+	float top, bottom, right, left;
+	top = zNear * tanf(M_PI/180*(fovy) / 2);
+	bottom = -top;
+	right = top * aspect;
+	left = -right;
+
+	Frustum(left, right, bottom, top, zNear, zFar);
+	return projection;
+}
+
+//-----------------
+//----------- SCENE
 
 void Scene::AddCamera()
 {
@@ -48,7 +120,7 @@ void Scene::draw()
 	//3. draw each MeshModel
 	for (auto model : models)
 	{
-		model->draw(cameras[activeCamera]->cTransform);
+		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
@@ -75,78 +147,6 @@ void Scene::draw()
 	m_renderer->updateTexture();
 }
 
-
-bool showInputDialog()
-{
-	bool pressedOK = false;
-	bool open = true;
-	//char* popupTitle;
-	
-	//if (showModelDialog)
-	//	popupTitle = "ModelPopup";
-	//else if (showCamDialog)
-	//	popupTitle = "CamPopup";
-	//else
-	//	return;
-	if (!showModelDialog && !showCamDialog)
-		return false;
-	//ImGui::OpenPopup(popupTitle);
-	if (ImGui::BeginPopupModal("inputPopUp", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
-#ifdef _DEBUG
-		//std::cout << "Scene: Entered BeginPopupModal " << string(popupTitle) << endl;
-		std::cout << "Window pop up appearing? " << ImGui::IsWindowAppearing() << endl;
-#endif // _DEBUG
-
-		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
-
-		ImGui::InputFloat3("Position", posBuffer);
-
-		// Validate position input
-		bool arePositionValuesValid = true;
-		for (int i = 0; i < 3; ++i) {
-			arePositionValuesValid = arePositionValuesValid &&
-				!std::isnan(posBuffer[i]) &&
-				!std::isinf(posBuffer[i]);
-		}		//&&
-				//isValueInRange(position[i], minPositionValue, maxPositionValue);
-
-
-		// Notify the user if position values are not in the specified range
-		if (!arePositionValuesValid) {
-			//ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be in the range [%f, %f].", minPositionValue, maxPositionValue);
-			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be float");
-		}
-
-		// Add buttons for OK and Cancel
-		if (ImGui::Button("OK") && arePositionValuesValid) {
-			// Set flag to indicate OK button is pressed
-			pressedOK = true;
-			ImGui::CloseCurrentPopup(); // Close the popup
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel")) {
-			// Close the popup 
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
-	}
-	std::cout<< "Scene: showInputDialog: open = " << open << std::endl;
-	//return pressedOK;
-	if (showModelDialog)
-	{
-		modelOK = pressedOK;
-		showModelDialog = false;
-	}
-	else if (showCamDialog)
-	{
-		camOK = pressedOK;
-		showCamDialog = false;
-	}
-	return pressedOK;
-}
 
 void Scene::drawGUI()
 {

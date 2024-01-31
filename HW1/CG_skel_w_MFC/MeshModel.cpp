@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "MeshModel.h"
-#include "vec.h"
+//#include "vec.h"
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -156,14 +157,42 @@ void MeshModel::loadFile(string fileName)
 
 }
 
-void MeshModel::draw(mat4& cTransform){}
-	//TODO: implement this function. i guess we should do all the transformation of "model-view" to update the m_outbuffer array...
-	
-	//---
-	//--- Create transformation matrix
+void MeshModel::draw(mat4& cTransform, mat4& projection)
+{
+
+	updateTransform();	//TODO maybe: Optimize to only update when changed;
+
+	for (int i = 0; i < num_vertices; i++)
+	{
+
+		// Homogenous vector for calculations:
+		vec4 v_i(vertex_positions[i]);
+
+		// Camera: ASSUMPTION: No scaling on camera
+		//	cTransform =	 [ R     T ]
+		//					 [ 0     1 ]
+		// 
+		// cTransform_inv =	 [ R^t  -R^t*T]
+		//					 [ 0	 1	  ]
+		//
+		mat3 cTransform_rot = TopLeft3(cTransform);
+		mat3 cTransform_rot_inv = transpose(cTransform_rot);
+		vec3 cTransfrom_trnsl = RightMostVec(cTransform);
+		mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
 
 
-void MeshModel::updateTransform()
+		// Transform	
+		v_i = projection * cTransform_inv * _world_transform * _model_transform * v_i;
+		
+		// Save result
+		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z);
+		buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
+
+	}
+}
+
+
+void MeshModel::updateTransform()	// TODO: connect to rendering
 {
 
 	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
@@ -176,38 +205,3 @@ void MeshModel::updateTransform()
 
 }
 
-//void MeshModel::scale(vec3& factors)
-//{
-//	auto scale_mat = Scale(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//void MeshModel::rotate(vec3& factors)
-//{
-//	auto scale_mat = Rotate(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//void MeshModel::translate(vec3& factors)
-//{
-//	auto scale_mat = Scale(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//void MeshModel::scaleInWorld(vec3& factors)
-//{
-//	auto scale_mat = Scale(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//void MeshModel::rotateInWorld(vec3& factors)
-//{
-//	auto scale_mat = Scale(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//void MeshModel::translateInWorld(vec3& factors)
-//{
-//	auto scale_mat = Scale(factors.x, factors.y, factors.z);
-//	_model_transform = scale_mat * _model_transform;
-//}
-//
-//void transform(mat4& transform_matrix)
-//{
-//	_model_transform = transform_matrix * _model_transform;
-//}

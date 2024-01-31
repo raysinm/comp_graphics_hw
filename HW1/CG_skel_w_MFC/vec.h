@@ -4,10 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////
-//
-//  vec2.h - 2D vector
-//
 
 
 
@@ -16,6 +12,12 @@
 #include <cmath>
 #include "GL/glew.h"
 #define M_PI 3.14159265358979323846264338327
+
+struct vec2;
+struct vec3;
+struct vec4;
+
+
 struct vec2 {
 
     GLfloat  x;
@@ -35,6 +37,8 @@ struct vec2 {
     {
         x = v.x;  y = v.y;
     }
+
+    //vec2(const vec3& v) { x = v.x; y = v.y; }
 
     //
     //  --- Indexing Operator ---
@@ -195,6 +199,9 @@ struct vec3 {
 
     vec3(const vec2& v, const float f) { x = v.x;  y = v.y;  z = f; }
 
+
+    //vec3(const vec4& v) { x = v.x; y = v.y; z = v.z; }
+    
     //
     //  --- Indexing Operator ---
     //

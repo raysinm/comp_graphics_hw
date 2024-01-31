@@ -29,7 +29,7 @@ public:
 	MeshModel(string fileName);
 	~MeshModel(void);
 	void loadFile(string fileName);
-	void MeshModel::draw(mat4& cTransform);
+	void MeshModel::draw(mat4& cTransform, mat4& projection);
 	
 	void MeshModel::updateTransform();
 	
@@ -38,7 +38,7 @@ public:
 	{
 		model->_trnsl = trnsl;
 	}
-	void setTranslation(MeshModel* model, GLfloat rot, char axis)
+	void setRotation(MeshModel* model, GLfloat rot, char axis)
 	{
 		switch (axis)
 		{
