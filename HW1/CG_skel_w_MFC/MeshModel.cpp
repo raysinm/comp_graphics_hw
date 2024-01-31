@@ -60,16 +60,12 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-<<<<<<< HEAD
-MeshModel::MeshModel(string fileName): //_s_scales(1, 1, 1)
-=======
 vec2* MeshModel::Get2dBuffer()
 {
 	return buffer2d;
 }
 
 MeshModel::MeshModel(string fileName): _s_scales(1, 1, 1)
->>>>>>> 311729995b7bda6bfd50df9a3921a1ad885bd5cd
 {
 	loadFile(fileName);
 	// MAYBE; change _world_transform matrix:
