@@ -28,7 +28,6 @@ class Renderer
 	//////////////////////////////
 	
 public:
-	//Renderer();
 	Renderer(int width, int height,GLFWwindow* window);
 	~Renderer(void);
 	void Init();
@@ -40,6 +39,7 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
+	void SetBufferOfModel(vec2* vertecies);
 	
 	// New funcs
 	void CreateTexture();

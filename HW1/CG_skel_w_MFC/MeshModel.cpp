@@ -60,6 +60,11 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
+vec2* MeshModel::Get2dBuffer()
+{
+	return buffer2d;
+}
+
 MeshModel::MeshModel(string fileName): _s_scales(1, 1, 1)
 {
 	loadFile(fileName);
@@ -129,6 +134,7 @@ void MeshModel::loadFile(string fileName)
 
 	vertex_positions = new vec3[3 * faces.size()]; /*BUG - fixed: each face is made of 3 vertecies.*/
 	vertex_normals =   new vec3[3 * faces.size()];
+	buffer2d =		   new vec2[3 * faces.size()]; //Worst case: each vertex is on a different pixel
 	// iterate through all stored faces and create triangles
 	int k=0;
 	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
