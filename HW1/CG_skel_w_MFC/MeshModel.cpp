@@ -60,19 +60,25 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-MeshModel::MeshModel(string fileName): _s_scales(1, 1, 1)
+MeshModel::MeshModel(string fileName): //_s_scales(1, 1, 1)
 {
 	loadFile(fileName);
-	// change _world_transform matrix:
+	// MAYBE; change _world_transform matrix:
 	// TODO: Normalize all vertices
+	
 	// Default position is in 0,0,0
 	// TODO: translate to user-defined position
+
+	_world_transform = _model_transform = mat4();	// Initialize transform matrices
+
 }
 
 MeshModel::~MeshModel(void)
 {
 	if(vertex_positions)
 		delete[] vertex_positions;
+	if (t_vertex_positions)
+		delete[] t_vertex_positions;
 	if(vertex_normals)
 		delete[] vertex_normals;
 
@@ -147,4 +153,43 @@ void MeshModel::loadFile(string fileName)
 void MeshModel::draw(mat4& cTransform)
 {
 	//TODO: implement this function. i guess we should do all the transformation of "model-view" to update the m_outbuffer array...
+	
+	//---
+	//--- Create transformation matrix
+}
+
+void MeshModel::scale(vec3& factors)
+{
+	auto scale_mat = Scale(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+void MeshModel::rotate(vec3& factors)
+{
+	auto scale_mat = Rotate(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+void MeshModel::translate(vec3& factors)
+{
+	auto scale_mat = Scale(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+void MeshModel::scaleInWorld(vec3& factors)
+{
+	auto scale_mat = Scale(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+void MeshModel::rotateInWorld(vec3& factors)
+{
+	auto scale_mat = Scale(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+void MeshModel::translateInWorld(vec3& factors)
+{
+	auto scale_mat = Scale(factors.x, factors.y, factors.z);
+	_model_transform = scale_mat * _model_transform;
+}
+
+void transform(mat4& transform_matrix)
+{
+	_model_transform = transform_matrix * _model_transform;
 }
