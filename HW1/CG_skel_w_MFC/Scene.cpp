@@ -147,6 +147,10 @@ bool showInputDialog()
 
 void Scene::drawGUI()
 {
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowPadding = ImVec2(0, 0);
+	style.ItemSpacing   = ImVec2(5, 4);
+	style.FramePadding  = ImVec2(4, 10);
 
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	if (ImGui::BeginMainMenuBar())
