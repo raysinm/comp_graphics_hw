@@ -56,11 +56,138 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(vec2* vertecies)
+void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
 {
+	/*	Each 3 indexes make up a face.
+		For example:
+		0, 1, 2  - face1
+		3, 4, 5  - face2
+		6, 7, 8  - face3
+		and so on...
+	*/
+
+	for (unsigned i = 0; i < len; i+=3)
+	{
+		//A   B    C    is the triangle
+		//i, i+1, i+2 
+
+		/* Set A to range [0, 1]*/
+		vec2 A = vec2( (vertecies[i+0].x + 1) / 2, (vertecies[i+0].y + 1) / 2);
+		vec2 B = vec2( (vertecies[i+1].x + 1) / 2, (vertecies[i+1].y + 1) / 2);
+		vec2 C = vec2( (vertecies[i+2].x + 1) / 2, (vertecies[i+2].y + 1) / 2);
+
+		/*	Set A_Pxl to range [0, m_wdith]  (X)
+							   [0, m_height] (Y)
+			Also, keep it in-bound of the screen.
+		*/
+		vec2 A_Pxl = vec2( max(min(m_width, (A.x * m_width)) ,0), max(min(m_height,  (A.y * m_height)), 0));
+		vec2 B_Pxl = vec2( max(min(m_width, (B.x * m_width)) ,0), max(min(m_height,  (B.y * m_height)), 0));
+		vec2 C_Pxl = vec2( max(min(m_width, (C.x * m_width)) ,0), max(min(m_height,  (C.y * m_height)), 0));
+
+		
+		/* At this point, we have 3 points, in screen space, in-bound */
+
+		/* Draw the 3 lines */
+		DrawLine(A_Pxl, B_Pxl, false);
+		DrawLine(A_Pxl, C_Pxl, false);
+		DrawLine(B_Pxl, C_Pxl, false);
+	}
 }
 
+void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
+{
+	if (B.x < A.x)
+	{
+		DrawLine(B, A, isNegative);
+		return;
+	}
+	/* Now we can assume A is left B*/
+	vector<vec2> pixels;
+	bool flipXY = false;
+	int dy = B.y - A.y;
+	int dx = B.x - A.x;
+	int y_mul = isNegative ? -1 : 1;
 
+	if (B.y >= A.y) //positive slope
+	{
+		if (dy <= dx) /* 0 < Slope < 1*/
+		{
+			pixels = ComputePixels_Bresenhams(A, B);
+		}
+		else /* 1 < Slope */
+		{
+			pixels = ComputePixels_Bresenhams(vec2(A.y, A.x), vec2(B.y, B.x)); //flip x with y to make it slope < 1
+			flipXY = true;
+		}
+	}
+	else /* Negative Slope - reflect of X axis */
+	{
+		DrawLine(vec2(A.x, -A.y), vec2(B.x, -B.y), true); // Draw with reflection of X axis.
+		return;
+	}
+
+	
+	//Draw all selected pixels:
+	if (flipXY)
+	{
+		for (vec2 pix : pixels)
+		{
+			int currentX = pix.y; //flip here
+			int currentY = pix.x; //flip here
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), RED)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), GREEN)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), BLUE)] = 0;
+		}
+
+	}
+	else
+	{
+		for (vec2 pix : pixels)
+		{
+			int currentX = pix.x;
+			int currentY = pix.y;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), RED)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), GREEN)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), BLUE)] = 0;
+		}
+	}
+}
+
+std::vector<vec2> Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B)
+{
+	if (B.x < A.x)
+	{
+		return ComputePixels_Bresenhams(B, A);
+	}
+	/* Now we can assume A is left B*/
+
+	/* Init stuff */
+	vector<vec2> pixels;
+	int x = A.x;
+	int y = A.y;
+	int dx = B.x - A.x;
+	int dy = B.y - A.y;
+	int d = 2 * dy - dx;
+	int de = 2 * dy;
+	int dne = 2 * dy - 2 * dx;
+
+	pixels.push_back(vec2(x, y));
+
+	for (x = A.x + 1; x < B.x; x++)
+	{
+		if (d < 0)
+		{
+			d += de;
+		}
+		else
+		{
+			y++;
+			d += dne;
+		}
+		pixels.push_back(vec2(x, y));
+	}
+	return pixels;
+}
 
 
 
@@ -204,3 +331,5 @@ void Renderer::updateBuffer()
 
 	}
 }
+
+

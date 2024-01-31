@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "MeshModel.h"
-//#include "vec.h"
-
+#include "vec.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -66,7 +65,12 @@ vec2* MeshModel::Get2dBuffer()
 	return buffer2d;
 }
 
-MeshModel::MeshModel(string fileName)
+unsigned int MeshModel::Get2dBuffer_len()
+{
+	return num_vertices;
+}
+
+MeshModel::MeshModel(string fileName) : _scale(1,1,1,1), _scale_world(1,1,1,1)
 {
 	loadFile(fileName);
 	// MAYBE; change _world_transform matrix:
@@ -139,22 +143,41 @@ void MeshModel::loadFile(string fileName)
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
-	vertex_positions = new vec3[3 * faces.size()]; /*BUG - fixed: each face is made of 3 vertecies.*/
-	vertex_normals =   new vec3[3 * faces.size()];
-	buffer2d =		   new vec2[3 * faces.size()]; //Worst case: each vertex is on a different pixel
+	//num_vertices = 3 * faces.size(); // comment for debug only
+	num_vertices = 12;
+	vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
+	vertex_normals =   new vec3[num_vertices];
+	buffer2d =		   new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
 	// iterate through all stored faces and create triangles
-	int k=0;
-	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
-	{
-		FaceIdcs current = *it;
-		for (int i = 0; i < 3; i++)
-		{
-			vertex_positions[k] = vertices[current.v[i] - 1];
-			vertex_normals[k] = verticesNormals[current.vn[i] - 1];
-			k++;
-		}
-	}
+	//int k=0;
+	//for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
+	//{
+	//	FaceIdcs current = *it;
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		vertex_positions[k] = vertices[current.v[i] - 1];
+	//		vertex_normals[k] = verticesNormals[current.vn[i] - 1];
+	//		k++;
+	//	}
+	//}
 
+#ifdef _DEBUG
+	buffer2d[0] = vec2(0, 0);     
+	buffer2d[1] = vec2(0.5, 0);   
+	buffer2d[2] = vec2(0.5, 0.5); 
+
+	buffer2d[3] = vec2(0, 0);	
+	buffer2d[4] = vec2(0.5, 0);	
+	buffer2d[5] = vec2(0.5, -0.5); 
+
+	buffer2d[6] = vec2(0, 0);	
+	buffer2d[7] = vec2(-0.5, 0);	
+	buffer2d[8] = vec2(-0.5, -0.5); 
+
+	buffer2d[9] = vec2(0, 0);	
+	buffer2d[10] = vec2(0, 0.5); 
+	buffer2d[11] = vec2(-0.5, 0);	
+#endif
 }
 
 void MeshModel::draw(mat4& cTransform, mat4& projection)

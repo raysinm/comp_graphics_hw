@@ -39,8 +39,8 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
-	void SetBufferOfModel(vec2* vertecies);
-	
+	void SetBufferOfModel(vec2* vertecies, unsigned int len);
+
 	// New funcs
 	void CreateTexture();
 	vec2 GetBufferSize();
@@ -50,6 +50,8 @@ public:
 
 	GLuint m_textureID;
 private:
+	void DrawLine(vec2 A, vec2 B, bool isNegative);
+	std::vector<vec2> ComputePixels_Bresenhams(vec2 A, vec2 B);
 	float* m_outBuffer; // 3*width*height
 
 };

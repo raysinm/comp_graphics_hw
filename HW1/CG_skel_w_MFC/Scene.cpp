@@ -134,7 +134,8 @@ void Scene::draw()
 		//This should hold the MeshModel vertices AFTER all Transforms and projection.
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
-		m_renderer->SetBufferOfModel(vertecies); //Rasterazation process...
+		if(vertecies)
+			m_renderer->SetBufferOfModel(vertecies, ((MeshModel*)model)->Get2dBuffer_len());
 	}
 #ifdef _DEBUG
 	//m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
