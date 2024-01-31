@@ -120,7 +120,7 @@ void Scene::draw()
 	//3. draw each MeshModel
 	for (auto model : models)
 	{
-		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		//model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
