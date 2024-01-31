@@ -560,7 +560,7 @@ vec4 mvmult( const mat4& a, const vec4& b )
 inline
 mat4 RotateX( const GLfloat theta )
 {
-    GLfloat angle = (M_PI/180.0) * theta;   //? M: radians?
+    GLfloat angle = (M_PI/180.0) * theta;
 
     mat4 c;
     c[2][2] = c[1][1] = cos(angle);
@@ -569,7 +569,29 @@ mat4 RotateX( const GLfloat theta )
     return c;
 }
 
-//TODO: add 'RotateY' 'RotateZ' function also...
+inline
+mat4 RotateY( const GLfloat theta )
+{
+    GLfloat angle = (M_PI/180.0) * theta;
+
+    mat4 c;
+    c[2][2] = c[0][0] = cos(angle);
+    c[2][0] = sin(angle);
+    c[0][2] = -c[2][0];
+    return c;
+}
+
+inline
+mat4 RotateZ( const GLfloat theta )
+{
+    GLfloat angle = (M_PI/180.0) * theta;
+
+    mat4 c;
+    c[1][1] = c[0][0] = cos(angle);
+    c[1][0] = sin(angle);
+    c[0][1] = -c[1][0];
+    return c;
+}
 
 
 //----------------------------------------------------------------------------
@@ -582,7 +604,7 @@ mat4 Translate( const GLfloat x, const GLfloat y, const GLfloat z )
 {
     mat4 c;
     c[0][3] = x;
-    c[1][3] = y;  /*BUG - TODO: test*/
+    c[1][3] = y;
     c[2][3] = z;
     return c;
 }
