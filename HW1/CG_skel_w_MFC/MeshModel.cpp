@@ -60,9 +60,13 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-MeshModel::MeshModel(string fileName)
+MeshModel::MeshModel(string fileName): _s_scales(1, 1, 1)
 {
 	loadFile(fileName);
+	// change _world_transform matrix:
+	// TODO: Normalize all vertices
+	// Default position is in 0,0,0
+	// TODO: translate to user-defined position
 }
 
 MeshModel::~MeshModel(void)
@@ -140,7 +144,7 @@ void MeshModel::loadFile(string fileName)
 
 }
 
-void MeshModel::draw()
+void MeshModel::draw(mat4& cTransform)
 {
 	//TODO: implement this function. i guess we should do all the transformation of "model-view" to update the m_outbuffer array...
 }

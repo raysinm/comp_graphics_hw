@@ -46,15 +46,25 @@ void Scene::draw()
 	
 																	
 	//3. TODO: draw all models
+	// For each vertex: model space-> world space-> camera space
 	for (auto model : models)
 	{
-		model->draw(); //rasterization part goes here ??
+		//model->draw(cameras[activeCamera]->cTransform); //rasterization part goes here ??
 	}
+
+	//3.5 Projection
+	// Uses camera 
+	// projection =Ortho * vertex
+	// normalized_projection = ST * projection
+
+	// 4. Resterization
+	// Already 2D, normalized and around 0,0 (Screen space)
+	// For each face define 3 lines and draw them on screen.
+	// Update m_OutBuffer content via algorithm from lec, for each line.
 #ifdef _DEBUG
 	m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
 #endif
 
-	
 	//4. TODO: draw cameras using '+' signs? 
 
 
@@ -295,9 +305,7 @@ void Scene::drawGUI()
 
 		ImGui::EndPopup();
 	}
-#ifdef _DEBUG
-	//std::cout << "Scene: showInputDialog: open = " << open << std::endl;
-#endif // _DEBUG
+
 
 		// Check if OK button was pressed in the popup
 		if (showModelDialog && pressedOK) {

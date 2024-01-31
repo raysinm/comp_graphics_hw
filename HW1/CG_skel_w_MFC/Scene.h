@@ -13,7 +13,7 @@ protected:
 	virtual ~Model() {}
 
 public:
-	void virtual draw()=0;
+	void virtual draw(mat4& cTransform)=0;
 	void setName(std::string newName) { name = newName; }
 	bool selected = false;
 	string name = "Model";
@@ -37,7 +37,7 @@ public:
 		const float zNear, const float zFar );
 	void Frustum( const float left, const float right,
 		const float bottom, const float top,
-		const float zNear, const float zFar );
+		const float zNear, const float zFar );	// Calculates frustum?
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);
 	void setName(std::string newName) { name = newName; }
