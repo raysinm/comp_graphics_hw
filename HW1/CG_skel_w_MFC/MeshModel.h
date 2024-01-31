@@ -29,25 +29,34 @@ public:
 	MeshModel(string fileName);
 	~MeshModel(void);
 	void loadFile(string fileName);
-	void MeshModel::draw(mat4& cTransform)
-	{
-
-
-	}
+	void MeshModel::draw(mat4& cTransform);
 	
-	void updateTransform()
+	void MeshModel::updateTransform();
+	
+	//--- Interface for triggering transformation on a model
+	void setTranslation(MeshModel* model, vec3& trnsl)
 	{
-		mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
-		mat4 rot_m_x = RotateX(_rot.x);
-		mat4 rot_m_y = RotateY(_rot.y);
-		mat4 rot_m_z = RotateZ(_rot.z);
-		mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);
-
-		
-
+		model->_trnsl = trnsl;
 	}
-	//void setTranslation(vec3& )
-
+	void setTranslation(MeshModel* model, GLfloat rot, char axis)
+	{
+		switch (axis)
+		{
+		case 'x':
+			model->_rot.x = rot;
+			break;
+		case 'y':
+			model->_rot.y = rot;
+			break;
+		case 'z':
+			model->_rot.z = rot;
+			break;
+		}
+	}
+	void setScale(MeshModel* model, vec3& scale)
+	{
+		model->_scale = scale;
+	}
 	//void scale(vec3& factors);
 	//void rotate(vec3& factors);
 	//void translate(vec3& factors);
