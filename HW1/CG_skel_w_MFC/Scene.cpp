@@ -6,7 +6,12 @@
 
 
 using namespace std;
-static char modelName[15];
+static char nameBuffer[15];	// Supposed to be static?
+static float posBuffer[3] = { 0,0,0 };
+static bool modelOK = false, camOK = false, showModelDialog = false, showCamDialog = false;
+
+
+
 
 void Scene::AddCamera()
 {
@@ -57,9 +62,82 @@ void Scene::draw()
 	m_renderer->updateTexture();
 }
 
+
+bool showInputDialog()
+{
+	bool pressedOK = false;
+	bool open = true;
+	//char* popupTitle;
+	
+	//if (showModelDialog)
+	//	popupTitle = "ModelPopup";
+	//else if (showCamDialog)
+	//	popupTitle = "CamPopup";
+	//else
+	//	return;
+	if (!showModelDialog && !showCamDialog)
+		return false;
+	//ImGui::OpenPopup(popupTitle);
+	if (ImGui::BeginPopupModal("inputPopUp", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
+#ifdef _DEBUG
+		//std::cout << "Scene: Entered BeginPopupModal " << string(popupTitle) << endl;
+		std::cout << "Window pop up appearing? " << ImGui::IsWindowAppearing() << endl;
+#endif // _DEBUG
+
+		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
+
+		ImGui::InputFloat3("Position", posBuffer);
+
+		// Validate position input
+		bool arePositionValuesValid = true;
+		for (int i = 0; i < 3; ++i) {
+			arePositionValuesValid = arePositionValuesValid &&
+				!std::isnan(posBuffer[i]) &&
+				!std::isinf(posBuffer[i]);
+		}		//&&
+				//isValueInRange(position[i], minPositionValue, maxPositionValue);
+
+
+		// Notify the user if position values are not in the specified range
+		if (!arePositionValuesValid) {
+			//ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be in the range [%f, %f].", minPositionValue, maxPositionValue);
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be float");
+		}
+
+		// Add buttons for OK and Cancel
+		if (ImGui::Button("OK") && arePositionValuesValid) {
+			// Set flag to indicate OK button is pressed
+			pressedOK = true;
+			ImGui::CloseCurrentPopup(); // Close the popup
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel")) {
+			// Close the popup 
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+	std::cout<< "Scene: showInputDialog: open = " << open << std::endl;
+	//return pressedOK;
+	if (showModelDialog)
+	{
+		modelOK = pressedOK;
+		showModelDialog = false;
+	}
+	else if (showCamDialog)
+	{
+		camOK = pressedOK;
+		showCamDialog = false;
+	}
+	return pressedOK;
+}
+
 void Scene::drawGUI()
 {
-	bool showObjDialog = false;
+
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -72,12 +150,22 @@ void Scene::drawGUI()
 				{
 					std::string filename((LPCTSTR)dlg.GetPathName());
 					loadOBJModel(filename);
-					showObjDialog = true;
+					showModelDialog = true;
+					//ImGui::OpenPopup("ModelPopup");
+					
+					auto currModel = models.back();
+					strncpy(nameBuffer, currModel->name.c_str(), IM_ARRAYSIZE(nameBuffer));
+
 				}
 			}
 			if (ImGui::MenuItem("Camera"))
 			{
 				AddCamera();
+				showCamDialog = true;
+
+				auto currCamera = cameras.back();
+				strncpy(nameBuffer, currCamera->name.c_str(), IM_ARRAYSIZE(nameBuffer));
+
 			}
 			
 			ImGui::EndMenu();
@@ -138,101 +226,131 @@ void Scene::drawGUI()
 		}
 
 		ImGui::EndMainMenuBar();
+	}
 
-		//-----------------------------------
-		//--------------- Pop up model input dialog
-		Model* currModel;
-		//char modelName[15] = currModel->name.c_str();	//TODO
-		/*char modelName[15] = "Model";*/
-		char tempModelBuffer[15];
-		float position[3] = { 0,0,0 };	// Let user choose where to put it - by default 0,0,0. Translate ;
-		bool pressedOK = false;
 
-		// Check if the popup should be shown
-		if (showObjDialog) {
-			currModel = models.back();
-			strncpy(modelName, currModel->name.c_str(), IM_ARRAYSIZE(modelName));
-			ImGui::OpenPopup("MyPopup");
-			showObjDialog = false; // Reset the flag
+	//Check if the popup should be shown
+	if (showModelDialog) {
+	//	currModel = models.back();
+	//	strncpy(nameBuffer, currModel->name.c_str(), IM_ARRAYSIZE(nameBuffer));
+		ImGui::OpenPopup("inputPopUp");
+	}
+	if (showCamDialog) {
+	//	currCamera = cameras.back();
+	//	strncpy(nameBuffer, currCamera->name.c_str(), IM_ARRAYSIZE(nameBuffer));
+		ImGui::OpenPopup("inputPopUp");
+	//	
+	}
+
+	
+
+	//bool pressedOK = showInputDialog();
+	//------------------------------------
+	//------- Begin pop up - MUST BE IN THIS SCOPE
+	bool pressedOK = false, pressedCANCEL = false;
+	bool open = true;
+
+	if (ImGui::BeginPopupModal("inputPopUp", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
+#ifdef _DEBUG
+		//std::cout << "Scene: Entered BeginPopupModal " << string(popupTitle) << endl;
+		//std::cout << "Window pop up appearing? " << ImGui::IsWindowAppearing() << endl;
+#endif // _DEBUG
+
+		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
+
+		// TODO: validate name
+
+		ImGui::InputFloat3("Position", posBuffer);
+
+		// Validate position input
+		bool arePositionValuesValid = true;
+		for (int i = 0; i < 3; ++i) {
+			arePositionValuesValid = arePositionValuesValid &&
+				!std::isnan(posBuffer[i]) &&
+				!std::isinf(posBuffer[i]);
+		}		//&&
+				//isValueInRange(position[i], minPositionValue, maxPositionValue);
+
+
+		// Notify the user if position values are not in the specified range
+		if (!arePositionValuesValid) {
+			//ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be in the range [%f, %f].", minPositionValue, maxPositionValue);
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be float");
 		}
 
-		// Define the contents of the modal popup
-		if (ImGui::BeginPopupModal("MyPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-			// Add input controls for the name, x, y, and z fields
-			//strncpy(tempModelBuffer, modelName, IM_ARRAYSIZE(tempModelBuffer));
-
-			ImGui::InputText("Name", modelName, IM_ARRAYSIZE(modelName));
-			
-			// Validate name input
-			//bool isNameValid = (tempModelBuffer[0] != '\0');
-
-			//// If you want to store the current value for the next frame, you can update the buffer
-			//if (isNameValid) {
-			//	// Update the name with the current buffer value
-			//	//strncpy(modelName, tempModelBuffer, IM_ARRAYSIZE(modelName));
-			//	
-			//}
-
-			ImGui::InputFloat3("Position", position);
-			
-			// Validate position input
-			bool arePositionValuesValid = true;
-			for (int i = 0; i < 3; ++i) {
-				arePositionValuesValid = arePositionValuesValid &&
-					!std::isnan(position[i]) &&
-					!std::isinf(position[i]);
-			}		//&&
-					//isValueInRange(position[i], minPositionValue, maxPositionValue);
-			
-
-			// Notify the user if position values are not in the specified range
-			if (!arePositionValuesValid) {
-				//ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be in the range [%f, %f].", minPositionValue, maxPositionValue);
-				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be float");
-			}
-
-			// Add buttons for OK and Cancel
-			if (ImGui::Button("OK") && arePositionValuesValid) {
-				// Set flag to indicate OK button is pressed
-				pressedOK = true;
-				ImGui::CloseCurrentPopup(); // Close the popup
-			}
-
-			ImGui::SameLine();
-
-			if (ImGui::Button("Cancel")) {
-				// Close the popup without adding the model
-				models.pop_back();
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
+		// Add buttons for OK and Cancel
+		if (ImGui::Button("OK") && arePositionValuesValid) {
+			// Set flag to indicate OK button is pressed
+			pressedOK = true;
+			ImGui::CloseCurrentPopup(); // Close the popup
 		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel")) {
+			// Close the popup 
+			pressedCANCEL = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+#ifdef _DEBUG
+	//std::cout << "Scene: showInputDialog: open = " << open << std::endl;
+#endif // _DEBUG
 
 		// Check if OK button was pressed in the popup
-		if (pressedOK) {
-			// Perform actions based on user input (e.g., save values, etc.)
-			// ...
+		if (showModelDialog && pressedOK) {
 			auto currModel = models.back();	// Surely loaded new model
-			currModel->setName(modelName);
+			currModel->setName(nameBuffer);
+			
 			//TODO: translate the model to given position;
 
 			// Reset the flag
-			pressedOK = false;
+			pressedOK = false;	// Reset flag
+			showModelDialog = false; // Reset flag
+
 		}
-	}
+		else if (showModelDialog && pressedCANCEL && !pressedOK)
+		{	// Model not added
+			models.pop_back();	
+			pressedCANCEL = false;
+			showModelDialog = false;
+		}
+
+		if (showCamDialog && pressedOK)
+		{
+			//if(cameras.capacity())
+			//{ 
+				auto currCamera = cameras.back();	// Surely loaded new model
+				currCamera->setName(nameBuffer);
+			//}
+			pressedOK = false;	// Reset flag
+			showCamDialog = false; // Reset flag
+
+		}
+		else if (showCamDialog && pressedCANCEL && !pressedOK)
+		{	// Model not added
+			cameras.pop_back();
+			pressedCANCEL = false;
+			showCamDialog = false;
+		}
+
 	
 
-	/* Draw the ImGui::Image (Used for displaying our texture) */
+	//--------------------------------------------------------------
+	//------ Draw the ImGui::Image (Used for displaying our texture)
+		
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
 	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | \
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
-		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground))
+		ImGuiWindowFlags_NoTitleBar ))
 	{
 		// Display the texture in ImGui:
 		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), viewport->WorkSize);
-	}
 	ImGui::End();
+	}
 
 }
+
