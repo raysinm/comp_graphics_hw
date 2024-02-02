@@ -101,22 +101,23 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
 		DrawLine(B, A, isNegative);
 		return;
 	}
-	/* Now we can assume A is left B*/
+	/* Now we can assume A is left to B*/
+
 	vector<vec2> pixels;
 	bool flipXY = false;
 	int dy = B.y - A.y;
 	int dx = B.x - A.x;
 	int y_mul = isNegative ? -1 : 1;
 
-	if (B.y >= A.y) //positive slope
+	if (B.y >= A.y) /* Positive Slope */
 	{
 		if (dy <= dx) /* 0 < Slope < 1*/
 		{
 			pixels = ComputePixels_Bresenhams(A, B);
 		}
-		else /* 1 < Slope */
+		else          /* 1 < Slope */
 		{
-			pixels = ComputePixels_Bresenhams(vec2(A.y, A.x), vec2(B.y, B.x)); //flip x with y to make it slope < 1
+			pixels = ComputePixels_Bresenhams(A.flip(), B.flip()); //flip x with y to make it slope < 1
 			flipXY = true;
 		}
 	}

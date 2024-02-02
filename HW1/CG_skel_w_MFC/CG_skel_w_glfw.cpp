@@ -51,10 +51,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		switch (key)
 		{
-			case GLFW_KEY_A:
-#ifdef _DEBUG
-				debug_func();
-#endif
+			case GLFW_KEY_F: //Set focus on active model
+				if (scene->activeCamera != NOT_SELECTED && scene->activeModel != NOT_SELECTED)
+				{
+					scene->GetActiveCamera()->LookAt(scene->GetActiveModel());
+				}
 				break;
 		}
 	}
@@ -101,14 +102,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	//Our callback:
 	mouse_scroll = yoffset;
 }
-
-
-#ifdef _DEBUG
-void debug_func()
-{
-	cout << "SUCCESS - Pressed A" << endl; 
-}
-#endif // DEBUG
 
 
 int my_main(int argc, char** argv)

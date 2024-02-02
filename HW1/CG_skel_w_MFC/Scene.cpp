@@ -6,9 +6,9 @@
 #include <math.h>
 
 using namespace std;
-static char nameBuffer[15];	// Supposed to be static?
-static float posBuffer[3] = { 0,0,0 };
-static bool modelOK = false, camOK = false, showModelDialog = false, showCamDialog = false;
+static char nameBuffer[64] = { 0 };
+static float posBuffer[3] = { 0 };
+bool add_showModelDlg = false, add_showCamDlg = false;
 
 
 //-----------------
@@ -18,8 +18,20 @@ Camera::Camera()
 {
 	// Default camera projection - Perspective
 	Frustum(-1, 1, -1, 1, 1, 15);
-	name = "Default Camera";
+	name = CAMERA_DEFAULT_NAME;
 }
+
+void Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
+{
+	//TODO: Implement
+}
+
+void Camera::LookAt(const Model* target)
+{
+	//This function is called from keyboard manager (pressed F to set focus)
+	//TODO: Implement
+}
+
 // TODO: Test
 void Camera::Ortho(const float left, const float right,
 	const float bottom, const float top,
@@ -42,11 +54,13 @@ void Camera::Ortho(const float left, const float right,
 // TODO: Test
 void Camera::Frustum(const float left, const float right,
 	const float bottom, const float top,
-	const float zNear, const float zFar) {
+	const float zNear, const float zFar)
+{
 	// Sets user-requested frostum	
 	if (zNear >= zFar)
 	{
 		// Illegal	//TODO
+		//Yonatan: Maybe switch between zNear and zFar? Or display an error messaged and return here.
 	}
 
 	GLfloat x = right - left;
@@ -91,14 +105,27 @@ void Scene::AddCamera()
 
 
 	Camera* cam = new Camera();
-
 	cameras.push_back(cam);
+	string s = cam->getName();
+	s += " " + std::to_string(cameras.size());
+	cam->setName(s);
+
 }
 
 void Scene::loadOBJModel(string fileName)
 {
 	MeshModel* model = new MeshModel(fileName);
 	models.push_back(model);
+}
+
+void Scene::ResetPopUpFlags()
+{
+	GUI_popup_pressedOK = false;		// Reset flag
+	GUI_popup_pressedCANCEL = false;		// Reset flag
+	add_showCamDlg = false;		// Reset flag
+	add_showModelDlg = false;
+	memset(nameBuffer, 0, IM_ARRAYSIZE(nameBuffer));
+	memset(posBuffer, 0, sizeof(float)*3);
 }
 
 /*  
@@ -128,8 +155,10 @@ void Scene::draw()
 		// normalized_projection = ST * projection
 
 
+		//4. TODO: Add camera ' + ' signs. 
+		//5. TODO: Add normals arrow lines (if enabled)
 
-		// 4. Resterization
+		//6. Rasterazation
 
 		//This should hold the MeshModel vertices AFTER all Transforms and projection.
 		//values: [-1, 1]
@@ -137,17 +166,13 @@ void Scene::draw()
 		if(vertecies)
 			m_renderer->SetBufferOfModel(vertecies, ((MeshModel*)model)->Get2dBuffer_len());
 	}
-#ifdef _DEBUG
-	//m_renderer->SetDemoBuffer(); //debug only. after rasterization the buffer should be already updated.
-#endif
 
-	//4. TODO: draw cameras using '+' signs? 
+
 
 
 	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
 }
-
 
 void Scene::drawGUI()
 {
@@ -162,65 +187,60 @@ void Scene::drawGUI()
 		if (ImGui::BeginMenu("Add"))
 		{
 			if (ImGui::MenuItem("Model (.obj file)"))
-			{
-				CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
-				if (dlg.DoModal() == IDOK)
 				{
-					std::string filename((LPCTSTR)dlg.GetPathName());
-					loadOBJModel(filename);
-					showModelDialog = true;
-					//ImGui::OpenPopup("ModelPopup");
-					
-					auto currModel = models.back();
-					strncpy(nameBuffer, currModel->name.c_str(), IM_ARRAYSIZE(nameBuffer));
+					CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
+					if (dlg.DoModal() == IDOK)
+					{
+						std::string filename((LPCTSTR)dlg.GetPathName());
+						loadOBJModel(filename);
+						add_showModelDlg = true;
 
+					}
 				}
-			}
 			if (ImGui::MenuItem("Camera"))
 			{
 				AddCamera();
-				showCamDialog = true;
-
-				auto currCamera = cameras.back();
-				strncpy(nameBuffer, currCamera->name.c_str(), IM_ARRAYSIZE(nameBuffer));
-
+				add_showCamDlg = true;
+				strcpy(nameBuffer, cameras[cameras.size() - 1]->getName().c_str());
 			}
 			
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Select"))
 		{
-			if (ImGui::BeginMenu("Model"))
+			if (models.size() > 0)
 			{
-				int len = models.size();
-				for (int c = 0; c < len; c++)
+				if (ImGui::BeginMenu("Model"))
 				{
-					if (ImGui::MenuItem(models[c]->name.c_str(), NULL, &models[c]->selected))
+					int len = models.size();
+					for (int c = 0; c < len; c++)
 					{
-						/* Deselect all others */
-						for (int t = 0; t < len; t++)
+						if (ImGui::MenuItem(models[c]->getName().c_str(), NULL, &models[c]->selected))
 						{
-							if (t != c)
+							/* Deselect all others */
+							for (int t = 0; t < len; t++)
 							{
-								models[t]->selected = false;
+								if (t != c)
+								{
+									models[t]->selected = false;
+								}
 							}
+
+							/* Select / Unselect the model */
+							activeModel = models[c]->selected == true ? c : NOT_SELECTED;
+
+							cout << "active model: " << activeModel << endl;
 						}
-
-						/* Select / Unselect the model */
-						activeModel = models[c]->selected == true ? c : NOT_SELECTED;
-
-						cout << "active model: " << activeModel << endl;
 					}
+					ImGui::EndMenu();
 				}
-				ImGui::EndMenu();
 			}
-
 			if (ImGui::BeginMenu("Camera"))
 			{
 				int len = cameras.size();
 				for (int c = 0; c < len; c++)
 				{
-					if (ImGui::MenuItem(cameras[c]->name.c_str(), NULL, &cameras[c]->selected))
+					if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL, &cameras[c]->selected))
 					{
 						/* Deselect all others */
 						for (int t = 0; t < len; t++)
@@ -248,114 +268,130 @@ void Scene::drawGUI()
 
 
 	//Check if the popup should be shown
-	if (showModelDialog) {
-	//	currModel = models.back();
-	//	strncpy(nameBuffer, currModel->name.c_str(), IM_ARRAYSIZE(nameBuffer));
-		ImGui::OpenPopup("inputPopUp");
-	}
-	if (showCamDialog) {
-	//	currCamera = cameras.back();
-	//	strncpy(nameBuffer, currCamera->name.c_str(), IM_ARRAYSIZE(nameBuffer));
-		ImGui::OpenPopup("inputPopUp");
-	//	
+	if (add_showModelDlg || add_showCamDlg)
+	{
+		ImGui::OpenPopup(ADD_INPUT_POPUP_TITLE);
 	}
 
 	
 
-	//bool pressedOK = showInputDialog();
 	//------------------------------------
 	//------- Begin pop up - MUST BE IN THIS SCOPE
-	bool pressedOK = false, pressedCANCEL = false;
-	bool open = true;
-
-	if (ImGui::BeginPopupModal("inputPopUp", &open, ImGuiWindowFlags_AlwaysAutoResize)) {
-#ifdef _DEBUG
-		//std::cout << "Scene: Entered BeginPopupModal " << string(popupTitle) << endl;
-		//std::cout << "Window pop up appearing? " << ImGui::IsWindowAppearing() << endl;
-#endif // _DEBUG
-
+	//------------------------------------
+	bool open_popup_AddObject = true; //Must be here unless it won't work... (Weird ImGui stuff i guess)
+	if (ImGui::BeginPopupModal(ADD_INPUT_POPUP_TITLE, 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
+	{
 		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
+		ImGui::InputFloat3("Position (x,y,z)", posBuffer);
 
-		// TODO: validate name
+		/* Validate name (not empty + not in use) */
+		bool isNameValid = strlen(nameBuffer) > 0;
+		if (add_showCamDlg)
+		{
+			for (auto i : cameras)
+			{
+				if (i != cameras.back())
+				{
+					isNameValid = isNameValid && strcmp(i->getName().c_str(), nameBuffer);
+				}
+			}
+		}
+		else if (add_showModelDlg)
+		{
+			for (auto i : models)
+			{
+				if (i != models.back())
+				{
+					isNameValid = isNameValid && strcmp(i->getName().c_str(), nameBuffer);
+				}
+			}
+		}
 
-		ImGui::InputFloat3("Position", posBuffer);
-
-		// Validate position input
+		/* Validate position input */
 		bool arePositionValuesValid = true;
-		for (int i = 0; i < 3; ++i) {
-			arePositionValuesValid = arePositionValuesValid &&
-				!std::isnan(posBuffer[i]) &&
-				!std::isinf(posBuffer[i]);
-		}		//&&
-				//isValueInRange(position[i], minPositionValue, maxPositionValue);
+		for (int i = 0; i < 3; ++i)
+		{
+			arePositionValuesValid = arePositionValuesValid && !std::isnan(posBuffer[i]) && !std::isinf(posBuffer[i]);
+		}
 
 
 		// Notify the user if position values are not in the specified range
-		if (!arePositionValuesValid) {
-			//ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be in the range [%f, %f].", minPositionValue, maxPositionValue);
+		if (!arePositionValuesValid)
+		{
 			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Position values must be float");
+		}
+		else if (!isNameValid)
+		{
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Name is not valid (or in-use)");
 		}
 
 		// Add buttons for OK and Cancel
-		if (ImGui::Button("OK") && arePositionValuesValid) {
-			// Set flag to indicate OK button is pressed
-			pressedOK = true;
-			ImGui::CloseCurrentPopup(); // Close the popup
-		}
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel")) {
-			// Close the popup 
-			pressedCANCEL = true;
+		if (ImGui::Button("OK") && arePositionValuesValid && isNameValid)
+		{
+			GUI_popup_pressedOK = true;
+			GUI_popup_pressedCANCEL = false;
 			ImGui::CloseCurrentPopup();
 		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			GUI_popup_pressedOK = false;
+			GUI_popup_pressedCANCEL = true;
+			ImGui::CloseCurrentPopup();
+		}
+
 
 		ImGui::EndPopup();
 	}
 
-
-		// Check if OK button was pressed in the popup
-		if (showModelDialog && pressedOK) {
+	//------------------------------------
+	//--------  Handle pop-ups -----------
+	if (add_showModelDlg)
+	{
+		if (GUI_popup_pressedOK)
+		{
 			auto currModel = models.back();	// Surely loaded new model
 			currModel->setName(nameBuffer);
-			
+
 			//TODO: translate the model to given position;
 
-			// Reset the flag
-			pressedOK = false;	// Reset flag
-			showModelDialog = false; // Reset flag
+			ResetPopUpFlags();
+
 
 		}
-		else if (showModelDialog && pressedCANCEL && !pressedOK)
-		{	// Model not added
-			models.pop_back();	
-			pressedCANCEL = false;
-			showModelDialog = false;
-		}
-
-		if (showCamDialog && pressedOK)
+		else if ( GUI_popup_pressedCANCEL )
 		{
-			//if(cameras.capacity())
-			//{ 
-				auto currCamera = cameras.back();	// Surely loaded new model
-				currCamera->setName(nameBuffer);
-			//}
-			pressedOK = false;	// Reset flag
-			showCamDialog = false; // Reset flag
-
+			delete ((MeshModel*)models[models.size() - 1]);
+			models.pop_back();
+			
+			ResetPopUpFlags();
 		}
-		else if (showCamDialog && pressedCANCEL && !pressedOK)
-		{	// Model not added
+	}
+	if (add_showCamDlg)
+	{
+		if (GUI_popup_pressedOK)
+		{
+			auto currCamera = cameras.back();
+			currCamera->setName(nameBuffer);
+			
+			//TODO: translate the camera to given position;
+			
+			ResetPopUpFlags();
+		}
+		else if (GUI_popup_pressedCANCEL)
+		{
+			delete cameras[cameras.size() - 1];
 			cameras.pop_back();
-			pressedCANCEL = false;
-			showCamDialog = false;
+
+			ResetPopUpFlags();
 		}
+	}
 
 	
 
 	//--------------------------------------------------------------
 	//------ Draw the ImGui::Image (Used for displaying our texture)
+ 	//--------------------------------------------------------------
 		
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -368,5 +404,15 @@ void Scene::drawGUI()
 	ImGui::End();
 	}
 
+}
+
+Camera* Scene::GetActiveCamera()
+{
+	return (activeCamera == NOT_SELECTED ? nullptr : cameras[activeCamera]);
+}
+
+Model* Scene::GetActiveModel()
+{
+	return (activeModel == NOT_SELECTED ? nullptr : models[activeModel]);
 }
 
