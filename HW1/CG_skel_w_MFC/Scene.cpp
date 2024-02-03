@@ -11,6 +11,15 @@ static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
 bool add_showModelDlg = false, add_showCamDlg = false;
 
+// TODO: Decide on ranges for transformations, projection
+float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
+float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
+float PROJ_RANGE_MIN = -10, PROJ_RANGE_MAX = 10;
+
+float TRNSL_RANGE_MIN = -10, TRNSL_RANGE_MAX = 10;
+float ROT_RANGE_MIN = 0, ROT_RANGE_MAX = 360;
+float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
+
 
 //--------------------------------------------------
 //-------------------- CAMERA ----------------------
@@ -183,12 +192,12 @@ void Scene::draw()
 		if(vertecies)
 			m_renderer->SetBufferOfModel(vertecies, ((MeshModel*)model)->Get2dBuffer_len());
 	}
+	m_renderer->updateTexture();
 
 
 
 
 	//5. Update the texture. (OpenGL stuff)
-	m_renderer->updateTexture();
 }
 
 void Scene::drawGUI()
@@ -211,6 +220,7 @@ void Scene::drawGUI()
 						std::string filename((LPCTSTR)dlg.GetPathName());
 						loadOBJModel(filename);
 						add_showModelDlg = true;
+						activeModel = models.size()-1;
 
 					}
 				}
@@ -220,6 +230,7 @@ void Scene::drawGUI()
 				{
 					Cube* cube = new Cube();
 					models.push_back(cube);
+					activeModel = models.size() - 1;
 					add_showModelDlg = true;
 				}
 				ImGui::EndMenu();
@@ -299,53 +310,107 @@ void Scene::drawGUI()
 	//---------------------------------------------------------
 	//------- Show Transformations Dialog - version 1 ---------
 	//---------------------------------------------------------
-	
-	/*if (ImGui::Begin("Transformations Window"))
+	if (models.capacity() > 0)	// TODO: Use flags
+	{
+
+	if (ImGui::Begin("Transformations Window"))
 	{
 		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-		const char* names[3] = { "Camera", "Model", "World" };
+		const char* names[2] = { "Camera", "Model" };
 		if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
 		{
+			ImGui::PushItemWidth(80);
 			for (int n = 0; n < ARRAYSIZE(names); n++)
 			{
-				if (ImGui::BeginTabItem(names[n], 0,  tab_bar_flags))
+				if (ImGui::BeginTabItem(names[n], 0, tab_bar_flags))
 				{
+					const char* name = names[n];
+					vec4* g_rot;
+					vec4* g_trnsl;
 
-					switch (names[n])
+					if (!strcmp(names[n], "Camera"))
 					{
-					case 'Camera':
+						float* g_left = &(cameras[activeCamera]->m_left);
+						float* g_right = &(cameras[activeCamera]->m_right);
+						float* g_top = &(cameras[activeCamera]->m_top);
+						float* g_bottom = &(cameras[activeCamera]->m_bottom);
+						float* g_zNear = &(cameras[activeCamera]->m_zNear);
+						float* g_zFar = &(cameras[activeCamera]->m_zFar);
+						float* g_fovy = &(cameras[activeCamera]->m_fovy);
+						float* g_aspect = &(cameras[activeCamera]->m_aspect);
+
+						//float* g_rotX = &cameras[activeCamera]->m_rot.x;
+						//float* g_rotY = &cameras[activeCamera]->m_rot.y;
+						//float* g_rotZ = &cameras[activeCamera]->m_rot.z;
+						g_rot = &(cameras[activeCamera]->m_rot);
+						g_trnsl = &(cameras[activeCamera]->m_trnsl);
+
+
+						ImGui::SeparatorText("Projection");
+						//ImGui::DragFloat("drag float3", vec4f, 0.01f, 0.0f, 1.0f);
+						ImGui::SliderFloat("Left", g_left, -10.0f, 10.0f, "Left"); ImGui::SameLine();
+						ImGui::SliderFloat("Right", g_right, -10.0f, 10.0f, "Right"); ImGui::SameLine();
+						ImGui::SliderFloat("Top", g_top, -10.0f, 10.0f, "Top"); ImGui::SameLine();
+						ImGui::SliderFloat("Bottom", g_bottom, -10.0f, 10.0f, "Bottom");
+						ImGui::SliderFloat("zNear", g_zNear, -10.0f, 10.0f, "zNear"); ImGui::SameLine();
+						ImGui::SliderFloat("zFar", g_zFar, -10.0f, 10.0f, "zFar");
+						ImGui::SliderFloat("FovY", g_fovy, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY"); ImGui::SameLine();
+						ImGui::SliderFloat("Aspect", g_aspect, -10.0f, 10.0f, "Aspect");
 
 					}
-					ImGui::SeparatorText("Translation");
+					else if (!strcmp(names[n], "Model"))
+					{
+						g_rot = &((MeshModel*)models[activeModel])->_rot;
+						g_trnsl = &((MeshModel*)models[activeModel])->_trnsl;
+					}
+					ImGui::SeparatorText("Transformation");
+					ImGui::Text("Translation");
+					ImGui::SliderFloat("X", &(g_trnsl->x), -10.0f, 10.0f, "X"); ImGui::SameLine();
+					ImGui::SliderFloat("Y", &(g_trnsl->y), -10.0f, 10.0f, "Y"); ImGui::SameLine();
+					ImGui::SliderFloat("Z", &(g_trnsl->z), -10.0f, 10.0f, "Z");
+					ImGui::Text("Rotation");
+					ImGui::SliderFloat("Rotate X", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate X"); ImGui::SameLine();
+					ImGui::SliderFloat("Rotate Y", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Y"); ImGui::SameLine();
+					ImGui::SliderFloat("Rotate Z", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Z");
+					if (!strcmp(names[n], "Model"))
+					{
+						vec4* g_scale = &((MeshModel*)models[activeModel])->_scale;
+						ImGui::Text("Scale");
+						ImGui::SliderFloat("Scale X", &(g_scale->x), -10.0f, 10.0f, "Scale X"); ImGui::SameLine();
+						ImGui::SliderFloat("Scale Y", &(g_scale->y), -10.0f, 10.0f, "Scale Y"); ImGui::SameLine();
+						ImGui::SliderFloat("Scale Z", &(g_scale->z), -10.0f, 10.0f, "Scale Z");
 
+						// World transformations
+						ImGui::SeparatorText("World Transformation");
+
+						g_trnsl = &((MeshModel*)models[activeModel])->_trnsl_w;
+						g_rot = &((MeshModel*)models[activeModel])->_rot_w;
+						g_scale = &((MeshModel*)models[activeModel])->_scale_w;
+
+						ImGui::Text("Translation");
+						ImGui::SliderFloat("W X", &(g_trnsl->x), -10.0f, 10.0f, "X"); ImGui::SameLine();
+						ImGui::SliderFloat("W Y", &(g_trnsl->y), -10.0f, 10.0f, "Y"); ImGui::SameLine();
+						ImGui::SliderFloat("W Z", &(g_trnsl->z), -10.0f, 10.0f, "Z");
+						ImGui::Text("Rotation");
+						ImGui::SliderFloat("W Rotate X", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate X"); ImGui::SameLine();
+						ImGui::SliderFloat("W Rotate Y", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Y"); ImGui::SameLine();
+						ImGui::SliderFloat("W Rotate Z", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Z");
+						ImGui::Text("Scale");
+						ImGui::SliderFloat("W Scale X", &(g_scale->x), -10.0f, 10.0f, "Scale X"); ImGui::SameLine();
+						ImGui::SliderFloat("W Scale Y", &(g_scale->y), -10.0f, 10.0f, "Scale Y"); ImGui::SameLine();
+						ImGui::SliderFloat("W Scale Z", &(g_scale->z), -10.0f, 10.0f, "Scale Z");
+
+					}
+					ImGui::EndTabItem();
 				}
 			}
-			if (ImGui::BeginTabItem("Avocado"))
-			{
-				ImGui::Text("This is the Avocado tab!\nblah blah blah blah blah");
-				ImGui::EndTabItem();
-			}
-			if (ImGui::BeginTabItem("Broccoli"))
-			{
-				ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
-				ImGui::EndTabItem();
-			}
-			if (ImGui::BeginTabItem("Cucumber"))
-			{
-				ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
-				ImGui::EndTabItem();
-			}
+			ImGui::PopItemWidth();
+
 			ImGui::EndTabBar();
 		}
-		ImGui::SeparatorText("3-wide");
-		ImGui::InputFloat3("input float3", vec4f);
-		ImGui::DragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f);
-		ImGui::SliderFloat3("slider float3", vec4f, 0.0f, 1.0f);
-		ImGui::InputInt3("input int3", vec4i);
-		ImGui::DragInt3("drag int3", vec4i, 1, 0, 255);
-		ImGui::SliderInt3("slider int3", vec4i, 0, 255);
 		ImGui::End();
-	}*/
+	}
+	}
 
 
 	//Check if the popup should be shown

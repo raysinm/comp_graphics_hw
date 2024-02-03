@@ -26,6 +26,8 @@ protected :
 
 	mat3 _normal_transform;
 
+	friend class Scene;
+
 public:
 	vec2* Get2dBuffer();
 	unsigned int Get2dBuffer_len();

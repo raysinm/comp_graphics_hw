@@ -188,7 +188,19 @@ void MeshModel::loadFile(string fileName)
 void MeshModel::draw(mat4& cTransform, mat4& projection)
 {
 
-	//updateTransform();	//TODO Currently update only when changed
+	updateTransform();	//TODO Currently update only when changed
+	updateTransformWorld ();	//TODO Currently update only when changed
+
+
+	// DEBUG
+#ifdef _DEBUG
+	cout << "trnsl: " << _trnsl << endl;
+	cout << "trnsl w: " << _trnsl_w << endl;
+	cout << "rot: " << _rot << endl;
+	cout << "rot w: " << _rot_w << endl;
+	cout << "scale: " << _scale << endl;
+	cout << "scale w: " << _scale_w << endl;
+#endif // _DEBUG
 
 	for (int i = 0; i < num_vertices; i++)
 	{

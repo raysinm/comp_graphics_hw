@@ -210,9 +210,9 @@ int my_main(int argc, char** argv)
 
 		// 1. Show the big demo window
 		
-		//ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
+		ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
 		//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-		//// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 		//{
 		//	static float f = 0.0f;
 		//	static int counter = 0;

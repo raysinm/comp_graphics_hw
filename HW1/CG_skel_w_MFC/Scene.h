@@ -34,6 +34,9 @@ private:
 	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
 	string name = "";
 	float m_left, m_right, m_top, m_bottom, m_fovy, m_aspect, m_zNear, m_zFar;
+	vec4 m_trnsl, m_rot;
+
+	friend class Scene;	// To acces transformations;
 
 public:
 
