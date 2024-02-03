@@ -80,9 +80,9 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
 							   [0, m_height] (Y)
 			Also, keep it in-bound of the screen.
 		*/
-		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * m_width)) ,0), max(min(m_height - 1,  (A.y * m_height)), 0));
-		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * m_width)) ,0), max(min(m_height - 1,  (B.y * m_height)), 0));
-		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * m_width)) ,0), max(min(m_height - 1,  (C.y * m_height)), 0));
+		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * (m_width - 1))) , 0), max(min(m_height - 1,  (A.y * (m_height - 1))), 0));
+		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * (m_width - 1))) , 0), max(min(m_height - 1,  (B.y * (m_height - 1))), 0));
+		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * (m_width - 1))) , 0), max(min(m_height - 1,  (C.y * (m_height - 1))), 0));
 
 		
 		/* At this point, we have 3 points, in screen space, in-bound */
