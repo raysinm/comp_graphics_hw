@@ -70,16 +70,21 @@ unsigned int MeshModel::Get2dBuffer_len()
 	return num_vertices;
 }
 
-MeshModel::MeshModel(string fileName) : _scale(1,1,1,1), _scale_world(1,1,1,1)
+MeshModel::MeshModel() : _scale(1, 1, 1, 1), _scale_w(1, 1, 1, 1)
 {
-	loadFile(fileName);
-	// MAYBE; change _world_transform matrix:
-	// TODO: Normalize all vertices
-	
+	//_world_transform = _model_transform = mat4();	// Initialize transform matrices
 	// Default position is in 0,0,0
 	// TODO: translate to user-defined position
+}
 
-	_world_transform = _model_transform = mat4();	// Initialize transform matrices
+MeshModel::MeshModel(string fileName) 
+{
+	loadFile(fileName);
+	// TODO: Normalize all vertices?
+	
+
+
+		
 
 }
 
@@ -144,7 +149,7 @@ void MeshModel::loadFile(string fileName)
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
 	//num_vertices = 3 * faces.size(); // comment for debug only
-	num_vertices = 12;
+	num_vertices = 12;	// FIXME
 	vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
 	vertex_normals =   new vec3[num_vertices];
 	buffer2d =		   new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
@@ -183,7 +188,7 @@ void MeshModel::loadFile(string fileName)
 void MeshModel::draw(mat4& cTransform, mat4& projection)
 {
 
-	updateTransform();	//TODO maybe: Optimize to only update when changed;
+	//updateTransform();	//TODO Currently update only when changed
 
 	for (int i = 0; i < num_vertices; i++)
 	{
@@ -198,6 +203,22 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		// cTransform_inv =	 [ R^t  -R^t*T]
 		//					 [ 0	 1	  ]
 		//
+
+#ifdef _DEBUG
+	// Test new mat funcs
+		//mat4 mat = mat4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+		//cout << "mat" << mat << endl;
+		//mat3 topleft3 = TopLeft3(mat);
+		//cout << "topleft3" << topleft3 << endl;
+		//vec3 r_vec = RightMostVec(mat);
+		//cout << "r_vec" << r_vec << endl;
+		//mat3 trans_m = transpose(topleft3);
+		//cout << "trans_m" << trans_m << endl;
+		//mat4 res(trans_m, -(trans_m * r_vec));
+		//cout << "res" << res << endl;
+
+
+#endif
 		mat3 cTransform_rot = TopLeft3(cTransform);
 		mat3 cTransform_rot_inv = transpose(cTransform_rot);
 		vec3 cTransfrom_trnsl = RightMostVec(cTransform);
@@ -211,6 +232,24 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z);
 		buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
 
+		//cout << "vertex_positions: ";
+		//for (int j = 0; j <= i; j++)
+		//{
+		//	cout << vertex_positions[j];
+		//}
+		//cout << endl << endl;
+		//cout << "t_vertex_positions: ";
+		//for (int j = 0; j <= i; j++)
+		//{
+		//	cout << t_vertex_positions[j];
+		//}
+		//cout << endl << endl;
+		//cout << "buffer2d: ";
+		//for (int j = 0; j<=i; j++)
+		//{
+		//	cout << buffer2d[j];
+		//}
+		//cout << endl <<endl;
 	}
 }
 
@@ -222,9 +261,20 @@ void MeshModel::updateTransform()	// TODO: connect to rendering
 	mat4 rot_m_x = RotateX(_rot.x);
 	mat4 rot_m_y = RotateY(_rot.y);
 	mat4 rot_m_z = RotateZ(_rot.z);
-	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);
+	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
 
-	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m;
+	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
 
+}
+
+void MeshModel::updateTransformWorld()	// TODO: connect to rendering
+{
+	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
+	mat4 rot_m_x = RotateX(_rot_w.x);
+	mat4 rot_m_y = RotateY(_rot_w.y);
+	mat4 rot_m_z = RotateZ(_rot_w.z);
+	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
+
+	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
 }
 

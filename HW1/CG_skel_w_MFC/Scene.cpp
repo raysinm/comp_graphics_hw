@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Scene.h"
 #include "MeshModel.h"
+#include "PrimMeshModel.h"
 #include "CG_skel_w_glfw.h"
 #include <string>
 #include <math.h>
@@ -11,8 +12,9 @@ static float posBuffer[3] = { 0 };
 bool add_showModelDlg = false, add_showCamDlg = false;
 
 
-//-----------------
-//---------- CAMERA
+//--------------------------------------------------
+//-------------------- CAMERA ----------------------
+//--------------------------------------------------
 
 Camera::Camera()
 {
@@ -41,6 +43,10 @@ void Camera::Ortho(const float left, const float right,
 	{
 		// Illegal	//TODO
 	}
+
+	m_left = left; m_right = right; m_top = top; m_bottom = bottom;
+	m_zNear = zNear; m_zFar = zFar;
+
 	// Sets orthographic projection
 	GLfloat x = right - left;
 	GLfloat y = top - bottom;
@@ -63,6 +69,10 @@ void Camera::Frustum(const float left, const float right,
 		//Yonatan: Maybe switch between zNear and zFar? Or display an error messaged and return here.
 	}
 
+	m_left = left; m_right = right; m_top = top; m_bottom = bottom;
+	m_zNear = zNear; m_zFar = zFar;
+
+
 	GLfloat x = right - left;
 	GLfloat y = top - bottom;
 	GLfloat z = zFar - zNear;
@@ -78,6 +88,7 @@ void Camera::Frustum(const float left, const float right,
 mat4 Camera::Perspective(const float fovy, const float aspect,
 	const float zNear, const float zFar)
 {
+	m_fovy = fovy; m_aspect = aspect; m_zNear = zNear; m_zFar = zFar;
 	if (fovy > 90)
 	{
 		// Not a frustum	//TODO
@@ -96,8 +107,9 @@ mat4 Camera::Perspective(const float fovy, const float aspect,
 	return projection;
 }
 
-//-----------------
-//----------- SCENE
+//--------------------------------------------------
+//-------------------- SCENE ----------------------
+//--------------------------------------------------
 
 void Scene::AddCamera()
 {
@@ -147,7 +159,7 @@ void Scene::draw()
 	//3. draw each MeshModel
 	for (auto model : models)
 	{
-		//model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
@@ -163,6 +175,11 @@ void Scene::draw()
 		//This should hold the MeshModel vertices AFTER all Transforms and projection.
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
+		// DEBUG
+		//for (int i=0;i< ((MeshModel*)model)->Get2dBuffer_len(); i++)
+		//{
+		//	cout << vertecies[i];
+		//}
 		if(vertecies)
 			m_renderer->SetBufferOfModel(vertecies, ((MeshModel*)model)->Get2dBuffer_len());
 	}
@@ -186,7 +203,7 @@ void Scene::drawGUI()
 	{
 		if (ImGui::BeginMenu("Add"))
 		{
-			if (ImGui::MenuItem("Model (.obj file)"))
+			if (ImGui::MenuItem("Model (.obj file)"))	// Loading Model
 				{
 					CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
 					if (dlg.DoModal() == IDOK)
@@ -197,6 +214,17 @@ void Scene::drawGUI()
 
 					}
 				}
+			if (ImGui::BeginMenu("Prim Model"))	// Creating PrimModel of many types
+			{
+				if (ImGui::MenuItem("Cube"))
+				{
+					Cube* cube = new Cube();
+					models.push_back(cube);
+					add_showModelDlg = true;
+				}
+				ImGui::EndMenu();
+
+			}
 			if (ImGui::MenuItem("Camera"))
 			{
 				AddCamera();
@@ -230,6 +258,7 @@ void Scene::drawGUI()
 							activeModel = models[c]->selected == true ? c : NOT_SELECTED;
 
 							cout << "active model: " << activeModel << endl;
+							
 						}
 					}
 					ImGui::EndMenu();
@@ -267,6 +296,58 @@ void Scene::drawGUI()
 	}
 
 
+	//---------------------------------------------------------
+	//------- Show Transformations Dialog - version 1 ---------
+	//---------------------------------------------------------
+	
+	/*if (ImGui::Begin("Transformations Window"))
+	{
+		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+		const char* names[3] = { "Camera", "Model", "World" };
+		if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
+		{
+			for (int n = 0; n < ARRAYSIZE(names); n++)
+			{
+				if (ImGui::BeginTabItem(names[n], 0,  tab_bar_flags))
+				{
+
+					switch (names[n])
+					{
+					case 'Camera':
+
+					}
+					ImGui::SeparatorText("Translation");
+
+				}
+			}
+			if (ImGui::BeginTabItem("Avocado"))
+			{
+				ImGui::Text("This is the Avocado tab!\nblah blah blah blah blah");
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Broccoli"))
+			{
+				ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Cucumber"))
+			{
+				ImGui::Text("This is the Cucumber tab!\nblah blah blah blah blah");
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+		ImGui::SeparatorText("3-wide");
+		ImGui::InputFloat3("input float3", vec4f);
+		ImGui::DragFloat3("drag float3", vec4f, 0.01f, 0.0f, 1.0f);
+		ImGui::SliderFloat3("slider float3", vec4f, 0.0f, 1.0f);
+		ImGui::InputInt3("input int3", vec4i);
+		ImGui::DragInt3("drag int3", vec4i, 1, 0, 255);
+		ImGui::SliderInt3("slider int3", vec4i, 0, 255);
+		ImGui::End();
+	}*/
+
+
 	//Check if the popup should be shown
 	if (add_showModelDlg || add_showCamDlg)
 	{
@@ -275,9 +356,9 @@ void Scene::drawGUI()
 
 	
 
-	//------------------------------------
-	//------- Begin pop up - MUST BE IN THIS SCOPE
-	//------------------------------------
+	//---------------------------------------------------
+	//------- Begin pop up - MUST BE IN THIS SCOPE ------
+	//---------------------------------------------------
 	bool open_popup_AddObject = true; //Must be here unless it won't work... (Weird ImGui stuff i guess)
 	if (ImGui::BeginPopupModal(ADD_INPUT_POPUP_TITLE, 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
 	{
