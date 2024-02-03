@@ -70,22 +70,15 @@ unsigned int MeshModel::Get2dBuffer_len()
 	return num_vertices;
 }
 
-MeshModel::MeshModel() : _scale(1, 1, 1, 1), _scale_w(1, 1, 1, 1)
+MeshModel::MeshModel()
 {
-	//_world_transform = _model_transform = mat4();	// Initialize transform matrices
-	// Default position is in 0,0,0
-	// TODO: translate to user-defined position
+	ResetAllUserTransforms();
 }
 
 MeshModel::MeshModel(string fileName) 
 {
 	loadFile(fileName);
-	// TODO: Normalize all vertices?
-	
-
-
-		
-
+	ResetAllUserTransforms();
 }
 
 MeshModel::~MeshModel(void)
@@ -187,20 +180,20 @@ void MeshModel::loadFile(string fileName)
 
 void MeshModel::draw(mat4& cTransform, mat4& projection)
 {
+	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
+		return;
 
-	updateTransform();	//TODO Currently update only when changed
+	updateTransform();			//TODO Currently update only when changed
 	updateTransformWorld ();	//TODO Currently update only when changed
 
-
-	// DEBUG
 #ifdef _DEBUG
-	cout << "trnsl: " << _trnsl << endl;
-	cout << "trnsl w: " << _trnsl_w << endl;
-	cout << "rot: " << _rot << endl;
-	cout << "rot w: " << _rot_w << endl;
-	cout << "scale: " << _scale << endl;
-	cout << "scale w: " << _scale_w << endl;
-#endif // _DEBUG
+	//cout << "trnsl: " << _trnsl << endl;
+	//cout << "trnsl w: " << _trnsl_w << endl;
+	//cout << "rot: " << _rot << endl;
+	//cout << "rot w: " << _rot_w << endl;
+	//cout << "scale: " << _scale << endl;
+	//cout << "scale w: " << _scale_w << endl;
+#endif 
 
 	for (int i = 0; i < num_vertices; i++)
 	{
@@ -265,8 +258,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	}
 }
 
-
-void MeshModel::updateTransform()	// TODO: connect to rendering
+void MeshModel::updateTransform()
 {
 
 	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
@@ -279,7 +271,7 @@ void MeshModel::updateTransform()	// TODO: connect to rendering
 
 }
 
-void MeshModel::updateTransformWorld()	// TODO: connect to rendering
+void MeshModel::updateTransformWorld()
 {
 	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 rot_m_x = RotateX(_rot_w.x);
@@ -287,6 +279,98 @@ void MeshModel::updateTransformWorld()	// TODO: connect to rendering
 	mat4 rot_m_z = RotateZ(_rot_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
 
-	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
+	_world_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
 }
 
+void MeshModel::setTranslation(vec3& trnsl)
+{
+	_trnsl = trnsl;
+}
+
+void MeshModel::setRotation(GLfloat rot, char axis)
+{
+	switch (axis)
+	{
+	case 'x':
+		_rot.x = rot;
+		break;
+	case 'y':
+		_rot.y = rot;
+		break;
+	case 'z':
+		_rot.z = rot;
+		break;
+	}
+}
+
+void MeshModel::setScale(vec3& scale)
+{
+	_scale = scale;
+}
+
+void MeshModel::setTranslationWorld(vec3& trnsl)
+{
+	_trnsl_w = trnsl;
+}
+
+void MeshModel::setRotationWorld(GLfloat rot, char axis)
+{
+	switch (axis)
+	{
+	case 'x':
+		_rot_w.x = rot;
+		break;
+	case 'y':
+		_rot_w.y = rot;
+		break;
+	case 'z':
+		_rot_w.z = rot;
+		break;
+	}
+}
+
+void MeshModel::setScaleWorld(vec3& scale)
+{
+	_scale_w = scale;
+}
+
+void MeshModel::ResetAllUserTransforms()
+{
+	_trnsl = vec4(0);
+	_rot = vec4(0);
+	_scale = vec4(1);
+
+	_trnsl_w = vec4(0);
+	_rot_w = vec4(0);
+	_scale_w = vec4(1);
+}
+
+void MeshModel::ResetUserTransform_translate_model()
+{
+	_trnsl = vec4(0);
+}
+
+void MeshModel::ResetUserTransform_rotate_model()
+{
+	_rot = vec4(0);
+}
+
+void MeshModel::ResetUserTransform_scale_model()
+{
+	_scale = vec4(1);
+}
+
+void MeshModel::ResetUserTransform_translate_world()
+{
+	_trnsl_w = vec4(0);
+}
+
+void MeshModel::ResetUserTransform_rotate_world()
+{
+	_rot_w = vec4(0);
+}
+
+void MeshModel::ResetUserTransform_scale_world()
+{
+	_scale_w = vec4(1);
+}

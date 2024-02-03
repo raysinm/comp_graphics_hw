@@ -9,15 +9,22 @@ using namespace std;
 #define NOT_SELECTED -1
 #define ADD_INPUT_POPUP_TITLE "Object Properties"
 #define CAMERA_DEFAULT_NAME "Camera"
+#define MODEL_DEFAULT_NAME "Model"
 
-class Model {
+class Model
+{
 protected:
 	virtual ~Model() {}
-	string name = "Model";
+	string name = MODEL_DEFAULT_NAME;
+	bool userInitFinished = false;
 
 public:
 	void virtual draw(mat4& cTransform, mat4& projection)=0;
+
 	void setName(std::string newName) { name = newName; }
+	void SetUserInitFinished() { userInitFinished = true; }
+	bool GetUserInitFinished() { return userInitFinished; }
+
 	std::string& getName() { return name; }
 	bool selected = false;
 
@@ -33,7 +40,7 @@ class Camera
 private:
 	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
 	string name = "";
-	float m_left, m_right, m_top, m_bottom, m_fovy, m_aspect, m_zNear, m_zFar;
+	float m_left = 0, m_right = 0, m_top = 0, m_bottom = 0, m_fovy = 0, m_aspect = 0, m_zNear = 0, m_zFar = 0;
 	vec4 m_trnsl, m_rot;
 
 	friend class Scene;	// To acces transformations;
@@ -54,8 +61,13 @@ public:
 		const float zNear, const float zFar );	// Sets projection matrix
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);	// Calls frustum
+	
+	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
+	void ResetTranslation() { m_trnsl = vec4(0); }
+	void ResetRotation() { m_rot = vec4(0); }
+	
 	bool selected = false;
 };
 
@@ -68,6 +80,7 @@ class Scene {
 
 private:
 	void AddCamera();
+	void UpdateModelSelection();
 
 	void ResetPopUpFlags();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;

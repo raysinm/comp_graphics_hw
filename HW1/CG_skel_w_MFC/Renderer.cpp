@@ -191,8 +191,6 @@ std::vector<vec2> Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B)
 }
 
 
-
-
 /////////////////////////////////////////////////////
 //OpenGL stuff. Don't touch.
 
@@ -311,7 +309,6 @@ void Renderer::update(int width, int height)
 {
 	if (m_width != width || m_height != height)
 	{
-		cout << "Debug: update called!" << endl;
 		m_width = width;
 		m_height = height;
 		updateBuffer();

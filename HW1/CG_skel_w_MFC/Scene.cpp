@@ -10,15 +10,16 @@ using namespace std;
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
 bool add_showModelDlg = false, add_showCamDlg = false;
+bool showTransWindow = false;
 
 // TODO: Decide on ranges for transformations, projection
-float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
-float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
-float PROJ_RANGE_MIN = -10, PROJ_RANGE_MAX = 10;
+const float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
+const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
+const float PROJ_RANGE_MIN = -10, PROJ_RANGE_MAX = 10;
 
-float TRNSL_RANGE_MIN = -10, TRNSL_RANGE_MAX = 10;
-float ROT_RANGE_MIN = 0, ROT_RANGE_MAX = 360;
-float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
+const float TRNSL_RANGE_MIN = -10, TRNSL_RANGE_MAX = 10;
+const float ROT_RANGE_MIN = 0, ROT_RANGE_MAX = 360;
+const float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
 
 
 //--------------------------------------------------
@@ -127,9 +128,10 @@ void Scene::AddCamera()
 
 	Camera* cam = new Camera();
 	cameras.push_back(cam);
+
 	string s = cam->getName();
 	s += " " + std::to_string(cameras.size());
-	cam->setName(s);
+	cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
 
 }
 
@@ -142,9 +144,9 @@ void Scene::loadOBJModel(string fileName)
 void Scene::ResetPopUpFlags()
 {
 	GUI_popup_pressedOK = false;		// Reset flag
-	GUI_popup_pressedCANCEL = false;		// Reset flag
-	add_showCamDlg = false;		// Reset flag
-	add_showModelDlg = false;
+	GUI_popup_pressedCANCEL = false;	// Reset flag
+	add_showCamDlg = false;				// Reset flag
+	add_showModelDlg = false;			// Reset flag
 	memset(nameBuffer, 0, IM_ARRAYSIZE(nameBuffer));
 	memset(posBuffer, 0, sizeof(float)*3);
 }
@@ -168,7 +170,11 @@ void Scene::draw()
 	//3. draw each MeshModel
 	for (auto model : models)
 	{
-		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		//Don't draw new model before user clicked 'OK'.
+		if (!model->GetUserInitFinished())
+			continue;
+
+		//model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
@@ -179,18 +185,12 @@ void Scene::draw()
 		//4. TODO: Add camera ' + ' signs. 
 		//5. TODO: Add normals arrow lines (if enabled)
 
-		//6. Rasterazation
 
-		//This should hold the MeshModel vertices AFTER all Transforms and projection.
 		//values: [-1, 1]
-		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
-		// DEBUG
-		//for (int i=0;i< ((MeshModel*)model)->Get2dBuffer_len(); i++)
-		//{
-		//	cout << vertecies[i];
-		//}
-		if(vertecies)
-			m_renderer->SetBufferOfModel(vertecies, ((MeshModel*)model)->Get2dBuffer_len());
+		//vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
+		//unsigned int len = ((MeshModel*)model)->Get2dBuffer_len();
+		//if(vertecies)
+		//	m_renderer->SetBufferOfModel(vertecies, len);
 	}
 	m_renderer->updateTexture();
 
@@ -206,8 +206,17 @@ void Scene::drawGUI()
 	style.WindowPadding = ImVec2(0, 0);
 	style.ItemSpacing   = ImVec2(5, 4);
 	style.FramePadding  = ImVec2(4, 10);
+	style.SeparatorTextBorderSize = 10;
+	style.SeparatorTextAlign= ImVec2(0.5, 0.5);
+	style.SeparatorTextPadding = ImVec2(20, 10);
 
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+	if (!showTransWindow && activeModel != NOT_SELECTED) //UnSelect the object if it's transformation windows closed
+	{
+		models[activeModel]->selected = false;
+		activeModel = false;
+	}
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("Add"))
@@ -220,18 +229,20 @@ void Scene::drawGUI()
 						std::string filename((LPCTSTR)dlg.GetPathName());
 						loadOBJModel(filename);
 						add_showModelDlg = true;
-						activeModel = models.size()-1;
-
+						showTransWindow = true;
 					}
 				}
-			if (ImGui::BeginMenu("Prim Model"))	// Creating PrimModel of many types
+			if (ImGui::BeginMenu("Primitive Model"))	// Creating PrimModel of many types
 			{
 				if (ImGui::MenuItem("Cube"))
 				{
 					Cube* cube = new Cube();
 					models.push_back(cube);
-					activeModel = models.size() - 1;
+
+					cube->setName("Cube");
+					strcpy(nameBuffer, cube->getName().c_str());
 					add_showModelDlg = true;
+					showTransWindow = true;
 				}
 				ImGui::EndMenu();
 
@@ -239,8 +250,9 @@ void Scene::drawGUI()
 			if (ImGui::MenuItem("Camera"))
 			{
 				AddCamera();
-				add_showCamDlg = true;
 				strcpy(nameBuffer, cameras[cameras.size() - 1]->getName().c_str());
+				add_showCamDlg = true;
+				showTransWindow = true;
 			}
 			
 			ImGui::EndMenu();
@@ -256,20 +268,11 @@ void Scene::drawGUI()
 					{
 						if (ImGui::MenuItem(models[c]->getName().c_str(), NULL, &models[c]->selected))
 						{
-							/* Deselect all others */
-							for (int t = 0; t < len; t++)
-							{
-								if (t != c)
-								{
-									models[t]->selected = false;
-								}
-							}
+							activeModel = c;
+							UpdateModelSelection();
 
-							/* Select / Unselect the model */
-							activeModel = models[c]->selected == true ? c : NOT_SELECTED;
-
-							cout << "active model: " << activeModel << endl;
-							
+							showTransWindow = true;
+							cout << "(debug) active model: " << activeModel << endl;
 						}
 					}
 					ImGui::EndMenu();
@@ -284,17 +287,13 @@ void Scene::drawGUI()
 					{
 						/* Deselect all others */
 						for (int t = 0; t < len; t++)
-						{
-							if (t != c)
-							{
-								cameras[t]->selected = false;
-							}
-						}
+							cameras[t]->selected = false;
 
 						/* Select current camera */
-						cameras[c]->selected = true;
 						activeCamera = c;
-
+						cameras[c]->selected = true;
+						showTransWindow = true;
+						cout << "(debug) active Camera: " << activeCamera<< endl;
 					}
 				}
 				ImGui::EndMenu();
@@ -310,106 +309,178 @@ void Scene::drawGUI()
 	//---------------------------------------------------------
 	//------- Show Transformations Dialog - version 1 ---------
 	//---------------------------------------------------------
-	if (models.capacity() > 0)	// TODO: Use flags
+	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && showTransWindow)
 	{
-
-	if (ImGui::Begin("Transformations Window"))
-	{
-		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-		const char* names[2] = { "Camera", "Model" };
-		if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
+		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
 		{
-			ImGui::PushItemWidth(80);
-			for (int n = 0; n < ARRAYSIZE(names); n++)
+#define MODEL_TAB_INDEX  0
+#define CAMERA_TAB_INDEX 1
+			const char* names[2] = { 0 };
+			names[CAMERA_TAB_INDEX] = "Camera";
+			names[MODEL_TAB_INDEX] = "Model";
+
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
 			{
-				if (ImGui::BeginTabItem(names[n], 0, tab_bar_flags))
+				ImGui::PushItemWidth(80);
+				for (int n = 0; n < ARRAYSIZE(names); n++)
 				{
-					const char* name = names[n];
-					vec4* g_rot;
-					vec4* g_trnsl;
-
-					if (!strcmp(names[n], "Camera"))
+					if (activeModel == NOT_SELECTED && n == MODEL_TAB_INDEX)
+						continue;
+					MeshModel* activeMesh = nullptr;
+					if (ImGui::BeginTabItem(names[n], 0, tab_bar_flags))
 					{
-						float* g_left = &(cameras[activeCamera]->m_left);
-						float* g_right = &(cameras[activeCamera]->m_right);
-						float* g_top = &(cameras[activeCamera]->m_top);
-						float* g_bottom = &(cameras[activeCamera]->m_bottom);
-						float* g_zNear = &(cameras[activeCamera]->m_zNear);
-						float* g_zFar = &(cameras[activeCamera]->m_zFar);
-						float* g_fovy = &(cameras[activeCamera]->m_fovy);
-						float* g_aspect = &(cameras[activeCamera]->m_aspect);
+						const char* name = names[n];
+						vec4* g_trnsl = nullptr;
+						vec4* g_rot   = nullptr;
 
-						//float* g_rotX = &cameras[activeCamera]->m_rot.x;
-						//float* g_rotY = &cameras[activeCamera]->m_rot.y;
-						//float* g_rotZ = &cameras[activeCamera]->m_rot.z;
-						g_rot = &(cameras[activeCamera]->m_rot);
-						g_trnsl = &(cameras[activeCamera]->m_trnsl);
+						if (n == CAMERA_TAB_INDEX)
+						{
+							string name("Name: ");
+							name += cameras[activeCamera]->getName();
+							ImGui::Text(name.c_str());
+
+							float* g_left = &(cameras[activeCamera]->m_left);
+							float* g_right = &(cameras[activeCamera]->m_right);
+							float* g_top = &(cameras[activeCamera]->m_top);
+							float* g_bottom = &(cameras[activeCamera]->m_bottom);
+							float* g_zNear = &(cameras[activeCamera]->m_zNear);
+							float* g_zFar = &(cameras[activeCamera]->m_zFar);
+							float* g_fovy = &(cameras[activeCamera]->m_fovy);
+							float* g_aspect = &(cameras[activeCamera]->m_aspect);
+
+							//float* g_rotX = &cameras[activeCamera]->m_rot.x;
+							//float* g_rotY = &cameras[activeCamera]->m_rot.y;
+							//float* g_rotZ = &cameras[activeCamera]->m_rot.z;
+							g_rot = &(cameras[activeCamera]->m_rot);
+							g_trnsl = &(cameras[activeCamera]->m_trnsl);
 
 
-						ImGui::SeparatorText("Projection");
-						//ImGui::DragFloat("drag float3", vec4f, 0.01f, 0.0f, 1.0f);
-						ImGui::SliderFloat("Left", g_left, -10.0f, 10.0f, "Left"); ImGui::SameLine();
-						ImGui::SliderFloat("Right", g_right, -10.0f, 10.0f, "Right"); ImGui::SameLine();
-						ImGui::SliderFloat("Top", g_top, -10.0f, 10.0f, "Top"); ImGui::SameLine();
-						ImGui::SliderFloat("Bottom", g_bottom, -10.0f, 10.0f, "Bottom");
-						ImGui::SliderFloat("zNear", g_zNear, -10.0f, 10.0f, "zNear"); ImGui::SameLine();
-						ImGui::SliderFloat("zFar", g_zFar, -10.0f, 10.0f, "zFar");
-						ImGui::SliderFloat("FovY", g_fovy, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY"); ImGui::SameLine();
-						ImGui::SliderFloat("Aspect", g_aspect, -10.0f, 10.0f, "Aspect");
+							ImGui::SeparatorText("Projection");
 
+							ImGui::SliderFloat("Left", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
+							ImGui::SliderFloat("Right", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
+							ImGui::SliderFloat("Top", g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
+							ImGui::SliderFloat("Bottom", g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d");
+							ImGui::SliderFloat("zNear", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
+							ImGui::SliderFloat("zFar", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d");
+
+							ImGui::SliderFloat("FovY", g_fovy,		FOV_RANGE_MIN, FOV_RANGE_MAX,		"%.1f"); ImGui::SameLine();
+							ImGui::SliderFloat("Aspect", g_aspect,	ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.1f");
+
+						}
+						else if (n == MODEL_TAB_INDEX)
+						{
+							activeMesh = (MeshModel*)models[activeModel];
+							string name("Name: ");
+							name += models[activeModel]->getName();
+							ImGui::Text(name.c_str());
+
+							g_trnsl = &(activeMesh->_trnsl);
+							g_rot   = &(activeMesh->_rot);
+							bool* dispFaceNormal   = &(activeMesh->showFaceNormals);
+							bool* dispVertexNormal = &(activeMesh->showVertexNormals);
+							
+							ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
+							ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
+						}
+						
+						ImGui::SeparatorText("Model space");
+
+						ImGui::Text("Translation (X Y Z)");
+						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
+						ImGui::SliderFloat("##Y_MT", &(g_trnsl->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
+						ImGui::SliderFloat("##Z_MT", &(g_trnsl->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
+						if (ImGui::Button("reset##MT"))
+						{
+							if (n == CAMERA_TAB_INDEX)
+							{
+								cameras[activeCamera]->ResetTranslation();
+							}
+							else if (n == MODEL_TAB_INDEX)
+							{
+								activeMesh->ResetUserTransform_translate_model();
+							}
+						}
+
+						ImGui::Text("Rotation (X Y Z)");
+						ImGui::SliderFloat("##X_MR", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+						ImGui::SliderFloat("##Y_MR", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+						ImGui::SliderFloat("##Z_MR", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+						if (ImGui::Button("reset##MR"))
+						{
+							if (n == CAMERA_TAB_INDEX)
+							{
+								cameras[activeCamera]->ResetRotation();
+							}
+							else if (n == MODEL_TAB_INDEX)
+							{
+								activeMesh->ResetUserTransform_rotate_model();
+							}
+						}
+						
+						if (n == MODEL_TAB_INDEX)
+						{
+							vec4* g_scale = &(activeMesh->_scale);
+
+							ImGui::Text("Scale (X Y Z)");
+							ImGui::SliderFloat("##X_MS", &(g_scale->x), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Y_MS", &(g_scale->y), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Z_MS", &(g_scale->z), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							if (ImGui::Button("reset##MS"))
+							{
+									activeMesh->ResetUserTransform_scale_model();
+							}
+							
+							
+							// World transformations
+							ImGui::SeparatorText("World space");
+
+							vec4* trnsl_w = &(activeMesh->_trnsl_w);
+							vec4* rot_w   = &(activeMesh->_rot_w);
+							vec4* scale_w = &(activeMesh->_scale_w);
+
+							ImGui::Text("Translation (X Y Z)");
+							ImGui::SliderFloat("##X_WT", &(trnsl_w->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Y_WT", &(trnsl_w->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Z_WT", &(trnsl_w->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							if (ImGui::Button("reset##WT"))
+							{
+								activeMesh->ResetUserTransform_translate_world();
+							}
+
+
+
+							ImGui::Text("Rotation (X Y Z)");
+							ImGui::SliderFloat("##X_WR", &(rot_w->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Y_WR", &(rot_w->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Z_WR", &(rot_w->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							if (ImGui::Button("reset##WR"))
+							{
+								activeMesh->ResetUserTransform_rotate_world();
+							}
+
+
+							ImGui::Text("Scale (X Y Z)");
+							ImGui::SliderFloat("##X_WS", &(scale_w->x), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Y_WS", &(scale_w->y), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Z_WS", &(scale_w->z), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							if (ImGui::Button("reset##WS"))
+							{
+								activeMesh->ResetUserTransform_scale_world();
+							}
+						}
+						
+						ImGui::EndTabItem();
 					}
-					else if (!strcmp(names[n], "Model"))
-					{
-						g_rot = &((MeshModel*)models[activeModel])->_rot;
-						g_trnsl = &((MeshModel*)models[activeModel])->_trnsl;
-					}
-					ImGui::SeparatorText("Transformation");
-					ImGui::Text("Translation");
-					ImGui::SliderFloat("X", &(g_trnsl->x), -10.0f, 10.0f, "X"); ImGui::SameLine();
-					ImGui::SliderFloat("Y", &(g_trnsl->y), -10.0f, 10.0f, "Y"); ImGui::SameLine();
-					ImGui::SliderFloat("Z", &(g_trnsl->z), -10.0f, 10.0f, "Z");
-					ImGui::Text("Rotation");
-					ImGui::SliderFloat("Rotate X", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate X"); ImGui::SameLine();
-					ImGui::SliderFloat("Rotate Y", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Y"); ImGui::SameLine();
-					ImGui::SliderFloat("Rotate Z", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Z");
-					if (!strcmp(names[n], "Model"))
-					{
-						vec4* g_scale = &((MeshModel*)models[activeModel])->_scale;
-						ImGui::Text("Scale");
-						ImGui::SliderFloat("Scale X", &(g_scale->x), -10.0f, 10.0f, "Scale X"); ImGui::SameLine();
-						ImGui::SliderFloat("Scale Y", &(g_scale->y), -10.0f, 10.0f, "Scale Y"); ImGui::SameLine();
-						ImGui::SliderFloat("Scale Z", &(g_scale->z), -10.0f, 10.0f, "Scale Z");
-
-						// World transformations
-						ImGui::SeparatorText("World Transformation");
-
-						g_trnsl = &((MeshModel*)models[activeModel])->_trnsl_w;
-						g_rot = &((MeshModel*)models[activeModel])->_rot_w;
-						g_scale = &((MeshModel*)models[activeModel])->_scale_w;
-
-						ImGui::Text("Translation");
-						ImGui::SliderFloat("W X", &(g_trnsl->x), -10.0f, 10.0f, "X"); ImGui::SameLine();
-						ImGui::SliderFloat("W Y", &(g_trnsl->y), -10.0f, 10.0f, "Y"); ImGui::SameLine();
-						ImGui::SliderFloat("W Z", &(g_trnsl->z), -10.0f, 10.0f, "Z");
-						ImGui::Text("Rotation");
-						ImGui::SliderFloat("W Rotate X", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate X"); ImGui::SameLine();
-						ImGui::SliderFloat("W Rotate Y", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Y"); ImGui::SameLine();
-						ImGui::SliderFloat("W Rotate Z", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "Rotate Z");
-						ImGui::Text("Scale");
-						ImGui::SliderFloat("W Scale X", &(g_scale->x), -10.0f, 10.0f, "Scale X"); ImGui::SameLine();
-						ImGui::SliderFloat("W Scale Y", &(g_scale->y), -10.0f, 10.0f, "Scale Y"); ImGui::SameLine();
-						ImGui::SliderFloat("W Scale Z", &(g_scale->z), -10.0f, 10.0f, "Scale Z");
-
-					}
-					ImGui::EndTabItem();
 				}
-			}
-			ImGui::PopItemWidth();
+				ImGui::PopItemWidth();
 
-			ImGui::EndTabBar();
+				ImGui::EndTabBar();
+			}
+			
+			ImGui::End();
 		}
-		ImGui::End();
-	}
 	}
 
 
@@ -497,16 +568,21 @@ void Scene::drawGUI()
 		if (GUI_popup_pressedOK)
 		{
 			auto currModel = models.back();	// Surely loaded new model
+			
 			currModel->setName(nameBuffer);
+			((MeshModel*)currModel)->setTranslationWorld(vec3(posBuffer[0], posBuffer[1], posBuffer[2]));
 
-			//TODO: translate the model to given position;
+			activeModel = models.size() - 1;
+			UpdateModelSelection(); //Deselect all others & select activeModel.
 
+			currModel->SetUserInitFinished();
 			ResetPopUpFlags();
 
 
 		}
 		else if ( GUI_popup_pressedCANCEL )
 		{
+			activeModel = NOT_SELECTED;
 			delete ((MeshModel*)models[models.size() - 1]);
 			models.pop_back();
 			
@@ -543,7 +619,7 @@ void Scene::drawGUI()
 	ImGui::SetNextWindowSize(viewport->WorkSize);
 	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | \
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
-		ImGuiWindowFlags_NoTitleBar ))
+		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
 	{
 		// Display the texture in ImGui:
 		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), viewport->WorkSize);
@@ -560,5 +636,15 @@ Camera* Scene::GetActiveCamera()
 Model* Scene::GetActiveModel()
 {
 	return (activeModel == NOT_SELECTED ? nullptr : models[activeModel]);
+}
+
+void Scene::UpdateModelSelection()
+{
+	int len = models.size();
+	for (int i = 0; i < len; i++)
+	{
+		models[i]->selected = false;
+	}
+	models[activeModel]->selected = true;
 }
 

@@ -61,12 +61,12 @@ public:
 			vertex_positions[i] = temp[i];
 		}
 
-		cout << "CUBE: vertex_positions: ";
-		for (int j = 0; j <= num_vertices; j++)
-		{
-			cout << vertex_positions[j];
-		}
-		cout << endl;
+		//cout << "CUBE: vertex_positions: ";
+		//for (int j = 0; j <= num_vertices; j++)
+		//{
+		//	cout << vertex_positions[j];
+		//}
+		//cout << endl;
 		//TODO: Add vertex normals
 	}
 };
