@@ -166,7 +166,10 @@ void Scene::draw()
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	m_renderer->update(viewport->WorkSize.x, viewport->WorkSize.y);
 	
-																	
+				
+	//2.5 Clear the pixel buffer before drawing new frame
+	m_renderer->clearBuffer();
+
 	//3. draw each MeshModel
 	for (auto model : models)
 	{
@@ -174,7 +177,7 @@ void Scene::draw()
 		if (!model->GetUserInitFinished())
 			continue;
 
-		//model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
@@ -187,10 +190,10 @@ void Scene::draw()
 
 
 		//values: [-1, 1]
-		//vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
-		//unsigned int len = ((MeshModel*)model)->Get2dBuffer_len();
-		//if(vertecies)
-		//	m_renderer->SetBufferOfModel(vertecies, len);
+		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer();
+		unsigned int len = ((MeshModel*)model)->Get2dBuffer_len();
+		if(vertecies)
+			m_renderer->SetBufferOfModel(vertecies, len);
 	}
 	m_renderer->updateTexture();
 

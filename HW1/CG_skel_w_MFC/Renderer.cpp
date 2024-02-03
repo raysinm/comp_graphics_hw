@@ -80,9 +80,9 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
 							   [0, m_height] (Y)
 			Also, keep it in-bound of the screen.
 		*/
-		vec2 A_Pxl = vec2( max(min(m_width, (A.x * m_width)) ,0), max(min(m_height,  (A.y * m_height)), 0));
-		vec2 B_Pxl = vec2( max(min(m_width, (B.x * m_width)) ,0), max(min(m_height,  (B.y * m_height)), 0));
-		vec2 C_Pxl = vec2( max(min(m_width, (C.x * m_width)) ,0), max(min(m_height,  (C.y * m_height)), 0));
+		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * m_width)) ,0), max(min(m_height - 1,  (A.y * m_height)), 0));
+		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * m_width)) ,0), max(min(m_height - 1,  (B.y * m_height)), 0));
+		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * m_width)) ,0), max(min(m_height - 1,  (C.y * m_height)), 0));
 
 		
 		/* At this point, we have 3 points, in screen space, in-bound */
@@ -324,6 +324,15 @@ void Renderer::updateBuffer()
 	{
 		delete[] m_outBuffer;
 		m_outBuffer = new float[3 * m_width * m_height];
+
+		clearBuffer();
+	}
+}
+
+void Renderer::clearBuffer()
+{
+	if (m_outBuffer)
+	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
 			m_outBuffer[i] = 1.0; //Set all pixels to pure white.
 

@@ -141,26 +141,26 @@ void MeshModel::loadFile(string fileName)
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 
-	//num_vertices = 3 * faces.size(); // comment for debug only
-	num_vertices = 12;	// FIXME
-	vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
-	vertex_normals =   new vec3[num_vertices];
-	buffer2d =		   new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
-	// iterate through all stored faces and create triangles
-	//int k=0;
-	//for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
-	//{
-	//	FaceIdcs current = *it;
-	//	for (int i = 0; i < 3; i++)
-	//	{
-	//		vertex_positions[k] = vertices[current.v[i] - 1];
-	//		vertex_normals[k] = verticesNormals[current.vn[i] - 1];
-	//		k++;
-	//	}
-	//}
+	num_vertices = 3 * faces.size(); //Each face is made from 3 vertices
+	vertex_positions = new vec3[num_vertices];
+	vertex_normals	 = new vec3[num_vertices];
+	buffer2d		 = new vec2[num_vertices];
+	
+	//iterate through all stored faces and create triangles
+	int k=0;
+	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
+	{
+		FaceIdcs current = *it;
+		for (int i = 0; i < 3; i++)
+		{
+			vertex_positions[k] = vertices[current.v[i] - 1];
+			vertex_normals[k]   = verticesNormals[current.vn[i] - 1];
+			k++;
+		}
+	}
 
 #ifdef _DEBUG
-	buffer2d[0] = vec2(0, 0);     
+/*	buffer2d[0] = vec2(0, 0);     
 	buffer2d[1] = vec2(0.5, 0);   
 	buffer2d[2] = vec2(0.5, 0.5); 
 
@@ -174,7 +174,7 @@ void MeshModel::loadFile(string fileName)
 
 	buffer2d[9] = vec2(0, 0);	
 	buffer2d[10] = vec2(0, 0.5); 
-	buffer2d[11] = vec2(-0.5, 0);	
+	buffer2d[11] = vec2(-0.5, 0);*/	
 #endif
 }
 
@@ -184,7 +184,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		return;
 
 	updateTransform();			//TODO Currently update only when changed
-	updateTransformWorld ();	//TODO Currently update only when changed
+	updateTransformWorld();		//TODO Currently update only when changed
 
 #ifdef _DEBUG
 	//cout << "trnsl: " << _trnsl << endl;
@@ -231,10 +231,11 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 
 		// Transform	
-		v_i = projection * cTransform_inv * _world_transform * _model_transform * v_i;
+		v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
 		
 		// Save result
-		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z);
+		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
+
 		buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
 
 		//cout << "vertex_positions: ";
@@ -255,12 +256,12 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		//	cout << buffer2d[j];
 		//}
 		//cout << endl <<endl;
+		//fflush(nullptr);
 	}
 }
 
 void MeshModel::updateTransform()
 {
-
 	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
 	mat4 rot_m_x = RotateX(_rot.x);
 	mat4 rot_m_y = RotateY(_rot.y);

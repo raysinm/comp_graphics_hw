@@ -47,9 +47,11 @@ public:
 	void update(int width, int height);
 	void updateTexture();
 	void updateBuffer();
+	void clearBuffer();
 
 	GLuint m_textureID;
 private:
+
 	void DrawLine(vec2 A, vec2 B, bool isNegative);
 	std::vector<vec2> ComputePixels_Bresenhams(vec2 A, vec2 B);
 	float* m_outBuffer; // 3*width*height
