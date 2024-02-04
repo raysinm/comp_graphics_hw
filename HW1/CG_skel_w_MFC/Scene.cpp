@@ -168,7 +168,7 @@ mat4 Camera::Perspective(const float fovy, const float aspect,
 		// Illegal	//TODO
 	}
 	float top, bottom, right, left;
-	top = zNear * tanf(M_PI/180*(fovy) / 2);
+	top = zNear * tanf((M_PI/180) *(fovy/ 2));
 	bottom = -top;
 	right = top * aspect;
 	left = -right;
@@ -422,20 +422,20 @@ void Scene::drawGUI()
 							ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
 							ImGui::RadioButton("Perspective", &g_ortho, 0);
 
-							ImGui::SliderFloat("Left", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
-							ImGui::SliderFloat("Right", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
-							ImGui::SliderFloat("Top", g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
-							ImGui::SliderFloat("Bottom", g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d");
-							ImGui::SliderFloat("zNear", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
-							ImGui::SliderFloat("zFar", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d");
+							ImGui::SliderFloat("Left", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::SliderFloat("Right", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::SliderFloat("Top", g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::SliderFloat("Bottom", g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
+							ImGui::SliderFloat("zNear", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::SliderFloat("zFar", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
 
 							float prev_fovy = *g_fovy;
 							float prev_aspect = *g_aspect;
 
-							ImGui::SliderFloat("FovY", g_fovy,		FOV_RANGE_MIN, FOV_RANGE_MAX,		"%.1f"); ImGui::SameLine();
-							ImGui::SliderFloat("Aspect", g_aspect,	ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.1f");
+							ImGui::SliderFloat("FovY", g_fovy,		FOV_RANGE_MIN, FOV_RANGE_MAX,		"%.01f"); ImGui::SameLine();
+							ImGui::SliderFloat("Aspect", g_aspect,	ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.01f");
 
-							// Set Camera projection
+							// Set Camera projection type
 							if (g_ortho == 1)
 								cameras[activeCamera]->setOrtho();
 							else

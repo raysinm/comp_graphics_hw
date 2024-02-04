@@ -76,8 +76,8 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
 		vec2 B = vec2( (vertecies[i+1].x + 1) / 2, (vertecies[i+1].y + 1) / 2);
 		vec2 C = vec2( (vertecies[i+2].x + 1) / 2, (vertecies[i+2].y + 1) / 2);
 
-		/*	Set A_Pxl to range [0, m_wdith]  (X)
-							   [0, m_height] (Y)
+		/*	Set A_Pxl to range [0, m_wdith - 1]  (X)
+							   [0, m_height - 1] (Y)
 			Also, keep it in-bound of the screen.
 		*/
 		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * (m_width - 1))) , 0), max(min(m_height - 1,  (A.y * (m_height - 1))), 0));
@@ -113,12 +113,16 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
 	{
 		if (dy <= dx) /* 0 < Slope < 1*/
 		{
-			pixels = ComputePixels_Bresenhams(A, B);
+			//pixels = ComputePixels_Bresenhams(A, B, false, y_mul);
+			ComputePixels_Bresenhams(A, B, false, y_mul);
+			return;
 		}
 		else          /* 1 < Slope */
 		{
-			pixels = ComputePixels_Bresenhams(A.flip(), B.flip()); //flip x with y to make it slope < 1
-			flipXY = true;
+			//pixels = ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul); //flip x with y to make it slope < 1
+			ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul); //flip x with y to make it slope < 1
+			return;
+			//flipXY = true;
 		}
 	}
 	else /* Negative Slope - reflect of X axis */
@@ -129,41 +133,25 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
 
 	
 	//Draw all selected pixels:
-	if (flipXY)
-	{
-		for (vec2 pix : pixels)
-		{
-			int currentX = pix.y; //flip here
-			int currentY = pix.x; //flip here
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), RED)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), GREEN)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), BLUE)] = 0;
-		}
+	//for (vec2 pix : pixels)
+	//{
 
-	}
-	else
-	{
-		for (vec2 pix : pixels)
-		{
-			int currentX = pix.x;
-			int currentY = pix.y;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), RED)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), GREEN)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY)), BLUE)] = 0;
-		}
-	}
+	//}
+
+
 }
 
-std::vector<vec2> Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B)
+void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul)
 {
 	if (B.x < A.x)
 	{
-		return ComputePixels_Bresenhams(B, A);
+		ComputePixels_Bresenhams(B, A, flipXY, y_mul);
+		return;
 	}
 	/* Now we can assume A is left B*/
 
 	/* Init stuff */
-	vector<vec2> pixels;
+	//vector<vec2> pixels;
 	int x = A.x;
 	int y = A.y;
 	int dx = B.x - A.x;
@@ -171,11 +159,26 @@ std::vector<vec2> Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B)
 	int d = 2 * dy - dx;
 	int de = 2 * dy;
 	int dne = 2 * dy - 2 * dx;
+	int BX = (int)B.x;
+	//pixels.reserve(dx+1);
 
-	pixels.push_back(vec2(x, y));
-
-	for (x = A.x + 1; x < B.x; x++)
+	for (; x < BX; x++)
 	{
+		//print (x,y):
+		{
+			int currentX = x;
+			int currentY = y;
+			if (flipXY)
+			{
+				currentX = y;
+				currentY = x;
+			}
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = 0;
+		}
+
+
 		if (d < 0)
 		{
 			d += de;
@@ -185,9 +188,24 @@ std::vector<vec2> Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B)
 			y++;
 			d += dne;
 		}
-		pixels.push_back(vec2(x, y));
 	}
-	return pixels;
+
+	//print B:
+	{
+		int currentX = B.x;
+		int currentY = B.y;
+
+		if (flipXY)
+		{
+			currentX = B.y;
+			currentY = B.x;
+		}
+
+		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = 0;
+		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = 0;
+		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = 0;
+	}
+	return;
 }
 
 
