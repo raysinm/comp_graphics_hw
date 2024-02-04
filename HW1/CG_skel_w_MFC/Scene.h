@@ -40,8 +40,8 @@ class Camera
 private:
 	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
 	string name = "";
-	float m_left = 0, m_right = 0, m_top = 0, m_bottom = 0, m_fovy = 0, m_aspect = 0, m_zNear = 0, m_zFar = 0;
-	vec4 m_trnsl, m_rot;
+	float c_left = 0, c_right = 0, c_top = 0, c_bottom = 0, c_fovy = 0, c_aspect = 0, c_zNear = 0, c_zFar = 0;
+	vec4 c_trnsl, c_rot;
 
 	friend class Scene;	// To acces transformations;
 
@@ -61,12 +61,16 @@ public:
 		const float zNear, const float zFar );	// Sets projection matrix
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);	// Calls frustum
+	void setOrtho();
+	void setPerspective();
+	void Camera::setPerspectiveByFov();
+
 	
 	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
-	void ResetTranslation() { m_trnsl = vec4(0); }
-	void ResetRotation() { m_rot = vec4(0); }
+	void ResetTranslation() { c_trnsl = vec4(0); }
+	void ResetRotation() { c_rot = vec4(0); }
 	
 	bool selected = false;
 };

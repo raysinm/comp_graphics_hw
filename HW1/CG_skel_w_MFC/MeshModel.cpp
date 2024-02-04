@@ -145,6 +145,7 @@ void MeshModel::loadFile(string fileName)
 	vertex_positions = new vec3[num_vertices];
 	vertex_normals	 = new vec3[num_vertices];
 	buffer2d		 = new vec2[num_vertices];
+	t_vertex_positions = new vec3[num_vertices];
 	
 	//iterate through all stored faces and create triangles
 	int k=0;

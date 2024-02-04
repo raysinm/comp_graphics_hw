@@ -49,13 +49,16 @@ void Camera::Ortho(const float left, const float right,
 	const float bottom, const float top,
 	const float zNear, const float zFar)
 {
+
+	//TODO: Think if we need to check input (and then not pass it directly from gui to Camera)
+
 	if (zNear >= zFar)
 	{
 		// Illegal	//TODO
 	}
 
-	m_left = left; m_right = right; m_top = top; m_bottom = bottom;
-	m_zNear = zNear; m_zFar = zFar;
+	c_left = left; c_right = right; c_top = top; c_bottom = bottom;
+	c_zNear = zNear; c_zFar = zFar;
 
 	// Sets orthographic projection
 	GLfloat x = right - left;
@@ -65,6 +68,62 @@ void Camera::Ortho(const float left, const float right,
 					  0		, 2 / y	, 0		, -(top + bottom) / y,
 					  0		, 0		, -2 / z, -(zFar + zNear) / z,
 					  0		, 0		, 0		, 1	);
+}
+
+void Camera::setOrtho()	// Check input? here or in GUI?
+{
+	GLfloat x = c_right - c_left;
+	GLfloat y = c_top - c_bottom;
+	GLfloat z = c_zFar - c_zNear;
+
+	projection = mat4(2 / x, 0, 0, -(c_left + c_right) / x,
+		0, 2 / y, 0, -(c_top + c_bottom) / y,
+		0, 0, -2 / z, -(c_zFar + c_zNear) / z,
+		0, 0, 0, 1);
+}
+
+// TODO: Test
+void Camera::setPerspective()
+{
+	// Sets user-requested frostum	
+	if (c_zNear >= c_zFar)
+	{
+		// Illegal	//TODO
+		//Yonatan: Maybe switch between zNear and zFar? Or display an error messaged and return here.
+	}
+
+	//c_left = left; c_right = right; c_top = top; c_bottom = bottom;
+	//c_zNear = zNear; c_zFar = zFar;
+
+
+	GLfloat x = c_right - c_left;
+	GLfloat y = c_top - c_bottom;
+	GLfloat z = c_zFar - c_zNear;
+
+	projection = mat4(2*c_zNear / x	, 0				, (c_right+c_left)/x	, 0,
+					  0				, 2*c_zNear / y	, (c_top + c_bottom) / y, 0,
+					  0				, 0				, -(c_zFar+c_zNear) / z	, -(2*c_zNear*c_zFar)/z,
+					  0				, 0				, -1				, 0);
+
+	// Adjust fovy, aspect accordingly:
+	c_fovy = 180 / M_PI * 2 * atan(c_top / c_zNear);
+	c_aspect = c_right / c_top;
+}
+
+void Camera::setPerspectiveByFov()
+{
+	if (c_zNear >= c_zFar)
+	{
+		// Illegal	//TODO
+	}
+	
+	c_top = c_zNear * tanf(M_PI / 180 * (c_fovy) / 2);
+	c_bottom = -c_top;
+	c_right = c_top * c_aspect;
+	c_left = -c_right;
+
+	setPerspective();
+	return;
 }
 
 // TODO: Test
@@ -79,26 +138,27 @@ void Camera::Frustum(const float left, const float right,
 		//Yonatan: Maybe switch between zNear and zFar? Or display an error messaged and return here.
 	}
 
-	m_left = left; m_right = right; m_top = top; m_bottom = bottom;
-	m_zNear = zNear; m_zFar = zFar;
+	c_left = left; c_right = right; c_top = top; c_bottom = bottom;
+	c_zNear = zNear; c_zFar = zFar;
 
 
 	GLfloat x = right - left;
 	GLfloat y = top - bottom;
 	GLfloat z = zFar - zNear;
 
-	projection = mat4(2*zNear / x	, 0				, (right+left)/x	, 0,
-					  0				, 2*zNear / y	, (top + bottom) / y, 0,
-					  0				, 0				, -(zFar+zNear) / z	, -(2*zNear*zFar)/z,
-					  0				, 0				, -1				, 0);
+	projection = mat4(2 * zNear / x, 0, (right + left) / x, 0,
+		0, 2 * zNear / y, (top + bottom) / y, 0,
+		0, 0, -(zFar + zNear) / z, -(2 * zNear * zFar) / z,
+		0, 0, -1, 0);
 
 }
+
 
 // TODO: Test
 mat4 Camera::Perspective(const float fovy, const float aspect,
 	const float zNear, const float zFar)
 {
-	m_fovy = fovy; m_aspect = aspect; m_zNear = zNear; m_zFar = zFar;
+	c_fovy = fovy; c_aspect = aspect; c_zNear = zNear; c_zFar = zFar;
 	if (fovy > 90)
 	{
 		// Not a frustum	//TODO
@@ -116,6 +176,8 @@ mat4 Camera::Perspective(const float fovy, const float aspect,
 	Frustum(left, right, bottom, top, zNear, zFar);
 	return projection;
 }
+
+
 
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
@@ -343,23 +405,22 @@ void Scene::drawGUI()
 							name += cameras[activeCamera]->getName();
 							ImGui::Text(name.c_str());
 
-							float* g_left = &(cameras[activeCamera]->m_left);
-							float* g_right = &(cameras[activeCamera]->m_right);
-							float* g_top = &(cameras[activeCamera]->m_top);
-							float* g_bottom = &(cameras[activeCamera]->m_bottom);
-							float* g_zNear = &(cameras[activeCamera]->m_zNear);
-							float* g_zFar = &(cameras[activeCamera]->m_zFar);
-							float* g_fovy = &(cameras[activeCamera]->m_fovy);
-							float* g_aspect = &(cameras[activeCamera]->m_aspect);
-
-							//float* g_rotX = &cameras[activeCamera]->m_rot.x;
-							//float* g_rotY = &cameras[activeCamera]->m_rot.y;
-							//float* g_rotZ = &cameras[activeCamera]->m_rot.z;
-							g_rot = &(cameras[activeCamera]->m_rot);
-							g_trnsl = &(cameras[activeCamera]->m_trnsl);
-
+							float* g_left = &(cameras[activeCamera]->c_left);
+							float* g_right = &(cameras[activeCamera]->c_right);
+							float* g_top = &(cameras[activeCamera]->c_top);
+							float* g_bottom = &(cameras[activeCamera]->c_bottom);
+							float* g_zNear = &(cameras[activeCamera]->c_zNear);
+							float* g_zFar = &(cameras[activeCamera]->c_zFar);
+							float* g_fovy = &(cameras[activeCamera]->c_fovy);
+							float* g_aspect = &(cameras[activeCamera]->c_aspect);
+							g_rot = &(cameras[activeCamera]->c_rot);
+							g_trnsl = &(cameras[activeCamera]->c_trnsl);
+								
+							static int g_ortho = 1;
 
 							ImGui::SeparatorText("Projection");
+							ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
+							ImGui::RadioButton("Perspective", &g_ortho, 0);
 
 							ImGui::SliderFloat("Left", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
 							ImGui::SliderFloat("Right", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
@@ -368,9 +429,23 @@ void Scene::drawGUI()
 							ImGui::SliderFloat("zNear", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d"); ImGui::SameLine();
 							ImGui::SliderFloat("zFar", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%d");
 
+							float prev_fovy = *g_fovy;
+							float prev_aspect = *g_aspect;
+
 							ImGui::SliderFloat("FovY", g_fovy,		FOV_RANGE_MIN, FOV_RANGE_MAX,		"%.1f"); ImGui::SameLine();
 							ImGui::SliderFloat("Aspect", g_aspect,	ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.1f");
 
+							// Set Camera projection
+							if (g_ortho == 1)
+								cameras[activeCamera]->setOrtho();
+							else
+							{
+								if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed those values
+									cameras[activeCamera]->setPerspectiveByFov();
+								else
+									cameras[activeCamera]->setPerspective();
+
+							}
 						}
 						else if (n == MODEL_TAB_INDEX)
 						{
