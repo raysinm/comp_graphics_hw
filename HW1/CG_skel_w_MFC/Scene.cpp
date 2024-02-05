@@ -29,7 +29,12 @@ const float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
 Camera::Camera()
 {
 	// Default camera projection - Perspective
-	Frustum(-1, 1, -1, 1, 1, 15);
+	c_left = c_top = DEF_PARAM_RANGE;
+	c_right = c_bottom = -DEF_PARAM_RANGE;
+	c_zNear = DEF_ZNEAR;
+	c_zFar = DEF_ZFAR;
+	setFovAspectByParams();
+	setPerspective();
 	name = CAMERA_DEFAULT_NAME;
 }
 
@@ -44,31 +49,6 @@ void Camera::LookAt(const Model* target)
 	//TODO: Implement
 }
 
-// TODO: Test
-void Camera::Ortho(const float left, const float right,
-	const float bottom, const float top,
-	const float zNear, const float zFar)
-{
-
-	//TODO: Think if we need to check input (and then not pass it directly from gui to Camera)
-
-	if (zNear >= zFar)
-	{
-		// Illegal	//TODO
-	}
-
-	c_left = left; c_right = right; c_top = top; c_bottom = bottom;
-	c_zNear = zNear; c_zFar = zFar;
-
-	// Sets orthographic projection
-	GLfloat x = right - left;
-	GLfloat y = top - bottom;
-	GLfloat z = zFar - zNear;
-	projection = mat4(2 / x	, 0		, 0		, -(left + right) / x,
-					  0		, 2 / y	, 0		, -(top + bottom) / y,
-					  0		, 0		, -2 / z, -(zFar + zNear) / z,
-					  0		, 0		, 0		, 1	);
-}
 
 void Camera::setOrtho()	// Check input? here or in GUI?
 {
@@ -106,8 +86,7 @@ void Camera::setPerspective()
 					  0				, 0				, -1				, 0);
 
 	// Adjust fovy, aspect accordingly:
-	c_fovy = 180 / M_PI * 2 * atan(c_top / c_zNear);
-	c_aspect = c_right / c_top;
+	setFovAspectByParams();
 }
 
 void Camera::setPerspectiveByFov()
@@ -117,66 +96,38 @@ void Camera::setPerspectiveByFov()
 		// Illegal	//TODO
 	}
 	
-	c_top = c_zNear * tanf(M_PI / 180 * (c_fovy) / 2);
-	c_bottom = -c_top;
-	c_right = c_top * c_aspect;
-	c_left = -c_right;
+	// Change params based on current fovy, aspect
+	setParamsByFovAspect();
 
 	setPerspective();
 	return;
 }
 
-// TODO: Test
-void Camera::Frustum(const float left, const float right,
-	const float bottom, const float top,
-	const float zNear, const float zFar)
+
+void Camera::setFovAspectByParams()
 {
-	// Sets user-requested frostum	
-	if (zNear >= zFar)
-	{
-		// Illegal	//TODO
-		//Yonatan: Maybe switch between zNear and zFar? Or display an error messaged and return here.
-	}
+	c_fovy = 180 / M_PI * 2 * atan(c_top / c_zNear);
+	c_aspect = c_right / c_top;
+}
 
-	c_left = left; c_right = right; c_top = top; c_bottom = bottom;
-	c_zNear = zNear; c_zFar = zFar;
-
-
-	GLfloat x = right - left;
-	GLfloat y = top - bottom;
-	GLfloat z = zFar - zNear;
-
-	projection = mat4(2 * zNear / x, 0, (right + left) / x, 0,
-		0, 2 * zNear / y, (top + bottom) / y, 0,
-		0, 0, -(zFar + zNear) / z, -(2 * zNear * zFar) / z,
-		0, 0, -1, 0);
-
+void Camera::setParamsByFovAspect()
+{
+	c_top = c_zNear * tanf(M_PI / 180 * (c_fovy) / 2);
+	c_bottom = -c_top;
+	c_right = c_top * c_aspect;
+	c_left = -c_right;
 }
 
 
-// TODO: Test
-mat4 Camera::Perspective(const float fovy, const float aspect,
-	const float zNear, const float zFar)
+void Camera::resetProjection()
 {
-	c_fovy = fovy; c_aspect = aspect; c_zNear = zNear; c_zFar = zFar;
-	if (fovy > 90)
-	{
-		// Not a frustum	//TODO
-	}
-	if (zNear >= zFar)
-	{
-		// Illegal	//TODO
-	}
-	float top, bottom, right, left;
-	top = zNear * tanf((M_PI/180) *(fovy/ 2));
-	bottom = -top;
-	right = top * aspect;
-	left = -right;
-
-	Frustum(left, right, bottom, top, zNear, zFar);
-	return projection;
+	c_left = c_bottom = -DEF_PARAM_RANGE;
+	c_right = c_top = DEF_PARAM_RANGE;
+	c_zNear = DEF_ZNEAR;
+	c_zFar = DEF_ZFAR;
+	
+	setFovAspectByParams();
 }
-
 
 
 //--------------------------------------------------
@@ -239,7 +190,8 @@ void Scene::draw()
 		if (!model->GetUserInitFinished())
 			continue;
 
-		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		model->draw
+		(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//3.5 Projection
 		// Uses camera 
@@ -422,30 +374,51 @@ void Scene::drawGUI()
 							ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
 							ImGui::RadioButton("Perspective", &g_ortho, 0);
 
-							ImGui::SliderFloat("Left", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::SliderFloat("Right", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::SliderFloat("Top", g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::SliderFloat("Bottom", g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
+							ImGui::TextColored(ImVec4(0, 1, 0, 1), "Left"); ImGui::SameLine;
+							ImGui::TextColored(ImVec4(1, 1, 0, 1), "Right"); 
+							ImGui::TextColored(ImVec4(0, 0, 1, 1), "Top"); ImGui::SameLine;
+							ImGui::TextColored(ImVec4(1, 0, 0, 1), "Bottom"); 
+							
+							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0,1,0,1)); 
+							ImGui::SliderFloat("##Left_CP", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::PopStyleColor();
+							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 1, 0, 1));
+							ImGui::SliderFloat("##Right_CP", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::PopStyleColor();
+							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0, 0, 1, 1));
+							ImGui::SliderFloat("##Top_CP", g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::PopStyleColor();
+							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 0, 0, 1));
+							ImGui::SliderFloat("##Bottom_CP", g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
+							ImGui::PopStyleColor();
+							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0, 1, 1, 1));
 							ImGui::SliderFloat("zNear", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
 							ImGui::SliderFloat("zFar", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
-
-							float prev_fovy = *g_fovy;
-							float prev_aspect = *g_aspect;
-
-							ImGui::SliderFloat("FovY", g_fovy,		FOV_RANGE_MIN, FOV_RANGE_MAX,		"%.01f"); ImGui::SameLine();
-							ImGui::SliderFloat("Aspect", g_aspect,	ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.01f");
+							ImGui::PopStyleColor();
 
 							// Set Camera projection type
 							if (g_ortho == 1)
 								cameras[activeCamera]->setOrtho();
 							else
 							{
+								float prev_fovy = *g_fovy;
+								float prev_aspect = *g_aspect;
+
+								ImGui::SliderFloat("FovY", g_fovy, FOV_RANGE_MIN, FOV_RANGE_MAX, "%.01f"); ImGui::SameLine();
+								ImGui::SliderFloat("Aspect", g_aspect, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.01f");
+
 								if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed those values
 									cameras[activeCamera]->setPerspectiveByFov();
 								else
 									cameras[activeCamera]->setPerspective();
 
 							}
+							if (ImGui::Button("reset_CP"))
+							{
+								cameras[activeCamera]->resetProjection();
+							}
+
+
 						}
 						else if (n == MODEL_TAB_INDEX)
 						{
@@ -463,7 +436,8 @@ void Scene::drawGUI()
 							ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
 						}
 						
-						ImGui::SeparatorText("Model space");
+						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "Camera space";
+						ImGui::SeparatorText(sep_text.c_str());
 
 						ImGui::Text("Translation (X Y Z)");
 						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();

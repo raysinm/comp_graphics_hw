@@ -11,6 +11,13 @@ using namespace std;
 #define CAMERA_DEFAULT_NAME "Camera"
 #define MODEL_DEFAULT_NAME "Model"
 
+#define DEF_PARAM_RANGE 5;
+#define DEF_ZNEAR 1;
+#define DEF_ZFAR 10;
+#define DEF_FOV 70
+#define DEF_ASPECT 1
+
+
 class Model
 {
 protected:
@@ -40,7 +47,7 @@ class Camera
 private:
 	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
 	string name = "";
-	float c_left = 0, c_right = 0, c_top = 0, c_bottom = 0, c_fovy = 0, c_aspect = 0, c_zNear = 0, c_zFar = 0;
+	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot;
 
 	friend class Scene;	// To acces transformations;
@@ -63,8 +70,11 @@ public:
 		const float zNear, const float zFar);	// Calls frustum
 	void setOrtho();
 	void setPerspective();
-	void Camera::setPerspectiveByFov();
+	void setPerspectiveByFov();
+	void setFovAspectByParams();
+	void setParamsByFovAspect();
 
+	void resetProjection();
 	
 	
 	void setName(std::string newName) { name = newName; }
