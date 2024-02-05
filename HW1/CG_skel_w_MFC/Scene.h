@@ -73,12 +73,13 @@ public:
 	void setPerspectiveByFov();
 	void setFovAspectByParams();
 	void setParamsByFovAspect();
-
 	void resetProjection();
 	
 	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
+	
+	void updateTransform();
 	void ResetTranslation() { c_trnsl = vec4(0); }
 	void ResetRotation() { c_rot = vec4(0); }
 	

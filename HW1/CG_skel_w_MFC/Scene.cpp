@@ -129,6 +129,17 @@ void Camera::resetProjection()
 	setFovAspectByParams();
 }
 
+void Camera::updateTransform()
+{
+	mat4 rot_x = RotateX(c_rot.x);
+	mat4 rot_y = RotateX(c_rot.y);
+	mat4 rot_z = RotateX(c_rot.z);
+	mat4 trnsl = Translate(c_trnsl);
+
+	cTransform = rot_z * rot_y * rot_x * trnsl; // yaw pitch roll order
+
+}
+
 
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
@@ -182,6 +193,9 @@ void Scene::draw()
 				
 	//2.5 Clear the pixel buffer before drawing new frame
 	m_renderer->clearBuffer();
+
+	//2.75 Update camera transformation matrix (cTransform)
+	cameras[activeCamera]->updateTransform();	// Is this the right place?
 
 	//3. draw each MeshModel
 	for (auto model : models)
