@@ -704,11 +704,12 @@ void Scene::drawGUI()
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
 		{
 			GUI_popup_pressedOK = false;
 			GUI_popup_pressedCANCEL = true;
 			ImGui::CloseCurrentPopup();
+			showTransWindow = false;
 		}
 
 
