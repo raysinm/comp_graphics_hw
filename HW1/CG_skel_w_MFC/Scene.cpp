@@ -696,7 +696,8 @@ void Scene::drawGUI()
 		}
 
 		// Add buttons for OK and Cancel
-		if ((ImGui::Button("OK") || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
+		ImGui::Button("OK");
+		if ((ImGui::IsItemClicked() || ImGui::IsKeyReleased(ImGui::GetKeyIndex(ImGuiKey_Enter)))
 			&& arePositionValuesValid && isNameValid)
 		{
 			GUI_popup_pressedOK = true;
@@ -704,7 +705,8 @@ void Scene::drawGUI()
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+		ImGui::Button("Cancel");
+		if (ImGui::IsItemClicked() || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
 		{
 			GUI_popup_pressedOK = false;
 			GUI_popup_pressedCANCEL = true;
