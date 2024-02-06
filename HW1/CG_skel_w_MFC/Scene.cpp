@@ -6,6 +6,9 @@
 #include <string>
 #include <math.h>
 
+#define MODEL_TAB_INDEX  0
+#define CAMERA_TAB_INDEX 1
+
 using namespace std;
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
@@ -29,11 +32,7 @@ const float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
 Camera::Camera()
 {
 	// Default camera projection - Perspective
-	c_left = c_top = DEF_PARAM_RANGE;
-	c_right = c_bottom = -DEF_PARAM_RANGE;
-	c_zNear = DEF_ZNEAR;
-	c_zFar = DEF_ZFAR;
-	setFovAspectByParams();
+	resetProjection();
 	setPerspective();
 	name = CAMERA_DEFAULT_NAME;
 }
@@ -118,13 +117,12 @@ void Camera::setParamsByFovAspect()
 	c_left = -c_right;
 }
 
-
 void Camera::resetProjection()
 {
 	c_left = c_bottom = -DEF_PARAM_RANGE;
 	c_right = c_top = DEF_PARAM_RANGE;
-	c_zNear = DEF_ZNEAR;
-	c_zFar = DEF_ZFAR;
+	c_zNear = -DEF_ZNEAR;
+	c_zFar = -DEF_ZFAR;
 	
 	setFovAspectByParams();
 }
@@ -137,7 +135,6 @@ void Camera::updateTransform()
 	mat4 trnsl = Translate(c_trnsl);
 
 	cTransform = rot_z * rot_y * rot_x * trnsl; // yaw pitch roll order
-
 }
 
 
@@ -147,9 +144,6 @@ void Camera::updateTransform()
 
 void Scene::AddCamera()
 {
-	//TODO: Add camera using the input x y z ...
-
-
 	Camera* cam = new Camera();
 	cameras.push_back(cam);
 
@@ -204,14 +198,7 @@ void Scene::draw()
 		if (!model->GetUserInitFinished())
 			continue;
 
-		model->draw
-		(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
-
-		//3.5 Projection
-		// Uses camera 
-		// projection =Ortho * vertex
-		// normalized_projection = ST * projection
-
+		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//4. TODO: Add camera ' + ' signs. 
 		//5. TODO: Add normals arrow lines (if enabled)
@@ -223,12 +210,12 @@ void Scene::draw()
 		if(vertecies)
 			m_renderer->SetBufferOfModel(vertecies, len);
 	}
+
+	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
 
 
 
-
-	//5. Update the texture. (OpenGL stuff)
 }
 
 void Scene::drawGUI()
@@ -417,8 +404,6 @@ void Scene::drawGUI()
 	{
 		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
 		{
-#define MODEL_TAB_INDEX  0
-#define CAMERA_TAB_INDEX 1
 			const char* names[2] = { 0 };
 			names[CAMERA_TAB_INDEX] = "Camera";
 			names[MODEL_TAB_INDEX] = "Model";
@@ -780,7 +765,7 @@ void Scene::drawGUI()
 	{
 		// Display the texture in ImGui:
 		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), viewport->WorkSize);
-	ImGui::End();
+		ImGui::End();
 	}
 
 }
