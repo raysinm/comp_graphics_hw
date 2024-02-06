@@ -13,6 +13,8 @@ class MeshModel : public Model
 protected:
 	MeshModel();
 	vec3* vertex_positions = nullptr;	// In model space- model transformations are applied immidiatly
+	vec3* b_box_vertices = nullptr;
+	int num_bbox_vertices = 36;
 	unsigned int num_vertices;
 	vec3* t_vertex_positions = nullptr;	// Transformed	- Used for pipeline	- No z axis
 	vec3* vertex_normals = nullptr;
@@ -21,8 +23,7 @@ protected:
 	mat4 _world_transform;
 	mat4 _model_transform;
 
-
-	mat3 _normal_transform;
+	mat3 _normal_transform;	// ??
 
 	friend class Scene;
 
@@ -32,6 +33,7 @@ public:
 
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
+	bool showBoundingBox = false;
 
 	vec2* Get2dBuffer();
 	unsigned int Get2dBuffer_len();
@@ -43,6 +45,7 @@ public:
 	void MeshModel::updateTransform();
 	void MeshModel::updateTransformWorld();
 
+	void initBoundingBox();
 	
 	//Model space:
 	void setTranslation(vec3& trnsl);

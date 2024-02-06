@@ -67,7 +67,7 @@ vec2* MeshModel::Get2dBuffer()
 
 unsigned int MeshModel::Get2dBuffer_len()
 {
-	return num_vertices;
+	return showBoundingBox ? (num_vertices + num_bbox_vertices) : num_vertices;
 }
 
 MeshModel::MeshModel()
@@ -78,7 +78,11 @@ MeshModel::MeshModel()
 MeshModel::MeshModel(string fileName) 
 {
 	loadFile(fileName);
+	buffer2d = new vec2[num_vertices+num_bbox_vertices];
+	initBoundingBox();
 	ResetAllUserTransforms();
+
+
 }
 
 MeshModel::~MeshModel(void)
@@ -144,7 +148,6 @@ void MeshModel::loadFile(string fileName)
 	num_vertices = 3 * faces.size(); //Each face is made from 3 vertices
 	vertex_positions = new vec3[num_vertices];
 	vertex_normals	 = new vec3[num_vertices];
-	buffer2d		 = new vec2[num_vertices];
 	t_vertex_positions = new vec3[num_vertices];
 	
 	//iterate through all stored faces and create triangles
@@ -160,23 +163,71 @@ void MeshModel::loadFile(string fileName)
 		}
 	}
 
-#ifdef _DEBUG
-/*	buffer2d[0] = vec2(0, 0);     
-	buffer2d[1] = vec2(0.5, 0);   
-	buffer2d[2] = vec2(0.5, 0.5); 
 
-	buffer2d[3] = vec2(0, 0);	
-	buffer2d[4] = vec2(0.5, 0);	
-	buffer2d[5] = vec2(0.5, -0.5); 
+}
 
-	buffer2d[6] = vec2(0, 0);	
-	buffer2d[7] = vec2(-0.5, 0);	
-	buffer2d[8] = vec2(-0.5, -0.5); 
+void MeshModel::initBoundingBox()
+{
+	// Assuming vertex_positions is initialized
+	if (vertex_positions == nullptr) return;
+	
+	// Bounding box init
+	b_box_vertices = new vec3[num_bbox_vertices];	// 12 triangular faces
+	
+		// Find min and max coordinates
+	float min_x, min_y, min_z, max_x, max_y, max_z;
+	min_x = max_x = vertex_positions[0].x;
+	min_y = max_y = vertex_positions[0].y;
+	min_z = max_z = vertex_positions[0].z;
 
-	buffer2d[9] = vec2(0, 0);	
-	buffer2d[10] = vec2(0, 0.5); 
-	buffer2d[11] = vec2(-0.5, 0);*/	
-#endif
+	for (int i = 0; i < num_vertices; i++)
+	{
+		vec3 v = vertex_positions[i];
+		if (v.x < min_x)	min_x = v.x;
+		else if (v.x > max_x)	max_x = v.x;
+		
+		if (v.y < min_y)	min_y = v.y;
+		else if (v.y > max_y)	max_y = v.y;
+		
+		if (v.z < min_z)	min_z = v.z;
+		else if (v.z > max_z)	max_z = v.z;
+	}
+	std::vector<vec3> v = {
+						   vec3(min_x, max_y, max_z),	//0
+						   vec3(min_x, max_y, min_z),
+						   vec3(max_x, max_y, min_z),
+						   vec3(max_x, max_y, max_z),	
+						   vec3(min_x, min_y, max_z),	
+						   vec3(min_x, min_y, min_z),
+						   vec3(max_x, min_y, min_z),
+						   vec3(max_x, min_y, max_z)	//7
+	};
+	std::vector<GLint> indices = {
+			0,1,2,	// Top
+			0,2,3,
+
+			4,5,6,	// Bottom
+			4,6,7,
+
+			0,1,5,	// Left
+			0,4,5,
+
+			2,3,7,	// Right
+			2,6,7,
+
+			0,4,7,	// Front
+			0,3,7,
+
+			1,2,6,	// Back
+			1,5,6
+	};
+
+	for (int i = 0; i < num_bbox_vertices; i++)
+	{
+		b_box_vertices[i] = v[indices[i]];
+	}
+
+
 }
 
 void MeshModel::draw(mat4& cTransform, mat4& projection)
@@ -196,7 +247,14 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	//cout << "scale w: " << _scale_w << endl;
 #endif 
 
-	for (int i = 0; i < num_vertices; i++)
+
+	mat3 cTransform_rot = TopLeft3(cTransform);
+	mat3 cTransform_rot_inv = transpose(cTransform_rot);
+	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
+	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
+
+	int i = 0;
+	for (; i < num_vertices; i++)
 	{
 
 		// Homogenous vector for calculations:
@@ -225,10 +283,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 
 #endif
-		mat3 cTransform_rot = TopLeft3(cTransform);
-		mat3 cTransform_rot_inv = transpose(cTransform_rot);
-		vec3 cTransfrom_trnsl = RightMostVec(cTransform);
-		mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
 
 
 		// Transform	
@@ -237,27 +291,21 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		// Save result
 		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
 
+
 		buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
 
-		//cout << "vertex_positions: ";
-		//for (int j = 0; j <= i; j++)
-		//{
-		//	cout << vertex_positions[j];
-		//}
-		//cout << endl << endl;
-		//cout << "t_vertex_positions: ";
-		//for (int j = 0; j <= i; j++)
-		//{
-		//	cout << t_vertex_positions[j];
-		//}
-		//cout << endl << endl;
-		//cout << "buffer2d: ";
-		//for (int j = 0; j<=i; j++)
-		//{
-		//	cout << buffer2d[j];
-		//}
-		//cout << endl <<endl;
-		//fflush(nullptr);
+	}
+
+	// Bounding box
+	if (showBoundingBox)
+	{
+		for (int j = 0; j < num_bbox_vertices; j++)
+		{
+			vec4 v_j(b_box_vertices[j]);
+			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+
+			buffer2d[i+j] = vec2(v_j.x, v_j.y);
+		}
 	}
 }
 

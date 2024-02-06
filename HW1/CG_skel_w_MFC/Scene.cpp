@@ -455,9 +455,11 @@ void Scene::drawGUI()
 							g_rot   = &(activeMesh->_rot);
 							bool* dispFaceNormal   = &(activeMesh->showFaceNormals);
 							bool* dispVertexNormal = &(activeMesh->showVertexNormals);
-							
+							bool* dispBoundingBox = &(activeMesh->showBoundingBox);
+
 							ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
 							ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
+							ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
 						}
 						
 						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "Camera space";

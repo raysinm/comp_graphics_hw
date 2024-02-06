@@ -38,7 +38,7 @@ public:
 		vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
 		t_vertex_positions = new vec3[num_vertices];
 												   //vertex_normals = new vec3[num_vertices];
-		buffer2d = new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
+		buffer2d = new vec2[num_vertices+num_bbox_vertices]; // Added bbox vertices
 		
 		 std::vector<vec3> v= { 
 							vec3(-0.5, -0.5, 0.5), 
@@ -85,6 +85,7 @@ public:
 		//}
 		//cout << endl;
 		//TODO: Add vertex normals
+		initBoundingBox();
 	}
 };
 
@@ -134,6 +135,7 @@ public:
 		//}
 		//cout << endl;
 		//TODO: Add vertex normals
+		initBoundingBox();
 	}
 };
 
