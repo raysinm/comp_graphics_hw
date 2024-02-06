@@ -650,6 +650,7 @@ void Scene::drawGUI()
 	bool open_popup_AddObject = true; //Must be here unless it won't work... (Weird ImGui stuff i guess)
 	if (ImGui::BeginPopupModal(ADD_INPUT_POPUP_TITLE, 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
 	{
+		ImGui::SetKeyboardFocusHere();
 		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
 		ImGui::InputFloat3("Position (x,y,z)", posBuffer);
 
@@ -695,7 +696,8 @@ void Scene::drawGUI()
 		}
 
 		// Add buttons for OK and Cancel
-		if (ImGui::Button("OK") && arePositionValuesValid && isNameValid)
+		if ((ImGui::Button("OK") || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
+			&& arePositionValuesValid && isNameValid)
 		{
 			GUI_popup_pressedOK = true;
 			GUI_popup_pressedCANCEL = false;
