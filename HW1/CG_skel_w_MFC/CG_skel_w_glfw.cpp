@@ -195,10 +195,16 @@ int my_main(int argc, char** argv)
 
 		glfwPollEvents(); //consider using glfwWaitEvents() ...
 
+		// Font
+
+		//io.Fonts->GetTexDataAsRGBA32();
+
 		ImGui_ImplGlfw_NewFrame();
+		//ImGuiIO& io = ImGui::GetIO();
+		//io.Fonts->ClearFonts();
+		//io.Fonts->AddFontFromFileTTF("../imgui/fonts/NotoSans-Medium.ttf", 5.0);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
-
 
 		/* All the GUI and scene draw will happen from scene->draw fuction*/
 		scene->draw();

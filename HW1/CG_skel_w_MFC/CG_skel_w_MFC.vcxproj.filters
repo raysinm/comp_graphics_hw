@@ -19,6 +19,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{e0b131de-5f4d-43d5-b60e-4302729ba908}</UniqueIdentifier>
     </Filter>
+    <Filter Include="imgui\fonts">
+      <UniqueIdentifier>{dbc80109-400f-42ba-a799-c867c68598da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="InitShader.cpp">
@@ -139,5 +142,10 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\imgui\fonts\NotoSans-Medium.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
   </ItemGroup>
 </Project>

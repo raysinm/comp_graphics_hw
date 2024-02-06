@@ -132,8 +132,8 @@ void Camera::resetProjection()
 void Camera::updateTransform()
 {
 	mat4 rot_x = RotateX(c_rot.x);
-	mat4 rot_y = RotateX(c_rot.y);
-	mat4 rot_z = RotateX(c_rot.z);
+	mat4 rot_y = RotateY(c_rot.y);
+	mat4 rot_z = RotateZ(c_rot.z);
 	mat4 trnsl = Translate(c_trnsl);
 
 	cTransform = rot_z * rot_y * rot_x * trnsl; // yaw pitch roll order
