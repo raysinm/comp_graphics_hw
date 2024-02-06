@@ -147,5 +147,20 @@
     <Font Include="..\imgui\fonts\NotoSans-Medium.ttf">
       <Filter>imgui\fonts</Filter>
     </Font>
+    <Font Include="..\..\..\..\Downloads\Noto_Sans\static\NotoSans-Light.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
+    <Font Include="..\..\..\..\Downloads\Noto_Sans\static\NotoSans-Regular.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Light.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Medium.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Regular.ttf">
+      <Filter>imgui\fonts</Filter>
+    </Font>
   </ItemGroup>
 </Project>

@@ -156,7 +156,11 @@ int my_main(int argc, char** argv)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= (ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
-	// Styling
+
+	//--- Styling
+	// Font
+	io.Fonts->AddFontFromFileTTF("../imgui/fonts/NotoSans-Medium.ttf", 18.0f);
+	
 	//ImGuiStyle& style = ImGui::GetStyle();
 	//style.FramePadding.y = 15.0f;  // Adjust this value to change the main menu bar height
 
@@ -190,19 +194,10 @@ int my_main(int argc, char** argv)
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		glfwPollEvents(); //consider using glfwWaitEvents() ...
 
-		// Font
-
-		//io.Fonts->GetTexDataAsRGBA32();
 
 		ImGui_ImplGlfw_NewFrame();
-		//ImGuiIO& io = ImGui::GetIO();
-		//io.Fonts->ClearFonts();
-		//io.Fonts->AddFontFromFileTTF("../imgui/fonts/NotoSans-Medium.ttf", 5.0);
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
@@ -253,6 +248,9 @@ int my_main(int argc, char** argv)
 
 		/* Render the scene */
 		ImGui::Render();
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		/* Swap buffers */

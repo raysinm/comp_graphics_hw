@@ -156,7 +156,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Font Include="..\..\..\..\Downloads\Noto_Sans\static\NotoSans-Light.ttf" />
+    <Font Include="..\..\..\..\Downloads\Noto_Sans\static\NotoSans-Regular.ttf" />
     <Font Include="..\imgui\fonts\NotoSans-Medium.ttf" />
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Light.ttf" />
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Medium.ttf" />
+    <Font Include="..\imgui\fonts\NotoSans_Condensed-Regular.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
