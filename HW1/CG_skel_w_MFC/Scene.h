@@ -116,5 +116,5 @@ public:
 
 	int activeModel  = NOT_SELECTED;
 	int activeLight  = NOT_SELECTED;
-	int activeCamera = NOT_SELECTED;
+	int activeCamera = 0;	// Always at least one camera
 };

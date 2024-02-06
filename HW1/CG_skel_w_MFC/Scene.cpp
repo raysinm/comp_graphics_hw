@@ -342,6 +342,69 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu(); //End select
 		}
+		// Delete Model/Camera
+		if (ImGui::BeginMenu("Delete..."))
+		{
+			if (models.size() > 0)
+			{
+				if (ImGui::BeginMenu("Model"))
+				{
+					for (int c = 0; c < models.size(); c++)
+					{
+						if (ImGui::MenuItem(models[c]->getName().c_str(), NULL))
+						{
+							models.erase(models.begin() + c);
+							if (c == activeModel)
+							{
+								activeModel = NOT_SELECTED;	// Selected model deleted
+							}
+							else if (activeModel > c)
+							{
+								--activeModel;	// index moved
+							}
+						
+							cout << "(debug) Deleted model: " << c << endl;
+						}
+					}
+					ImGui::EndMenu();
+				}
+			}
+			if (cameras.size() > 1)	// Delete only if there is more than one camera
+			{ 
+				if (ImGui::BeginMenu("Camera"))
+				{
+					for (int c = 0; c < cameras.size(); c++)
+					{
+						if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL))
+						{
+							/* Delete current camera */
+							cameras.erase(cameras.begin() + c);
+							cout << "activeCamera before" << activeCamera<< endl;
+							cout << "c" << c << endl;
+
+							if (c == activeCamera)	//	Select first camera by default
+							{
+								activeCamera = 0;
+							}
+							else if (activeCamera > c)
+							{
+								--activeCamera;	// index changed
+							}
+							cout << "activeCamera after" << activeCamera << endl;
+
+							cout << "(debug) Deleted Camera: " << c << endl;
+							cout << "(debug) cameras size: " << cameras.size() << endl;
+
+						}
+					}
+				ImGui::EndMenu();
+				}
+
+			}
+
+			ImGui::EndMenu(); //End delete
+		}
+
 
 		ImGui::EndMainMenuBar();
 	}
@@ -349,7 +412,7 @@ void Scene::drawGUI()
 
 	//---------------------------------------------------------
 	//------- Show Transformations Dialog - version 1 ---------
-	//---------------------------------------------------------
+	////---------------------------------------------------------
 	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && showTransWindow)
 	{
 		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
