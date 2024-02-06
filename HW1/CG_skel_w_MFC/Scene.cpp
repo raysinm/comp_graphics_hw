@@ -547,6 +547,17 @@ void Scene::drawGUI()
 							{
 								activeMesh->ResetUserTransform_scale_world();
 							}
+
+							// Delete model
+							ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
+							if (ImGui::Button("Delete model"))
+							{
+								models.erase(models.begin() + activeModel);
+								activeModel = NOT_SELECTED;
+							}
+							ImGui::PopStyleColor(3);
 						}
 						
 						ImGui::EndTabItem();
