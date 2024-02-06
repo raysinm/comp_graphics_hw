@@ -270,8 +270,18 @@ void Scene::drawGUI()
 					Cube* cube = new Cube();
 					models.push_back(cube);
 
-					cube->setName("Cube");
+					//cube->setName("Cube");
 					strcpy(nameBuffer, cube->getName().c_str());
+					add_showModelDlg = true;
+					showTransWindow = true;
+				}
+				if (ImGui::MenuItem("Pyramid (triangular)"))
+				{
+					TriPyramid* tri_pyr = new TriPyramid();
+					models.push_back(tri_pyr);
+
+					//cube->setName("Cube");
+					strcpy(nameBuffer, tri_pyr->getName().c_str());
 					add_showModelDlg = true;
 					showTransWindow = true;
 				}
