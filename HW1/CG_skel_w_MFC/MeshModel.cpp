@@ -129,10 +129,6 @@ MeshModel::~MeshModel(void)
 		delete[] buffer2d_v_normals;
 	if (buffer2d_f_normals)
 		delete[] buffer2d_f_normals;
-
-
-
-
 }
 
 void MeshModel::loadFile(string fileName)

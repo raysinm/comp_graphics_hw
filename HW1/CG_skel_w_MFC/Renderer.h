@@ -53,8 +53,8 @@ public:
 	GLuint m_textureID;
 private:
 
-	void DrawLine(vec2 A, vec2 B, bool isNegative);
-	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul);
+	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color);
+	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color);
 	float* m_outBuffer; // 3*width*height
 
 };

@@ -88,9 +88,9 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
 		/* At this point, we have 3 points, in screen space, in-bound */
 
 		/* Draw the 3 lines */
-		DrawLine(A_Pxl, B_Pxl, false);
-		DrawLine(A_Pxl, C_Pxl, false);
-		DrawLine(B_Pxl, C_Pxl, false);
+		DrawLine(A_Pxl, B_Pxl, false, color);
+		DrawLine(A_Pxl, C_Pxl, false, color);
+		DrawLine(B_Pxl, C_Pxl, false, color);
 	}
 }
 
@@ -116,15 +116,15 @@ void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
 		/* At this point, we have 3 points, in screen space, in-bound */
 
 		/* Draw the line */
-		DrawLine(A_Pxl, B_Pxl, false);
+		DrawLine(A_Pxl, B_Pxl, false, color);
 	}
 }
 
-void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
+void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
 {
 	if (B.x < A.x)
 	{
-		DrawLine(B, A, isNegative);
+		DrawLine(B, A, isNegative, color);
 		return;
 	}
 	/* Now we can assume A is left to B*/
@@ -140,20 +140,20 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
 		if (dy <= dx) /* 0 < Slope < 1*/
 		{
 			//pixels = ComputePixels_Bresenhams(A, B, false, y_mul);
-			ComputePixels_Bresenhams(A, B, false, y_mul);
+			ComputePixels_Bresenhams(A, B, false, y_mul, color);
 			return;
 		}
 		else          /* 1 < Slope */
 		{
 			//pixels = ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul); //flip x with y to make it slope < 1
-			ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul); //flip x with y to make it slope < 1
+			ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul, color); //flip x with y to make it slope < 1
 			return;
 			//flipXY = true;
 		}
 	}
 	else /* Negative Slope - reflect of X axis */
 	{
-		DrawLine(vec2(A.x, -A.y), vec2(B.x, -B.y), true); // Draw with reflection of X axis.
+		DrawLine(vec2(A.x, -A.y), vec2(B.x, -B.y), true, color); // Draw with reflection of X axis.
 		return;
 	}
 
@@ -167,11 +167,11 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative)
 
 }
 
-void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul)
+void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color)
 {
 	if (B.x < A.x)
 	{
-		ComputePixels_Bresenhams(B, A, flipXY, y_mul);
+		ComputePixels_Bresenhams(B, A, flipXY, y_mul, color);
 		return;
 	}
 	/* Now we can assume A is left B*/
@@ -200,9 +200,9 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul)
 				currentY = x;
 			}
 
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = 0;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = 0;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = color.x;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
+			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = color.z;
 		}
 
 
