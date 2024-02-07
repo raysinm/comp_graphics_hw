@@ -56,7 +56,7 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
+void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
 		For example:
@@ -91,6 +91,32 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len)
 		DrawLine(A_Pxl, B_Pxl, false);
 		DrawLine(A_Pxl, C_Pxl, false);
 		DrawLine(B_Pxl, C_Pxl, false);
+	}
+}
+
+void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
+{
+
+	for (unsigned i = 0; i < len; i+=2)
+	{
+		// A B makes the line
+
+		/* Set A to range [0, 1]*/
+		vec2 A = vec2((points[i].x + 1) / 2, (points[i].y + 1) / 2);
+		vec2 B = vec2((points[i+1].x + 1) / 2, (points[i+1].y + 1) / 2);
+
+		/*	Set A_Pxl to range [0, m_wdith - 1]  (X)
+							   [0, m_height - 1] (Y)
+			Also, keep it in-bound of the screen.
+		*/
+		vec2 A_Pxl = vec2(max(min(m_width - 1, (A.x * (m_width - 1))), 0), max(min(m_height - 1, (A.y * (m_height - 1))), 0));
+		vec2 B_Pxl = vec2(max(min(m_width - 1, (B.x * (m_width - 1))), 0), max(min(m_height - 1, (B.y * (m_height - 1))), 0));
+		
+
+		/* At this point, we have 3 points, in screen space, in-bound */
+
+		/* Draw the line */
+		DrawLine(A_Pxl, B_Pxl, false);
 	}
 }
 

@@ -6,6 +6,12 @@
 
 #define FINDEX(face) face*3
 
+enum MODEL_OBJECT{
+	MODEL,
+	BBOX,
+	V_NORMAL,
+	F_NORMAL
+};
 using namespace std;
 
 class MeshModel : public Model
@@ -29,6 +35,9 @@ protected:
 	vec3* face_normals = nullptr;
 
 	vec2* buffer2d = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
+	vec2* buffer2d_bbox = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
+	vec2* buffer2d_v_normals = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
+	vec2* buffer2d_f_normals = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
 
 	mat4 _world_transform;
 	mat4 _model_transform;
@@ -48,8 +57,8 @@ public:
 	bool showFaceNormals	= false;
 	bool showBoundingBox = false;
 
-	vec2* Get2dBuffer();
-	unsigned int Get2dBuffer_len();
+	vec2* Get2dBuffer(MODEL_OBJECT obj);
+	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
 	MeshModel(string fileName);	// Add option to give initial world position 
 	~MeshModel(void);
 	void loadFile(string fileName);

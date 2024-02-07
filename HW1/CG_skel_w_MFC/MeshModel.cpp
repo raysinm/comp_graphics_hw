@@ -60,14 +60,34 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-vec2* MeshModel::Get2dBuffer()
+vec2* MeshModel::Get2dBuffer(MODEL_OBJECT obj)
 {
-	return buffer2d;
+	switch (obj)
+	{
+	case MODEL:
+		return buffer2d;
+	case BBOX:
+		return buffer2d_bbox;
+	case V_NORMAL:
+		return buffer2d_v_normals;
+	case F_NORMAL:
+		return buffer2d_f_normals;
+	}
 }
 
-unsigned int MeshModel::Get2dBuffer_len()
+unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 {
-	return showBoundingBox ? (num_vertices + num_bbox_vertices) : num_vertices;
+	switch (obj)
+	{
+	case MODEL:
+		return num_vertices;
+	case BBOX:
+		return num_bbox_vertices;
+	case V_NORMAL:
+		return num_vertices_unordered;
+	case F_NORMAL:
+		return num_faces;
+	}
 }
 
 MeshModel::MeshModel()
@@ -98,6 +118,20 @@ MeshModel::~MeshModel(void)
 		delete[] t_vertex_positions;
 	if(vertex_normals)
 		delete[] vertex_normals;
+	if (face_normals)
+		delete[] face_normals;
+
+	if (buffer2d)
+		delete[] buffer2d;
+	if (buffer2d_bbox)
+		delete[] buffer2d_bbox;
+	if (buffer2d_v_normals)
+		delete[] buffer2d_v_normals;
+	if (buffer2d_f_normals)
+		delete[] buffer2d_f_normals;
+
+
+
 
 }
 
@@ -213,7 +247,7 @@ void MeshModel::initBoundingBox()
 	
 	// Bounding box init
 	b_box_vertices = new vec3[num_bbox_vertices];	// 12 triangular faces
-	
+	buffer2d_bbox = new vec2[num_bbox_vertices];
 	// TODO: If changing to faces indices, use min(), max() in vector vertex_positions_unoredered maybe
 		// Find min and max coordinates
 	float min_x, min_y, min_z, max_x, max_y, max_z;
@@ -275,7 +309,10 @@ void MeshModel::calculateFaceNormals()
 {
 	int num_faces = num_vertices / 3;
 	if (face_normals == nullptr)
+	{
 		face_normals = new vec3[num_faces];	// Should be int
+		buffer2d_f_normals = new vec2[num_faces];
+	}
 
 	for (int i = 0; i < num_faces; i++)
 	{
@@ -296,6 +333,9 @@ void MeshModel::estimateVertexNormals()
 {
 	if (face_normals == nullptr)	return;
 		//area : length(cross(v1,v2))/2;
+	if (buffer2d_v_normals == nullptr)
+		buffer2d_v_normals = new vec2[num_vertices_unordered];
+
 	for (int i = 0; i < num_vertices_unordered; i++)
 	{
 		vector<int> neighbor_faces = vertex_faces_neighbors[i];
@@ -352,23 +392,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		//					 [ 0	 1	  ]
 		//
 
-#ifdef _DEBUG
-	// Test new mat funcs
-		//mat4 mat = mat4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
-		//cout << "mat" << mat << endl;
-		//mat3 topleft3 = TopLeft3(mat);
-		//cout << "topleft3" << topleft3 << endl;
-		//vec3 r_vec = RightMostVec(mat);
-		//cout << "r_vec" << r_vec << endl;
-		//mat3 trans_m = transpose(topleft3);
-		//cout << "trans_m" << trans_m << endl;
-		//mat4 res(trans_m, -(trans_m * r_vec));
-		//cout << "res" << res << endl;
-
-
-#endif
-
-
 		// Transform	
 		v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
 		
@@ -388,7 +411,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			vec4 v_j(b_box_vertices[j]);
 			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
 
-			buffer2d[i+j] = vec2(v_j.x, v_j.y);
+			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
 		}
 	}
 }
