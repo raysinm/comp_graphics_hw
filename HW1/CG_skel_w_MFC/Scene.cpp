@@ -209,7 +209,7 @@ void Scene::draw()
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
 		unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(MODEL);
 		if(vertecies)
-			m_renderer->SetBufferOfModel(vertecies, len, vec3(0));
+			m_renderer->SetBufferOfModel(vertecies, len);
 		
 		// Bounding Box
 		if (((MeshModel*)model)->showBoundingBox)
@@ -217,7 +217,7 @@ void Scene::draw()
 			vec2* bbox_vertices = ((MeshModel*)model)->Get2dBuffer(BBOX);
 			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(BBOX);
 			if (bbox_vertices)
-				m_renderer->SetBufferOfModel(bbox_vertices, len, vec3(0,1,0));
+				m_renderer->SetBufferOfModel(bbox_vertices, len, vec4(0,1,0,1));
 		}
 		
 		// Vertex Normals
@@ -226,7 +226,7 @@ void Scene::draw()
 			vec2* v_norm_vertices = ((MeshModel*)model)->Get2dBuffer(V_NORMAL);
 			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(V_NORMAL);
 			if (v_norm_vertices)
-				m_renderer->SetBufferLines(v_norm_vertices, len, vec3(0));
+				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(0,0,0));
 
 		}
 		// Face normals
@@ -235,7 +235,7 @@ void Scene::draw()
 			vec2* f_norm_vertices = ((MeshModel*)model)->Get2dBuffer(F_NORMAL);
 			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(F_NORMAL);
 			if (f_norm_vertices)
-				m_renderer->SetBufferLines(f_norm_vertices, len, vec3(0));
+				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0,0,0));
 		}
 
 	}

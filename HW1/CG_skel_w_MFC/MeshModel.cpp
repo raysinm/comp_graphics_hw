@@ -84,7 +84,7 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	case BBOX:
 		return num_bbox_vertices;
 	case V_NORMAL:
-		return num_vertices_unordered;
+		return num_vertices_raw;
 	case F_NORMAL:
 		return num_faces;
 	}
@@ -98,11 +98,14 @@ MeshModel::MeshModel()
 MeshModel::MeshModel(string fileName) 
 {
 	loadFile(fileName);
+	t_vertex_positions_raw = vector<vec3>(num_vertices_raw);
+
 	// Now we should have faces and their indices
 	buffer2d = new vec2[num_vertices+num_bbox_vertices];
+
 	for (int i = 0; i < num_vertices; i++)
 	{
-		vertex_positions[i] = vertex_positions_unordered[faces_v_indices[i]];
+		vertex_positions[i] = vertex_positions_raw[faces_v_indices[i]];
 	}
 	initBoundingBox();
 	ResetAllUserTransforms();
@@ -154,7 +157,7 @@ void MeshModel::loadFile(string fileName)
 		if (lineType == "v") //Vertex  /*BUG - fixed*/
 		{
 			//vertices.push_back(vec3fFromStream(issLine));
-			vertex_positions_unordered.push_back(vec3fFromStream(issLine));
+			vertex_positions_raw.push_back(vec3fFromStream(issLine));
 		}
 		else if (lineType == "f") //Face   /*BUG - fixed*/
 		{
@@ -182,14 +185,16 @@ void MeshModel::loadFile(string fileName)
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
 	num_faces = faces.size();
 	num_vertices = 3 * num_faces;//Each face is made from 3 vertices
-	//num_vertices_unordered = vertices.size();
-	num_vertices_unordered = vertex_positions_unordered.size();
+	//num_vertices_raw = vertices.size();
+	num_vertices_raw = vertex_positions_raw.size();
 
 	vertex_positions = new vec3[num_vertices];
 	vertex_normals	 = new vec3[num_vertices];
+	buffer2d_v_normals = new vec2[num_vertices_raw*2];
+	buffer2d_f_normals = new vec2[num_faces*2];
 	t_vertex_positions = new vec3[num_vertices];
 	//faces_indices = new vec3[num_faces];
-	//vertex_positions_unordered = new vec3[num_vertices_unordered];
+	//vertex_positions_raw = new vec3[num_vertices_raw];
 
 	bool v_normals_exist = verticesNormals.size() > 0;
 	//iterate through all stored faces and create triangles
@@ -307,32 +312,31 @@ void MeshModel::calculateFaceNormals()
 	if (face_normals == nullptr)
 	{
 		face_normals = new vec3[num_faces];	// Should be int
-		buffer2d_f_normals = new vec2[num_faces];
 	}
 
-	for (int i = 0; i < num_faces; i++)
+	for (int i = 0; i < num_vertices; i+=3)
 	{
 		//int k = i * 3;
 		//vec3 v1 = vertex_positions[k + 1] - vertex_positions[k];
 		//vec3 v2 = vertex_positions[k + 2] - vertex_positions[k];
 
-		vec3 v_i = vertex_positions_unordered[faces_v_indices[i+0]];
-		vec3 v_j = vertex_positions_unordered[faces_v_indices[i+1]];
-		vec3 v_k = vertex_positions_unordered[faces_v_indices[i+2]];
+		vec3 v_i = vertex_positions_raw[faces_v_indices[i+0]];
+		vec3 v_j = vertex_positions_raw[faces_v_indices[i+1]];
+		vec3 v_k = vertex_positions_raw[faces_v_indices[i+2]];
 		vec3 v_ji = v_j - v_i;
 		vec3 v_ki = v_k - v_i;
 
-		face_normals[i] = cross(v_ji, v_ki);
+		face_normals[int(i/3)] = normalize(cross(v_ji, v_ki));
 	}
 }
 void MeshModel::estimateVertexNormals()
 {
 	if (face_normals == nullptr)	return;
 		//area : length(cross(v1,v2))/2;
-	if (buffer2d_v_normals == nullptr)
-		buffer2d_v_normals = new vec2[num_vertices_unordered];
+	//if (buffer2d_v_normals == nullptr)
+	//	buffer2d_v_normals = new vec2[num_vertices_raw*2];
 
-	for (int i = 0; i < num_vertices_unordered; i++)
+	for (int i = 0; i < num_vertices_raw; i++)
 	{
 		vector<int> neighbor_faces = vertex_faces_neighbors[i];
 		vec3 v_normal(0);
@@ -357,7 +361,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 	updateTransform();			//TODO Currently update only when changed
 	updateTransformWorld();		//TODO Currently update only when changed
-
 #ifdef _DEBUG
 	//cout << "trnsl: " << _trnsl << endl;
 	//cout << "trnsl w: " << _trnsl_w << endl;
@@ -373,12 +376,35 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
 	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
 
-	int i = 0;
-	for (; i < num_vertices; i++)
-	{
+	//int i = 0;
+	//for (; i < num_vertices; i++)	// We are multplying duplicated vertices
+	//{
 
-		// Homogenous vector for calculations:
-		vec4 v_i(vertex_positions[i]);
+	//	// Homogenous vector for calculations:
+	//	vec4 v_i(vertex_positions[i]);
+
+	//	// Camera: ASSUMPTION: No scaling on camera
+	//	//	cTransform =	 [ R     T ]
+	//	//					 [ 0     1 ]
+	//	// 
+	//	// cTransform_inv =	 [ R^t  -R^t*T]
+	//	//					 [ 0	 1	  ]
+	//	//
+
+	//	// Transform	
+	//	v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+	//	
+	//	// Save result
+	//	t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
+
+
+	//	buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
+
+	//}
+	int i = 0;
+	for (auto vertex : vertex_positions_raw)
+	{
+		vec4 v_i(vertex_positions_raw[i]);
 
 		// Camera: ASSUMPTION: No scaling on camera
 		//	cTransform =	 [ R     T ]
@@ -387,19 +413,24 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		// cTransform_inv =	 [ R^t  -R^t*T]
 		//					 [ 0	 1	  ]
 		//
-
-		// Transform	
+			 //Transform					//-> object
 		v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
 		
 		// Save result
-		t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
+		t_vertex_positions_raw[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
 
+		i++;
+	}
 
-		buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
+	// Model buffer
+	for (int j = 0; j < num_vertices; j++)
+	{
+		vec3 v = t_vertex_positions_raw[faces_v_indices[j]];
+		buffer2d[j] = vec2(v.x, v.y);	// Should be already normalized after projection
 
 	}
 
-	// Bounding box
+	// Bounding box buffer
 	if (showBoundingBox)
 	{
 		for (int j = 0; j < num_bbox_vertices; j++)
@@ -408,6 +439,42 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
 
 			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
+		}
+	}
+
+	// Vertex normals buffer
+	if (showVertexNormals)
+	{
+		for (int j = 0; j < num_vertices_raw; j++)
+		{
+			vec4 v_j(vertex_normals[j]);
+			v_j = projection * (cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+			v_j -= t_vertex_positions_raw[j];	// To make it go out of the vertex
+			buffer2d_v_normals[j] = vec2(v_j.x, v_j.y);
+		}
+	}
+	// Face normals buffer
+	if (showFaceNormals)
+	{
+		for (int j = 0; j < num_faces; j++)
+		{
+			vec4 v_j(face_normals[j]);
+			v_j = projection * (cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+			v_j = normalize(v_j);	//Normal
+																															   //v_j -= t_vertex_positions_raw[j];	// TODO: Make it go out of the face
+			// Cacluate center of face:
+			vec3 v0, v1, v2;
+			v0 = t_vertex_positions_raw[faces_v_indices[j * 3 + 0]];
+			v1 = t_vertex_positions_raw[faces_v_indices[j * 3 + 1]];
+			v2 = t_vertex_positions_raw[faces_v_indices[j * 3 + 2]];
+
+			vec3 c_of_mass(v0 + v1 + v2);
+			c_of_mass /= 3;
+			//c_of_mass += v_j;
+			v_j = vec4(c_of_mass) + v_j;
+			buffer2d_f_normals[j * 2 + 0] = vec2(c_of_mass.x, c_of_mass.y);
+			buffer2d_f_normals[j * 2 + 1] = vec2(v_j.x, v_j.y);
+
 		}
 	}
 }
@@ -423,6 +490,16 @@ void MeshModel::updateTransform()
 
 	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
 
+
+	// Inverse
+	mat4 trnsl_m_inv = Translate(-_trnsl.x, -_trnsl.y, -_trnsl.z);	//minus
+	mat4 rot_m_x_inv = transpose(rot_m_x);
+	mat4 rot_m_y_inv = transpose(rot_m_y);
+	mat4 rot_m_z_inv = transpose(rot_m_z);
+	mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
+
+	_model_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
+
 }
 
 void MeshModel::updateTransformWorld()
@@ -434,6 +511,16 @@ void MeshModel::updateTransformWorld()
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
 
 	_world_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
+	
+	// Inverse
+	mat4 trnsl_m_inv = Translate(-_trnsl_w.x, -_trnsl_w.y, -_trnsl_w.z);	//minus
+	mat4 rot_m_x_inv = transpose(rot_m_x);
+	mat4 rot_m_y_inv = transpose(rot_m_y);
+	mat4 rot_m_z_inv = transpose(rot_m_z);
+	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
+
+	_world_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
+
 }
 
 void MeshModel::setTranslation(vec3& trnsl)

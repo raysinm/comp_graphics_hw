@@ -45,6 +45,7 @@ public:
 							vec3(0.5, -0.5, 0.5),
 							vec3(-0.5,  0.5, 0.5),
 							vec3(0.5,  0.5, 0.5),
+
 							vec3(-0.5, -0.5,  -0.5),
 							vec3(0.5, -0.5,  -0.5),
 							vec3(-0.5,  0.5,  -0.5),
@@ -85,7 +86,11 @@ public:
 		//}
 		//cout << endl;
 		//TODO: Add vertex normals
+		t_vertex_positions_raw = vector<vec3>(num_vertices_raw);
+
 		initBoundingBox();
+		calculateFaceNormals();
+		estimateVertexNormals();
 	}
 };
 

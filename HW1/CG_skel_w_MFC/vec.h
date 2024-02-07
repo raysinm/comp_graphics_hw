@@ -365,7 +365,7 @@ struct vec4 {
     vec4(GLfloat s = GLfloat(0.0)) :
         x(s), y(s), z(s), w(s) {}
 
-    vec4(GLfloat x, GLfloat y, GLfloat z, GLfloat w) :
+    vec4(GLfloat x, GLfloat y, GLfloat z, GLfloat w=1.0) :
         x(x), y(y), z(z), w(w) {}
 
     vec4(const vec4& v) { x = v.x;  y = v.y;  z = v.z;  w = v.w; }

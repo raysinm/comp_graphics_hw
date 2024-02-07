@@ -56,7 +56,7 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color=vec3(0))
+void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
 		For example:
@@ -66,7 +66,7 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color=ve
 		and so on...
 	*/
 
-	for (unsigned i = 0; i < len; i+=3)
+	for (unsigned int i = 0; i < len; i+=3)
 	{
 		//A   B    C    is the triangle
 		//i, i+1, i+2 
@@ -94,10 +94,10 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color=ve
 	}
 }
 
-void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color = vec3(0))
+void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
 {
 
-	for (unsigned i = 0; i < len; i+=2)
+	for (unsigned int  i = 0; i < len; i+=2)
 	{
 		// A B makes the line
 
@@ -120,7 +120,7 @@ void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color = vec3(
 	}
 }
 
-void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec3(0))
+void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
 {
 	if (B.x < A.x)
 	{
@@ -167,7 +167,7 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec3(0))
 
 }
 
-void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color = vec3(0))
+void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color)
 {
 	if (B.x < A.x)
 	{

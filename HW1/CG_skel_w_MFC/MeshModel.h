@@ -19,21 +19,23 @@ class MeshModel : public Model
 protected:
 	MeshModel();
 	vec3* vertex_positions = nullptr;	// In model space- model transformations are applied immidiatly
-	//vec3* vertex_positions_unordered = nullptr;
-	vector<vec3> vertex_positions_unordered;
+	//vec3* vertex_positions_raw = nullptr;
+	vector<vec3> vertex_positions_raw;
+	vector<vec3> t_vertex_positions_raw;
+
 	vector<int> faces_v_indices;
 	vector<vector<int>> vertex_faces_neighbors;
+	vec3* t_vertex_positions = nullptr;	// Transformed	- Used for pipeline	- No z axis
+	vec3* vertex_normals = nullptr;	// size: Num of vertices ("raw")
+	vec3* face_normals = nullptr; // size: Num of faces
+
 
 	vec3* b_box_vertices = nullptr;
 	unsigned int num_vertices;
-	unsigned int num_vertices_unordered;
+	unsigned int num_vertices_raw;
 	unsigned int num_faces;
 	unsigned int num_bbox_vertices = 36;
 	
-	vec3* t_vertex_positions = nullptr;	// Transformed	- Used for pipeline	- No z axis
-	vec3* vertex_normals = nullptr;
-	vec3* face_normals = nullptr;
-
 	vec2* buffer2d = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
 	vec2* buffer2d_bbox = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
 	vec2* buffer2d_v_normals = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
@@ -41,8 +43,10 @@ protected:
 
 	mat4 _world_transform;
 	mat4 _model_transform;
+	mat4 _world_transform_inv;	// Needed for normal
+	mat4 _model_transform_inv; // Needed for normal
 
-	mat3 _normal_transform;	// ??
+	mat3 _normal_transform;	// FOR NORMALS!!! G = (M^(-1))^T
 
 	friend class Scene;
 
