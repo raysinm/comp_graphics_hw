@@ -56,7 +56,7 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
+void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color=vec3(0))
 {
 	/*	Each 3 indexes make up a face.
 		For example:
@@ -94,7 +94,7 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
 	}
 }
 
-void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
+void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color = vec3(0))
 {
 
 	for (unsigned i = 0; i < len; i+=2)
@@ -120,7 +120,7 @@ void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
 	}
 }
 
-void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
+void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec3(0))
 {
 	if (B.x < A.x)
 	{
@@ -167,7 +167,7 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
 
 }
 
-void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color)
+void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color = vec3(0))
 {
 	if (B.x < A.x)
 	{

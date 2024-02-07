@@ -39,8 +39,8 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
-	void SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color);
-	void SetBufferLines(vec2* points, unsigned int len, vec4 color);
+	void SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color=vec3(0));
+	void SetBufferLines(vec2* points, unsigned int len, vec4 color = vec3(0));
 
 	// New funcs
 	void CreateTexture();
@@ -53,8 +53,8 @@ public:
 	GLuint m_textureID;
 private:
 
-	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color);
-	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color);
+	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec3(0));
+	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color=vec3(0));
 	float* m_outBuffer; // 3*width*height
 
 };
