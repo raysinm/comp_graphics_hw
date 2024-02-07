@@ -78,7 +78,12 @@ MeshModel::MeshModel()
 MeshModel::MeshModel(string fileName) 
 {
 	loadFile(fileName);
+	// Now we should have faces and their indices
 	buffer2d = new vec2[num_vertices+num_bbox_vertices];
+	for (int i = 0; i < num_vertices; i++)
+	{
+		vertex_positions[i] = vertex_positions_unordered[faces_v_indices[i]];
+	}
 	initBoundingBox();
 	ResetAllUserTransforms();
 
@@ -100,7 +105,7 @@ void MeshModel::loadFile(string fileName)
 {
 	ifstream ifile(fileName.c_str());
 	vector<FaceIdcs> faces;
-	vector<vec3> vertices;
+	//vector<vec3> vertices;
 	vector<vec3> verticesNormals;
 
 	while (!ifile.eof())
@@ -118,7 +123,8 @@ void MeshModel::loadFile(string fileName)
 		// based on the type parse data
 		if (lineType == "v") //Vertex  /*BUG - fixed*/
 		{
-			vertices.push_back(vec3fFromStream(issLine));
+			//vertices.push_back(vec3fFromStream(issLine));
+			vertex_positions_unordered.push_back(vec3fFromStream(issLine));
 		}
 		else if (lineType == "f") //Face   /*BUG - fixed*/
 		{
@@ -144,23 +150,57 @@ void MeshModel::loadFile(string fileName)
 	//f 1 3 4
 	//Then vertex_positions should contain:
 	//vertex_positions={v1,v2,v3,v1,v3,v4}
+	num_faces = faces.size();
+	num_vertices = 3 * num_faces;//Each face is made from 3 vertices
+	//num_vertices_unordered = vertices.size();
+	num_vertices_unordered = vertex_positions_unordered.size();
 
-	num_vertices = 3 * faces.size(); //Each face is made from 3 vertices
 	vertex_positions = new vec3[num_vertices];
 	vertex_normals	 = new vec3[num_vertices];
 	t_vertex_positions = new vec3[num_vertices];
-	
+	//faces_indices = new vec3[num_faces];
+	//vertex_positions_unordered = new vec3[num_vertices_unordered];
+
+	bool v_normals_exist = verticesNormals.size() > 0;
 	//iterate through all stored faces and create triangles
-	int k=0;
-	for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
+
+	
+	for (auto face : faces)
 	{
-		FaceIdcs current = *it;
 		for (int i = 0; i < 3; i++)
 		{
-			vertex_positions[k] = vertices[current.v[i] - 1];
-			vertex_normals[k]   = verticesNormals[current.vn[i] - 1];
-			k++;
+			int v_index = face.v[i] - 1;
+			faces_v_indices.push_back(v_index);
+
+			if (v_normals_exist)
+				vertex_normals[v_index] = verticesNormals[face.vn[i] - 1];
+			
 		}
+	}
+
+	//for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
+	//{
+	//	FaceIdcs current_face = *it;
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		int v_index = current_face.v[i] - 1;
+	//		faces_indices[k] = v_index;	// Saving vertex indices for later use
+	//		vertex_faces_neighbors[v_index].push_back(k);	// Adding current face as neighbor to vertex (needed for normal calculation)
+	//		// Now we want to keep for each vertex, all of its neighbors
+	//									
+	//		//vertex_positions[k] = vertices[current_face.v[i] - 1];	// 1-based indexing to 0-based indexing
+	//		//vertex_positions[k] = vertices_positions_unordered[current_face.v[i] - 1];	// 1-based indexing to 0-based indexing
+
+	//		if (v_normals_exist)
+	//			vertex_normals[k]   = verticesNormals[current_face.vn[i] - 1];
+	//		//k++;
+	//	k++;	// new change
+	//	}
+	//}
+	calculateFaceNormals();
+	if (!v_normals_exist)
+	{
+		estimateVertexNormals();
 	}
 
 
@@ -174,6 +214,7 @@ void MeshModel::initBoundingBox()
 	// Bounding box init
 	b_box_vertices = new vec3[num_bbox_vertices];	// 12 triangular faces
 	
+	// TODO: If changing to faces indices, use min(), max() in vector vertex_positions_unoredered maybe
 		// Find min and max coordinates
 	float min_x, min_y, min_z, max_x, max_y, max_z;
 	min_x = max_x = vertex_positions[0].x;
@@ -228,6 +269,49 @@ void MeshModel::initBoundingBox()
 	}
 
 
+}
+
+void MeshModel::calculateFaceNormals()
+{
+	int num_faces = num_vertices / 3;
+	if (face_normals == nullptr)
+		face_normals = new vec3[num_faces];	// Should be int
+
+	for (int i = 0; i < num_faces; i++)
+	{
+		//int k = i * 3;
+		//vec3 v1 = vertex_positions[k + 1] - vertex_positions[k];
+		//vec3 v2 = vertex_positions[k + 2] - vertex_positions[k];
+
+		vec3 v_i = vertex_positions_unordered[faces_v_indices[i+0]];
+		vec3 v_j = vertex_positions_unordered[faces_v_indices[i+1]];
+		vec3 v_k = vertex_positions_unordered[faces_v_indices[i+2]];
+		vec3 v_ji = v_j - v_i;
+		vec3 v_ki = v_k - v_i;
+
+		face_normals[i] = cross(v_ji, v_ki);
+	}
+}
+void MeshModel::estimateVertexNormals()
+{
+	if (face_normals == nullptr)	return;
+		//area : length(cross(v1,v2))/2;
+	for (int i = 0; i < num_vertices_unordered; i++)
+	{
+		vector<int> neighbor_faces = vertex_faces_neighbors[i];
+		vec3 v_normal(0);
+		GLfloat area_tot = 0;
+		for (auto neighbor_i : neighbor_faces)
+		{
+			vec3 f_normal = face_normals[neighbor_i];
+			GLfloat area = length(f_normal);	// Should be cross product of face vectors TODO: CHECK
+			v_normal += f_normal * area;
+			area_tot += area;
+		}
+		// Maybe not neccesary:
+		v_normal /= area_tot;
+		vertex_normals[i] = v_normal;
+	}
 }
 
 void MeshModel::draw(mat4& cTransform, mat4& projection)
