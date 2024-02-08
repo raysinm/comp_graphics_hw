@@ -7,7 +7,6 @@
 #include "mat.h"
 #include "GL/glew.h"
 
-
 using namespace std;
 class Renderer
 {
@@ -28,7 +27,7 @@ class Renderer
 	//////////////////////////////
 	
 public:
-	Renderer(int width, int height,GLFWwindow* window);
+	Renderer(int width, int height, GLFWwindow* window);
 	~Renderer(void);
 	void Init();
 	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* normals=NULL);
@@ -45,6 +44,7 @@ public:
 	// New funcs
 	void CreateTexture();
 	vec2 GetBufferSize();
+	vec2 GetWindowSize();
 	void update(int width, int height);
 	void updateTexture();
 	void updateBuffer();

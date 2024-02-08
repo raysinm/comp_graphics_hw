@@ -114,8 +114,10 @@ public:
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawGUI();
+	void resize_callback_handle(int width, int height);
 	void setViewPort(vec4& vp);
 	friend bool showInputDialog();
+
 	Camera* GetActiveCamera();
 	Model* GetActiveModel();
 

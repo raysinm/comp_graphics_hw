@@ -235,7 +235,6 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 	return;
 }
 
-
 /////////////////////////////////////////////////////
 //OpenGL stuff. Don't touch.
 
@@ -346,6 +345,14 @@ void Renderer::updateTexture()
 
 	// Allocate texture storage with the updated buffer data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
+}
+
+vec2 Renderer::GetWindowSize()
+{
+	int width, height;
+	glfwGetFramebufferSize(m_window, &width, &height);
+
+	return vec2(width, height);
 }
 
 vec2 Renderer::GetBufferSize()

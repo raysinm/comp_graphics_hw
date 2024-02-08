@@ -30,7 +30,6 @@ float mouse_scroll;
 //----------------------------------------------------------------------------
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
-const float modelAspectRatio = 16.0f / 9.0f;
 
 //----------------------------------------------------------------------------
 // ---------------------- Callbacks functions --------------------------------
@@ -111,33 +110,7 @@ void resize_callback(GLFWwindow* window, int width, int height)
 	if (!renderer || !scene)
 		return;
 	
-	float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
-	height -= (int)mainMenuBarHeight;
-
-
-	// Calculate aspect ratio
-	float aspect = (float)width / (float)height;
-
-	// Calculate new viewport size
-	int newWidth = width, newHeight = height;
-	if (aspect > modelAspectRatio)
-		newWidth = (int)((float)height * modelAspectRatio);
-	else
-		newHeight = (int)((float)width / modelAspectRatio);
-
-	// Calculate viewport position to keep it centered
-	int xOffset = abs(width - newWidth)   / 2;
-	int yOffset = (abs(height - newHeight) / 2) + mainMenuBarHeight;
-	
-	// Set viewport
-	glViewport(xOffset, yOffset, newWidth, newHeight);
-
-	//Update buffer
-	renderer->update(newWidth, newHeight);
-
-	//Update Scene
-	scene->setViewPort( vec4(xOffset, yOffset, newWidth, newHeight) );
-
+	scene->resize_callback_handle(width, height);
 }
 
 int my_main(int argc, char** argv)
@@ -204,6 +177,7 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 	renderer = new Renderer(START_WIDTH, START_HEIGHT, window);
 	scene = new Scene(renderer);
+	
 
 
 //----------------------------------------------------------------------------

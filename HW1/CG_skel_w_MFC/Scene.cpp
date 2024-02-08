@@ -16,6 +16,8 @@ bool add_showModelDlg = false, add_showCamDlg = false;
 bool showTransWindow = false;
 bool constScaleRatio = false;
 bool constScaleRatio_w = false;
+int transformationWindowWidth = 0;
+
 // TODO: Decide on ranges for transformations, projection
 const float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
@@ -102,7 +104,6 @@ void Camera::setPerspectiveByFov()
 	setPerspective();
 	return;
 }
-
 
 void Camera::setFovAspectByParams()
 {
@@ -246,6 +247,7 @@ void Scene::draw()
 
 }
 
+bool closedTransfWindowFlag = false;
 void Scene::drawGUI()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -261,8 +263,21 @@ void Scene::drawGUI()
 	if (!showTransWindow && activeModel != NOT_SELECTED) //UnSelect the object if it's transformation windows closed
 	{
 		models[activeModel]->selected = false;
-		activeModel = false;
+		activeModel = NOT_SELECTED;
+
 	}
+	if (!showTransWindow)
+	{
+		if (!closedTransfWindowFlag)
+		{
+			//Call manually the resize callback to update the scene:
+			resize_callback_handle(m_renderer->GetWindowSize().x, m_renderer->GetWindowSize().y);
+			closedTransfWindowFlag = true;
+			transformationWindowWidth = 0;
+		}
+	}
+
+		
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("Add"))
@@ -328,7 +343,6 @@ void Scene::drawGUI()
 							UpdateModelSelection();
 
 							showTransWindow = true;
-							cout << "(debug) active model: " << activeModel << endl;
 						}
 					}
 					ImGui::EndMenu();
@@ -349,7 +363,6 @@ void Scene::drawGUI()
 						activeCamera = c;
 						cameras[c]->selected = true;
 						showTransWindow = true;
-						cout << "(debug) active Camera: " << activeCamera<< endl;
 					}
 				}
 				ImGui::EndMenu();
@@ -427,8 +440,20 @@ void Scene::drawGUI()
 	//---------------------------------------------------------
 	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && showTransWindow)
 	{
-		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
+		closedTransfWindowFlag = false;
+		float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
+		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarHeight), ImGuiCond_Always);
+		ImGui::SetNextWindowSizeConstraints(ImVec2(310, m_renderer->GetWindowSize().y - mainMenuBarHeight),\
+											ImVec2(m_renderer->GetWindowSize().x / 2, m_renderer->GetWindowSize().y - mainMenuBarHeight));
+		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove))
 		{
+			int currentWidth = (int)ImGui::GetWindowSize().x;
+			if (currentWidth != transformationWindowWidth)
+			{
+				transformationWindowWidth = currentWidth;
+				resize_callback_handle(m_renderer->GetWindowSize().x, m_renderer->GetWindowSize().y);
+			}
+
 			const char* names[2] = { 0 };
 			names[CAMERA_TAB_INDEX] = "Camera";
 			names[MODEL_TAB_INDEX] = "Model";
@@ -665,7 +690,9 @@ void Scene::drawGUI()
 	}
 
 
+	//---------------------------------------------------------
 	//Check if the popup should be shown
+	//---------------------------------------------------------
 	if (add_showModelDlg || add_showCamDlg)
 	{
 		ImGui::OpenPopup(ADD_INPUT_POPUP_TITLE);
@@ -844,4 +871,39 @@ void Scene::setViewPort(vec4& vp)
 	viewportY	   = vp.y;
 	viewportWidth  = vp.z;
 	viewportHeight = vp.w;
+}
+
+void Scene::resize_callback_handle(int width, int height)
+{
+	/* Take the main menu bar height into account */
+	float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
+	height -= (int)mainMenuBarHeight;
+	
+	/* Take the Transformatins Widnow width into account (if opened) */
+	int transormationWindowGap = showTransWindow ? transformationWindowWidth : 0;
+	width -= transormationWindowGap;
+
+
+	// Calculate aspect ratio
+	float aspect = (float)width / (float)height;
+
+	// Calculate new viewport size
+	int newWidth = width, newHeight = height;
+	if (aspect > modelAspectRatio)
+		newWidth = (int)((float)height * modelAspectRatio);
+	else
+		newHeight = (int)((float)width / modelAspectRatio);
+
+	// Calculate viewport position to keep it centered
+	int xOffset = (abs(width - newWidth) / 2) + transormationWindowGap;
+	int yOffset = (abs(height - newHeight) / 2) + mainMenuBarHeight;
+
+	// Set viewport
+	glViewport(xOffset, yOffset, newWidth, newHeight);
+
+	//Update buffer
+	m_renderer->update(newWidth, newHeight);
+
+	//Update Scene
+	setViewPort(vec4(xOffset, yOffset, newWidth, newHeight));
 }
