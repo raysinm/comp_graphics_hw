@@ -99,6 +99,10 @@ private:
 
 	void ResetPopUpFlags();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
+	int viewportX;
+	int viewportY;
+	int viewportWidth;
+	int viewportHeight;
 
 public:
 	Scene(Renderer* renderer) : m_renderer(renderer)
@@ -110,6 +114,7 @@ public:
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawGUI();
+	void setViewPort(vec4& vp);
 	friend bool showInputDialog();
 	Camera* GetActiveCamera();
 	Model* GetActiveModel();

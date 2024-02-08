@@ -294,7 +294,7 @@ void Renderer::CreateOpenGLBuffer()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
-	glViewport(0, 0, m_width, m_height);
+	//glViewport(0, 0, m_width, m_height);
 }
 
 void Renderer::SwapBuffers()
@@ -327,19 +327,22 @@ void Renderer::CreateTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void Renderer::updateTexture() {
-	// Delete the existing texture
-	glDeleteTextures(1, &m_textureID);
+void Renderer::updateTexture()
+{
+	//Yonatan: It seems to work without all this deleting & generating... better performance without them
 
-	// Generate a new texture
-	glGenTextures(1, &m_textureID);
+	//// Delete the existing texture
+	//glDeleteTextures(1, &m_textureID);
 
-	// Bind the new texture
-	glBindTexture(GL_TEXTURE_2D, m_textureID);
+	//// Generate a new texture
+	//glGenTextures(1, &m_textureID);
 
-	// Set texture parameters (adjust as needed)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//// Bind the new texture
+	//glBindTexture(GL_TEXTURE_2D, m_textureID);
+
+	//// Set texture parameters (adjust as needed)
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// Allocate texture storage with the updated buffer data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
@@ -380,7 +383,6 @@ void Renderer::clearBuffer()
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
 			m_outBuffer[i] = 1.0; //Set all pixels to pure white.
-
 	}
 }
 

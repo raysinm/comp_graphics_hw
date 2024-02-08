@@ -182,17 +182,16 @@ void Scene::draw()
 	drawGUI();
 	
 	//2. Update the buffer (if needed) before rasterization.
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	m_renderer->update(viewport->WorkSize.x, viewport->WorkSize.y);
+	//const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	
 				
-	//2.5 Clear the pixel buffer before drawing new frame
+	//3 Clear the pixel buffer before drawing new frame
 	m_renderer->clearBuffer();
 
-	//2.75 Update camera transformation matrix (cTransform)
-	cameras[activeCamera]->updateTransform();	// Is this the right place?
+	//4 Update camera transformation matrix (cTransform)
+	cameras[activeCamera]->updateTransform();
 
-	//3. draw each MeshModel
+	//5. draw each MeshModel
 	for (auto model : models)
 	{
 		//Don't draw new model before user clicked 'OK'.
@@ -228,6 +227,7 @@ void Scene::draw()
 				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1,0,0));
 
 		}
+		
 		// Face normals
 		if (((MeshModel*)model)->showFaceNormals)
 		{
@@ -239,7 +239,7 @@ void Scene::draw()
 
 	}
 
-	//5. Update the texture. (OpenGL stuff)
+	//6. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
 
 
@@ -423,8 +423,8 @@ void Scene::drawGUI()
 
 
 	//---------------------------------------------------------
-	//------- Show Transformations Dialog - version 1 ---------
-	////---------------------------------------------------------
+	//------------ Transformations Window ---------------------
+	//---------------------------------------------------------
 	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && showTransWindow)
 	{
 		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
@@ -749,6 +749,7 @@ void Scene::drawGUI()
 
 	//------------------------------------
 	//--------  Handle pop-ups -----------
+	//------------------------------------
 	if (add_showModelDlg)
 	{
 		if (GUI_popup_pressedOK)
@@ -796,19 +797,22 @@ void Scene::drawGUI()
 	}
 
 	
-
 	//--------------------------------------------------------------
 	//------ Draw the ImGui::Image (Used for displaying our texture)
  	//--------------------------------------------------------------
-		
-	ImGui::SetNextWindowPos(viewport->WorkPos);
-	ImGui::SetNextWindowSize(viewport->WorkSize);
-	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | \
-		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
-		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
+
+
+	ImVec2 imgPos = ImVec2(viewportX, viewportY);
+	ImVec2 imgSize = ImVec2(viewportWidth, viewportHeight);
+
+	ImGui::SetNextWindowPos (imgPos);
+	ImGui::SetNextWindowSize(imgSize);
+
+	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove			 | \
+											ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
+											ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
 	{
-		// Display the texture in ImGui:
-		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), viewport->WorkSize);
+		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), imgSize);
 		ImGui::End();
 	}
 
@@ -834,3 +838,10 @@ void Scene::UpdateModelSelection()
 	models[activeModel]->selected = true;
 }
 
+void Scene::setViewPort(vec4& vp)
+{
+	viewportX	   = vp.x;
+	viewportY	   = vp.y;
+	viewportWidth  = vp.z;
+	viewportHeight = vp.w;
+}

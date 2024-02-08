@@ -30,6 +30,8 @@ float mouse_scroll;
 //----------------------------------------------------------------------------
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
+const float modelAspectRatio = 16.0f / 9.0f;
+
 //----------------------------------------------------------------------------
 // ---------------------- Callbacks functions --------------------------------
 //----------------------------------------------------------------------------
@@ -103,6 +105,40 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	mouse_scroll = yoffset;
 }
 
+//resize window
+void resize_callback(GLFWwindow* window, int width, int height)
+{
+	if (!renderer || !scene)
+		return;
+	
+	float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
+	height -= (int)mainMenuBarHeight;
+
+
+	// Calculate aspect ratio
+	float aspect = (float)width / (float)height;
+
+	// Calculate new viewport size
+	int newWidth = width, newHeight = height;
+	if (aspect > modelAspectRatio)
+		newWidth = (int)((float)height * modelAspectRatio);
+	else
+		newHeight = (int)((float)width / modelAspectRatio);
+
+	// Calculate viewport position to keep it centered
+	int xOffset = abs(width - newWidth)   / 2;
+	int yOffset = (abs(height - newHeight) / 2) + mainMenuBarHeight;
+	
+	// Set viewport
+	glViewport(xOffset, yOffset, newWidth, newHeight);
+
+	//Update buffer
+	renderer->update(newWidth, newHeight);
+
+	//Update Scene
+	scene->setViewPort( vec4(xOffset, yOffset, newWidth, newHeight) );
+
+}
 
 int my_main(int argc, char** argv)
 {
@@ -178,14 +214,15 @@ int my_main(int argc, char** argv)
 	glfwSetCursorPosCallback(window, mouse_move_callback);
 	glfwSetMouseButtonCallback(window, mouse_click_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetFramebufferSizeCallback(window, resize_callback);
 
 
 //----------------------------------------------------------------------------
 //------------------------------- Main Loop ----------------------------------
 //----------------------------------------------------------------------------
 	
-	bool imgui_show_demo = true;
-	bool show_another_window = true;
+	//Manally call for resize window to start up the window properly
+	resize_callback(window, START_WIDTH, START_HEIGHT);
 
 	while (!glfwWindowShouldClose(window))
 	{
