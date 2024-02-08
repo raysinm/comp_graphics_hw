@@ -21,9 +21,9 @@ const float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
 const float PROJ_RANGE_MIN = -10, PROJ_RANGE_MAX = 10;
 
-const float TRNSL_RANGE_MIN = -10, TRNSL_RANGE_MAX = 10;
-const float ROT_RANGE_MIN = 0, ROT_RANGE_MAX = 360;
-const float SCALE_RANGE_MIN = -10, SCALE_RANGE_MAX = 10;
+const float TRNSL_RANGE_MIN = -40, TRNSL_RANGE_MAX = 40;
+const float ROT_RANGE_MIN = -180, ROT_RANGE_MAX = 180;
+const float SCALE_RANGE_MIN = -1, SCALE_RANGE_MAX = 20;
 
 
 //--------------------------------------------------
@@ -202,7 +202,6 @@ void Scene::draw()
 		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
 
 		//4. TODO: Add camera ' + ' signs. 
-		//5. TODO: Add normals arrow lines (if enabled)
 
 
 		//values: [-1, 1]
@@ -215,7 +214,7 @@ void Scene::draw()
 		if (((MeshModel*)model)->showBoundingBox)
 		{
 			vec2* bbox_vertices = ((MeshModel*)model)->Get2dBuffer(BBOX);
-			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(BBOX);
+			len = ((MeshModel*)model)->Get2dBuffer_len(BBOX);
 			if (bbox_vertices)
 				m_renderer->SetBufferOfModel(bbox_vertices, len, vec4(0,1,0,1));
 		}
@@ -224,18 +223,18 @@ void Scene::draw()
 		if (((MeshModel*)model)->showVertexNormals)
 		{
 			vec2* v_norm_vertices = ((MeshModel*)model)->Get2dBuffer(V_NORMAL);
-			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(V_NORMAL);
+			len = ((MeshModel*)model)->Get2dBuffer_len(V_NORMAL);
 			if (v_norm_vertices)
-				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(0,0,0));
+				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1,0,0));
 
 		}
 		// Face normals
 		if (((MeshModel*)model)->showFaceNormals)
 		{
 			vec2* f_norm_vertices = ((MeshModel*)model)->Get2dBuffer(F_NORMAL);
-			unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(F_NORMAL);
+			len = ((MeshModel*)model)->Get2dBuffer_len(F_NORMAL);
 			if (f_norm_vertices)
-				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0,0,0));
+				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0,0,1));
 		}
 
 	}
@@ -358,67 +357,64 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu(); //End select
 		}
+		
 		// Delete Model/Camera
-		if (ImGui::BeginMenu("Delete..."))
+		if (models.size() > 0 || cameras.size() > 1)
 		{
-			if (models.size() > 0)
+			if (ImGui::BeginMenu("Delete..."))
 			{
-				if (ImGui::BeginMenu("Model"))
+				if (models.size() > 0)
 				{
-					for (int c = 0; c < models.size(); c++)
+					if (ImGui::BeginMenu("Model"))
 					{
-						if (ImGui::MenuItem(models[c]->getName().c_str(), NULL))
+						for (int c = 0; c < models.size(); c++)
 						{
-							models.erase(models.begin() + c);
-							if (c == activeModel)
+							if (ImGui::MenuItem(models[c]->getName().c_str(), NULL))
 							{
-								activeModel = NOT_SELECTED;	// Selected model deleted
+								models.erase(models.begin() + c);
+								if (c == activeModel)
+								{
+									activeModel = NOT_SELECTED;	// Selected model deleted
+								}
+								else if (activeModel > c)
+								{
+									--activeModel;	// index moved
+								}
 							}
-							else if (activeModel > c)
-							{
-								--activeModel;	// index moved
-							}
-						
-							cout << "(debug) Deleted model: " << c << endl;
 						}
+						ImGui::EndMenu();
 					}
-					ImGui::EndMenu();
 				}
-			}
-			if (cameras.size() > 1)	// Delete only if there is more than one camera
-			{ 
-				if (ImGui::BeginMenu("Camera"))
+				if (cameras.size() > 1)	// Delete only if there is more than one camera
 				{
-					for (int c = 0; c < cameras.size(); c++)
+					if (ImGui::BeginMenu("Camera"))
 					{
-						if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL))
+						for (int c = 0; c < cameras.size(); c++)
 						{
-							/* Delete current camera */
-							cameras.erase(cameras.begin() + c);
-							cout << "activeCamera before" << activeCamera<< endl;
-							cout << "c" << c << endl;
-
-							if (c == activeCamera)	//	Select first camera by default
+							if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL))
 							{
-								activeCamera = 0;
-							}
-							else if (activeCamera > c)
-							{
-								--activeCamera;	// index changed
-							}
-							cout << "activeCamera after" << activeCamera << endl;
+								/* Delete current camera */
+								cameras.erase(cameras.begin() + c);
 
-							cout << "(debug) Deleted Camera: " << c << endl;
-							cout << "(debug) cameras size: " << cameras.size() << endl;
+								if (c == activeCamera)
+								{
+									activeCamera = max(0, activeCamera - 1);
+								}
+								else if (activeCamera > c)
+								{
+									--activeCamera;	// index changed
+								}
+								cameras[activeCamera]->selected = true;
 
+							}
 						}
+						ImGui::EndMenu();
 					}
-				ImGui::EndMenu();
+
 				}
 
+				ImGui::EndMenu(); //End delete
 			}
-
-			ImGui::EndMenu(); //End delete
 		}
 
 
@@ -546,9 +542,9 @@ void Scene::drawGUI()
 						ImGui::SeparatorText(sep_text.c_str());
 
 						ImGui::Text("Translation (X Y Z)");
-						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
-						ImGui::SliderFloat("##Y_MT", &(g_trnsl->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
-						ImGui::SliderFloat("##Z_MT", &(g_trnsl->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX); ImGui::SameLine();
+						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+						ImGui::SliderFloat("##Y_MT", &(g_trnsl->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+						ImGui::SliderFloat("##Z_MT", &(g_trnsl->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
 						if (ImGui::Button("reset##MT"))
 						{
 							if (n == CAMERA_TAB_INDEX)
@@ -607,9 +603,9 @@ void Scene::drawGUI()
 							vec4* scale_w = &(activeMesh->_scale_w);
 
 							ImGui::Text("Translation (X Y Z)");
-							ImGui::SliderFloat("##X_WT", &(trnsl_w->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Y_WT", &(trnsl_w->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Z_WT", &(trnsl_w->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::SliderFloat("##X_WT", &(trnsl_w->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Y_WT", &(trnsl_w->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+							ImGui::SliderFloat("##Z_WT", &(trnsl_w->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
 							if (ImGui::Button("reset##WT"))
 							{
 								activeMesh->ResetUserTransform_translate_world();

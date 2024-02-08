@@ -137,7 +137,7 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 //------------------------------ glew stuff ----------------------------------
 //----------------------------------------------------------------------------
- 
+
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
@@ -156,13 +156,8 @@ int my_main(int argc, char** argv)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= (ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
-
-	//--- Styling
-	// Font
 	io.Fonts->AddFontFromFileTTF("../imgui/fonts/NotoSans-Medium.ttf", 18.0f);
 	
-	//ImGuiStyle& style = ImGui::GetStyle();
-	//style.FramePadding.y = 15.0f;  // Adjust this value to change the main menu bar height
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(window, true); // install_callback=true installs GLFW callbacks and chain to existing ones.
@@ -201,56 +196,18 @@ int my_main(int argc, char** argv)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
 
-		/* All the GUI and scene draw will happen from scene->draw fuction*/
-		scene->draw();
-
-
-
-
-//#ifdef _DEBUG
-
-		// 1. Show the big demo window
-		
-		ImGui::ShowDemoWindow(&imgui_show_demo); // Show demo window! :)
-		//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-		//{
-		//	static float f = 0.0f;
-		//	static int counter = 0;
-
-		//	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-		//	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		//	ImGui::Checkbox("Demo Window", &imgui_show_demo);      // Edit bools storing our window open/close state
-		//	ImGui::Checkbox("Another Window", &show_another_window);
-
-		//	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-		//	ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		//	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-		//		counter++;
-		//	ImGui::SameLine();
-		//	ImGui::Text("counter = %d", counter);
-
-		//	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		//	ImGui::End();
-		//}
-		//// 3. Show another simple window.
-		//if (show_another_window)
-		//{
-		//	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		//	ImGui::Text("Hello from another window!");
-		//	if (ImGui::Button("Close Me"))
-		//		show_another_window = false;
-		//	ImGui::End();
-		//}
-		//
-
-		/* Render the scene */
-		ImGui::Render();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		/* All the GUI and scene draw will happen from scene->draw fuction*/
+		scene->draw();
+
+		/* Debug window (demo window with all the ImGui controls */
+		//ImGui::ShowDemoWindow(&imgui_show_demo);
+
+
+		/* Render the scene */
+		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		/* Swap buffers */
@@ -260,9 +217,7 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 //------------------------------- Terminate ----------------------------------
 //----------------------------------------------------------------------------
-	
 	glDeleteTextures(1, &(renderer->m_textureID));
-
 	glfwDestroyWindow(window);
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

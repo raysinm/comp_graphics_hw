@@ -8,51 +8,54 @@
 class PrimMeshModel : public MeshModel
 {
 
-};
+protected:
+	PrimMeshModel(int num_vertex_raw, int num_faces)
+	{
+		this->num_vertices_raw			= num_vertex_raw;
+		this->num_faces					= num_faces;
+		this->num_vertices				= num_faces * 3;
+		
+		vertex_positions_raw			= vector<vec3>(num_vertices_raw);
+		t_vertex_positions_normalized	= vector<vec3>(num_vertices_raw);
+		vertex_faces_neighbors			= vector<vector<int>>(num_vertices_raw);
+		faces_v_indices					= vector<int> (num_faces * 3);
+		vertex_normals					= vector<vec3>(num_vertices_raw);
+		buffer2d						= new vec2[num_vertices];
+		buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
+		buffer2d_f_normals				= new vec2[num_faces * 2];
+	}
 
-//class TriPyramid : PrimMeshModel	// triangular base
-//{
-//public:
-//	TriPyramid::TriPyramid()	
-//	{
-//		name = "Triangular Pyramid";
-//		
-//		int num_faces = 4;
-//		vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
-//		vertex_normals = new vec3[num_vertices];
-//		buffer2d = new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
-//
-//		vertex_positions = {vec3(0,0,0), vec3()}
-//	}
-//};
+	void initNeighbors()
+	{
+		//iterate through all stored faces and store neighbors normal vectors (for each vertex)
+		for (unsigned int face_id = 0; face_id < num_faces; face_id++)
+			for (unsigned int i = 0; i < 3; i++)
+				vertex_faces_neighbors[faces_v_indices[(face_id * 3) + i]].push_back(face_id);
+	}
+};
 
 class Cube : public PrimMeshModel
 {
 public:
-	Cube()
+	Cube() : PrimMeshModel(8, 12)
 	{
 		name = "Cube";
-		int num_triangles = 12; // 6 square faces, 2 triangles each
-		num_vertices = num_triangles*3;	// With repeats
 		
-		vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
-		t_vertex_positions = new vec3[num_vertices];
-												   //vertex_normals = new vec3[num_vertices];
-		buffer2d = new vec2[num_vertices+num_bbox_vertices]; // Added bbox vertices
-		
-		 std::vector<vec3> v= { 
-							vec3(-0.5, -0.5, 0.5), 
-							vec3(0.5, -0.5, 0.5),
-							vec3(-0.5,  0.5, 0.5),
-							vec3(0.5,  0.5, 0.5),
+		 vertex_positions_raw =
+		 { 
+			vec3(-0.5, -0.5, 0.5), 
+			vec3(0.5, -0.5, 0.5),
+			vec3(-0.5,  0.5, 0.5),
+			vec3(0.5,  0.5, 0.5),
 
-							vec3(-0.5, -0.5,  -0.5),
-							vec3(0.5, -0.5,  -0.5),
-							vec3(-0.5,  0.5,  -0.5),
-							vec3(0.5,  0.5,  -0.5)
+			vec3(-0.5, -0.5,  -0.5),
+			vec3(0.5, -0.5,  -0.5),
+			vec3(-0.5,  0.5,  -0.5),
+			vec3(0.5,  0.5,  -0.5)
 		};
 
-		 std::vector<GLint> indices = {
+		 faces_v_indices =
+		 {
 			 0,2,3,	// Front
 			 0,1,3,
 
@@ -73,50 +76,35 @@ public:
 		 };
 
 
-		for (int i = 0; i < num_vertices; i++)
-		{
-			vertex_positions[i] = vec3(v[indices[i]]);
-
-		}
-
-		//cout << "CUBE: vertex_positions: ";
-		//for (int j = 0; j <= num_vertices; j++)
-		//{
-		//	cout << vertex_positions[j];
-		//}
-		//cout << endl;
-		//TODO: Add vertex normals
-		t_vertex_positions_raw = vector<vec3>(num_vertices_raw);
-
-		initBoundingBox();
-		calculateFaceNormals();
-		estimateVertexNormals();
+			 
+		 
+		 /* Call these functions after setting the vertex & faces data */
+		 initNeighbors();
+		 initBoundingBox();
+		 calculateFaceNormals();
+		 estimateVertexNormals();
 	}
 };
 
 class TriPyramid : public PrimMeshModel
 {
 public:
-	TriPyramid()
+	TriPyramid() : PrimMeshModel(5, 4)
 	{
-		name = "Triangular-based Pyramid";
-		int num_triangles = 4; // 6 square faces, 2 triangles each
-		num_vertices = num_triangles * 3;	// With repeats
+		name = "Pyramid";
 
-		vertex_positions = new vec3[num_vertices]; /*BUG - fixed: each face is made of 3 vertecies.*/
-		t_vertex_positions = new vec3[num_vertices];
-		//vertex_normals = new vec3[num_vertices];
-		buffer2d = new vec2[num_vertices]; //Worst case: each vertex is on a different pixel
 
-		std::vector<vec3> v = {
-						   vec3(0, 0.5, 0),
-						   vec3(-0.5, -0.5, 0.5),
-						   vec3(0.5,  -0.5, 0.5),
-						   vec3(0.5,  -0.5, -0.5),
-						   vec3(-0.5, -0.5,  -0.5)
-};
+		vertex_positions_raw =
+		{
+			vec3(0, 0.5, 0),
+			vec3(-0.5, -0.5, 0.5),
+			vec3(0.5,  -0.5, 0.5),
+			vec3(0.5,  -0.5, -0.5),
+			vec3(-0.5, -0.5,  -0.5)
+		};
 
-		std::vector<GLint> indices = {
+		faces_v_indices =
+		{
 			0,1,2,	// Base
 
 			0,2,3,	// 1
@@ -127,20 +115,11 @@ public:
 		};
 
 
-		for (int i = 0; i < num_vertices; i++)
-		{
-			vertex_positions[i] = vec3(v[indices[i]]);
-
-		}
-
-		//cout << "CUBE: vertex_positions: ";
-		//for (int j = 0; j <= num_vertices; j++)
-		//{
-		//	cout << vertex_positions[j];
-		//}
-		//cout << endl;
-		//TODO: Add vertex normals
+		/* Call these functions after setting the vertex & faces data */
+		initNeighbors();
 		initBoundingBox();
+		calculateFaceNormals();
+		estimateVertexNormals();
 	}
 };
 

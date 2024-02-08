@@ -80,13 +80,16 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	switch (obj)
 	{
 	case MODEL:
-		return num_vertices;
+		return num_vertices_to_draw;
 	case BBOX:
 		return num_bbox_vertices;
 	case V_NORMAL:
-		return num_vertices_raw;
+		return num_vertices_raw*2;
 	case F_NORMAL:
-		return num_faces;
+		return num_faces*2;
+
+	default:
+		return -1;
 	}
 }
 
@@ -97,33 +100,18 @@ MeshModel::MeshModel()
 
 MeshModel::MeshModel(string fileName) 
 {
-	loadFile(fileName);
-	t_vertex_positions_raw = vector<vec3>(num_vertices_raw);
-
-	// Now we should have faces and their indices
-	buffer2d = new vec2[num_vertices+num_bbox_vertices];
-
-	for (int i = 0; i < num_vertices; i++)
-	{
-		vertex_positions[i] = vertex_positions_raw[faces_v_indices[i]];
-	}
-	initBoundingBox();
 	ResetAllUserTransforms();
+	
+	loadFile(fileName);
+	
+	initBoundingBox();
 
+	buffer2d = new vec2[num_vertices];
 
 }
 
 MeshModel::~MeshModel(void)
 {
-	if(vertex_positions)
-		delete[] vertex_positions;
-	if (t_vertex_positions)
-		delete[] t_vertex_positions;
-	if(vertex_normals)
-		delete[] vertex_normals;
-	if (face_normals)
-		delete[] face_normals;
-
 	if (buffer2d)
 		delete[] buffer2d;
 	if (buffer2d_bbox)
@@ -138,7 +126,6 @@ void MeshModel::loadFile(string fileName)
 {
 	ifstream ifile(fileName.c_str());
 	vector<FaceIdcs> faces;
-	//vector<vec3> vertices;
 	vector<vec3> verticesNormals;
 
 	while (!ifile.eof())
@@ -154,16 +141,15 @@ void MeshModel::loadFile(string fileName)
 		issLine >> std::ws >> lineType;
 
 		// based on the type parse data
-		if (lineType == "v") //Vertex  /*BUG - fixed*/
+		if (lineType == "v") //Vertex
 		{
-			//vertices.push_back(vec3fFromStream(issLine));
 			vertex_positions_raw.push_back(vec3fFromStream(issLine));
 		}
-		else if (lineType == "f") //Face   /*BUG - fixed*/
+		else if (lineType == "f") //Face
 		{
 			faces.push_back(issLine);
 		}
-		else if (lineType == "vn") //Vector Normal
+		else if (lineType == "vn") //Vertex Normal
 		{
 			verticesNormals.push_back(vec3fFromStream(issLine));
 		}
@@ -177,95 +163,72 @@ void MeshModel::loadFile(string fileName)
 		}
 	}
 	
-	//Vertex_positions is an array of vec3. Every three elements define a triangle in 3D.
-	//If the face part of the obj is
-	//f 1 2 3
-	//f 1 3 4
-	//Then vertex_positions should contain:
-	//vertex_positions={v1,v2,v3,v1,v3,v4}
-	num_faces = faces.size();
-	num_vertices = 3 * num_faces;//Each face is made from 3 vertices
-	//num_vertices_raw = vertices.size();
 	num_vertices_raw = vertex_positions_raw.size();
+	num_faces = faces.size();
+	num_vertices = 3 * num_faces;			//Each face is made from 3 vertices
 
-	vertex_positions = new vec3[num_vertices];
-	vertex_normals	 = new vec3[num_vertices];
-	buffer2d_v_normals = new vec2[num_vertices_raw*2];
-	buffer2d_f_normals = new vec2[num_faces*2];
-	t_vertex_positions = new vec3[num_vertices];
-	//faces_indices = new vec3[num_faces];
-	//vertex_positions_raw = new vec3[num_vertices_raw];
+	t_vertex_positions_normalized	= vector<vec3> (num_vertices_raw);
+	vertex_normals					= vector<vec3> (num_vertices_raw);
+	vertex_faces_neighbors			= vector<vector<int>> (num_vertices_raw);
+	buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
+	buffer2d_f_normals				= new vec2[num_faces * 2];
+
 
 	bool v_normals_exist = verticesNormals.size() > 0;
-	//iterate through all stored faces and create triangles
 
-	
+	//iterate through all stored faces and create triangles
+	unsigned int face_id = 0;
 	for (auto face : faces)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			int v_index = face.v[i] - 1;
-			faces_v_indices.push_back(v_index);
-
-			if (v_normals_exist)
-				vertex_normals[v_index] = verticesNormals[face.vn[i] - 1];
-			
+			faces_v_indices.push_back(face.v[i] - 1);
+			vertex_faces_neighbors[face.v[i] - 1].push_back(face_id);
 		}
+		face_id++;
 	}
 
-	//for (vector<FaceIdcs>::iterator it = faces.begin(); it != faces.end(); ++it)
-	//{
-	//	FaceIdcs current_face = *it;
-	//	for (int i = 0; i < 3; i++)
-	//	{
-	//		int v_index = current_face.v[i] - 1;
-	//		faces_indices[k] = v_index;	// Saving vertex indices for later use
-	//		vertex_faces_neighbors[v_index].push_back(k);	// Adding current face as neighbor to vertex (needed for normal calculation)
-	//		// Now we want to keep for each vertex, all of its neighbors
-	//									
-	//		//vertex_positions[k] = vertices[current_face.v[i] - 1];	// 1-based indexing to 0-based indexing
-	//		//vertex_positions[k] = vertices_positions_unordered[current_face.v[i] - 1];	// 1-based indexing to 0-based indexing
-
-	//		if (v_normals_exist)
-	//			vertex_normals[k]   = verticesNormals[current_face.vn[i] - 1];
-	//		//k++;
-	//	k++;	// new change
-	//	}
-	//}
+		
 	calculateFaceNormals();
+
 	if (!v_normals_exist)
 	{
 		estimateVertexNormals();
 	}
+	else
+	{
+		for (auto face : faces)
+			for (int i = 0; i < 3; i++)
+				vertex_normals[face.v[i] - 1] = verticesNormals[face.vn[i] - 1];
+	}
+
 
 
 }
 
 void MeshModel::initBoundingBox()
 {
-	// Assuming vertex_positions is initialized
-	if (vertex_positions == nullptr) return;
+	if (vertex_positions_raw.empty()) return;
 	
 	// Bounding box init
-	b_box_vertices = new vec3[num_bbox_vertices];	// 12 triangular faces
-	buffer2d_bbox = new vec2[num_bbox_vertices];
-	// TODO: If changing to faces indices, use min(), max() in vector vertex_positions_unoredered maybe
-		// Find min and max coordinates
-	float min_x, min_y, min_z, max_x, max_y, max_z;
-	min_x = max_x = vertex_positions[0].x;
-	min_y = max_y = vertex_positions[0].y;
-	min_z = max_z = vertex_positions[0].z;
+	b_box_vertices = vector<vec3> (num_bbox_vertices);
+	buffer2d_bbox = new vec2      [num_bbox_vertices];
 
-	for (int i = 0; i < num_vertices; i++)
+	float min_x, min_y, min_z, max_x, max_y, max_z;
+	min_x = max_x = vertex_positions_raw[0].x;
+	min_y = max_y = vertex_positions_raw[0].y;
+	min_z = max_z = vertex_positions_raw[0].z;
+
+	for (int i = 0; i < num_vertices_raw; i++)
 	{
-		vec3 v = vertex_positions[i];
-		if (v.x < min_x)	min_x = v.x;
+		vec3 v = vertex_positions_raw[i];
+		if (v.x < min_x)		min_x = v.x;
 		else if (v.x > max_x)	max_x = v.x;
 		
-		if (v.y < min_y)	min_y = v.y;
+		if (v.y < min_y)		min_y = v.y;
 		else if (v.y > max_y)	max_y = v.y;
 		
-		if (v.z < min_z)	min_z = v.z;
+		if (v.z < min_z)		min_z = v.z;
 		else if (v.z > max_z)	max_z = v.z;
 	}
 	std::vector<vec3> v = {
@@ -299,58 +262,36 @@ void MeshModel::initBoundingBox()
 	};
 
 	for (int i = 0; i < num_bbox_vertices; i++)
-	{
 		b_box_vertices[i] = v[indices[i]];
-	}
-
-
 }
 
 void MeshModel::calculateFaceNormals()
-{
-	int num_faces = num_vertices / 3;
-	if (face_normals == nullptr)
+{	
+	for (int i = 0; i < num_faces; i++)
 	{
-		face_normals = new vec3[num_faces];	// Should be int
-	}
+		vec3 v_i = vertex_positions_raw[faces_v_indices[(i * 3) + 0]];
+		vec3 v_j = vertex_positions_raw[faces_v_indices[(i * 3) + 1]];
+		vec3 v_k = vertex_positions_raw[faces_v_indices[(i * 3) + 2]];
 
-	for (int i = 0; i < num_vertices; i+=3)
-	{
-		//int k = i * 3;
-		//vec3 v1 = vertex_positions[k + 1] - vertex_positions[k];
-		//vec3 v2 = vertex_positions[k + 2] - vertex_positions[k];
-
-		vec3 v_i = vertex_positions_raw[faces_v_indices[i+0]];
-		vec3 v_j = vertex_positions_raw[faces_v_indices[i+1]];
-		vec3 v_k = vertex_positions_raw[faces_v_indices[i+2]];
 		vec3 v_ji = v_j - v_i;
 		vec3 v_ki = v_k - v_i;
 
-		face_normals[int(i/3)] = normalize(cross(v_ji, v_ki));
+		face_normals.push_back( normalize(cross(v_ji, v_ki)) );
 	}
 }
+
 void MeshModel::estimateVertexNormals()
 {
-	if (face_normals == nullptr)	return;
-		//area : length(cross(v1,v2))/2;
-	//if (buffer2d_v_normals == nullptr)
-	//	buffer2d_v_normals = new vec2[num_vertices_raw*2];
-
-	for (int i = 0; i < num_vertices_raw; i++)
+	for (unsigned int i = 0; i < num_vertices_raw; i++)
 	{
 		vector<int> neighbor_faces = vertex_faces_neighbors[i];
+
 		vec3 v_normal(0);
-		GLfloat area_tot = 0;
+
 		for (auto neighbor_i : neighbor_faces)
-		{
-			vec3 f_normal = face_normals[neighbor_i];
-			GLfloat area = length(f_normal);	// Should be cross product of face vectors TODO: CHECK
-			v_normal += f_normal * area;
-			area_tot += area;
-		}
-		// Maybe not neccesary:
-		v_normal /= area_tot;
-		vertex_normals[i] = v_normal;
+			v_normal += face_normals[neighbor_i];
+		
+		vertex_normals[i] = normalize(v_normal);
 	}
 }
 
@@ -359,84 +300,70 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
 		return;
 
-	updateTransform();			//TODO Currently update only when changed
-	updateTransformWorld();		//TODO Currently update only when changed
-#ifdef _DEBUG
-	//cout << "trnsl: " << _trnsl << endl;
-	//cout << "trnsl w: " << _trnsl_w << endl;
-	//cout << "rot: " << _rot << endl;
-	//cout << "rot w: " << _rot_w << endl;
-	//cout << "scale: " << _scale << endl;
-	//cout << "scale w: " << _scale_w << endl;
-#endif 
-
+	updateTransform();	
+	updateTransformWorld();
 
 	mat3 cTransform_rot = TopLeft3(cTransform);
 	mat3 cTransform_rot_inv = transpose(cTransform_rot);
 	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
 	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
 
-	//int i = 0;
-	//for (; i < num_vertices; i++)	// We are multplying duplicated vertices
-	//{
-
-	//	// Homogenous vector for calculations:
-	//	vec4 v_i(vertex_positions[i]);
-
-	//	// Camera: ASSUMPTION: No scaling on camera
-	//	//	cTransform =	 [ R     T ]
-	//	//					 [ 0     1 ]
-	//	// 
-	//	// cTransform_inv =	 [ R^t  -R^t*T]
-	//	//					 [ 0	 1	  ]
-	//	//
-
-	//	// Transform	
-	//	v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
-	//	
-	//	// Save result
-	//	t_vertex_positions[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
-
-
-	//	buffer2d[i] = vec2(v_i.x, v_i.y);	// Should be already normalized after projection
-
-	//}
-	int i = 0;
-	for (auto vertex : vertex_positions_raw)
+	//Apply all transformations and save in t_vertex_positions_normalized array
+	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
 	{
 		vec4 v_i(vertex_positions_raw[i]);
 
-		// Camera: ASSUMPTION: No scaling on camera
-		//	cTransform =	 [ R     T ]
-		//					 [ 0     1 ]
-		// 
-		// cTransform_inv =	 [ R^t  -R^t*T]
-		//					 [ 0	 1	  ]
-		//
-			 //Transform					//-> object
-		v_i = projection * (cTransform_inv * (_world_transform * (_model_transform * v_i))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+		//Apply model-view transformation
+		v_i = cTransform_inv * (_world_transform * (_model_transform * v_i));
+
+		//Apply projection:
+		v_i = projection * v_i;
 		
 		// Save result
-		t_vertex_positions_raw[i] = vec3(v_i.x, v_i.y, v_i.z); //We dont really use this... 
-
-		i++;
+		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z);
 	}
 
-	// Model buffer
-	for (int j = 0; j < num_vertices; j++)
+	// Model buffer - Add to 2d-buffer all vertecies
+	num_vertices_to_draw = 0;
+	for (unsigned int j = 0; j < num_faces; j++)
 	{
-		vec3 v = t_vertex_positions_raw[faces_v_indices[j]];
-		buffer2d[j] = vec2(v.x, v.y);	// Should be already normalized after projection
+		/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
+			If yes: Add the face to buffer2d
+			else: Don't add the face*/
+		bool atleast_one_vertex_in_bound = true;
+		for (unsigned int v = 0; v < 3; v++)
+		{
+			vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
 
+			if (point.x >= -1 && point.x <= 1 &&
+				point.y >= -1 && point.y <= 1 &&
+				point.z >= -1 && point.z <= 1 )
+			{
+				atleast_one_vertex_in_bound = true;
+				break;
+			}
+		}
+
+
+		/* add the 3 points of the current face: */
+		if (atleast_one_vertex_in_bound)
+		{
+			for (unsigned int v = 0; v < 3; v++)
+			{
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
+				buffer2d[(j * 3) + v] = vec2(point.x, point.y);
+				num_vertices_to_draw++;
+			}
+		}
 	}
 
 	// Bounding box buffer
 	if (showBoundingBox)
 	{
-		for (int j = 0; j < num_bbox_vertices; j++)
+		for (unsigned int j = 0; j < num_bbox_vertices; j++)
 		{
-			vec4 v_j(b_box_vertices[j]);
-			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
+			vec4 v_j (b_box_vertices[j]);
+			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j)));
 
 			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
 		}
@@ -445,35 +372,55 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	// Vertex normals buffer
 	if (showVertexNormals)
 	{
-		for (int j = 0; j < num_vertices_raw; j++)
+		for (unsigned int j = 0; j < num_vertices_raw; j++)
 		{
-			vec4 v_j(vertex_normals[j]);
-			v_j = projection * (cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
-			v_j -= t_vertex_positions_raw[j];	// To make it go out of the vertex
-			buffer2d_v_normals[j] = vec2(v_j.x, v_j.y);
+			vec4 v_j (vertex_normals[j]);
+
+
+			//Transform the normal vector:
+			v_j = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j));
+
+			//Project the vector:
+			v_j = projection * v_j;
+
+			//Make sure it is still normalized:
+			v_j = normalize(v_j);
+
+			vec4 start_point = t_vertex_positions_normalized[j];
+			vec4 end_point	 = start_point + v_j;
+
+			buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
+			buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
 		}
 	}
+	
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		for (int j = 0; j < num_faces; j++)
+		for (unsigned int j = 0; j < num_faces; j++)
 		{
-			vec4 v_j(face_normals[j]);
-			v_j = projection * (cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j))); //This way we always multiply Matrix x Vector (O(N^2) per multiplication)
-			v_j = normalize(v_j);	//Normal
-																															   //v_j -= t_vertex_positions_raw[j];	// TODO: Make it go out of the face
-			// Cacluate center of face:
-			vec3 v0, v1, v2;
-			v0 = t_vertex_positions_raw[faces_v_indices[j * 3 + 0]];
-			v1 = t_vertex_positions_raw[faces_v_indices[j * 3 + 1]];
-			v2 = t_vertex_positions_raw[faces_v_indices[j * 3 + 2]];
+			vec4 v_n(face_normals[j]);
 
-			vec3 c_of_mass(v0 + v1 + v2);
-			c_of_mass /= 3;
-			//c_of_mass += v_j;
-			v_j = vec4(c_of_mass) + v_j;
-			buffer2d_f_normals[j * 2 + 0] = vec2(c_of_mass.x, c_of_mass.y);
-			buffer2d_f_normals[j * 2 + 1] = vec2(v_j.x, v_j.y);
+			//Transform the normal vector:
+			v_n = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_n));
+			
+			//Project the vector:
+			v_n = projection * v_n;
+
+			//Make sure it is still normalized:
+			v_n = normalize(v_n);
+
+			// Cacluate center of face as the start point:
+			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 0]];
+			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 1]];
+			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 2]];
+
+			vec3 start_point = vec3(v0 + v1 + v2) / 3;
+			vec4 end_point = vec4(start_point) + v_n;
+
+
+			buffer2d_f_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
+			buffer2d_f_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
 
 		}
 	}
@@ -509,18 +456,16 @@ void MeshModel::updateTransformWorld()
 	mat4 rot_m_y = RotateY(_rot_w.y);
 	mat4 rot_m_z = RotateZ(_rot_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
-
 	_world_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
 	
+
 	// Inverse
 	mat4 trnsl_m_inv = Translate(-_trnsl_w.x, -_trnsl_w.y, -_trnsl_w.z);	//minus
 	mat4 rot_m_x_inv = transpose(rot_m_x);
 	mat4 rot_m_y_inv = transpose(rot_m_y);
 	mat4 rot_m_z_inv = transpose(rot_m_z);
 	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
-
 	_world_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
-
 }
 
 void MeshModel::setTranslation(vec3& trnsl)
