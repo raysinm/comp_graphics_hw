@@ -21,7 +21,9 @@ int transformationWindowWidth = 0;
 // TODO: Decide on ranges for transformations, projection
 const float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
-const float PROJ_RANGE_MIN = -10, PROJ_RANGE_MAX = 10;
+const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 20;
+const float ZCAM_RANGE_MIN = 0.001, ZCAM_RANGE_MAX = 100;
+//const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 10;
 
 const float TRNSL_RANGE_MIN = -40, TRNSL_RANGE_MAX = 40;
 const float ROT_RANGE_MIN = -180, ROT_RANGE_MAX = 180;
@@ -36,7 +38,8 @@ Camera::Camera()
 {
 	// Default camera projection - Perspective
 	resetProjection();
-	setPerspective();
+	setOrtho();
+	//setPerspective();
 	name = CAMERA_DEFAULT_NAME;
 }
 
@@ -86,7 +89,7 @@ void Camera::setPerspective()
 					  0				, 2*c_zNear / y	, (c_top + c_bottom) / y, 0,
 					  0				, 0				, -(c_zFar+c_zNear) / z	, -(2*c_zNear*c_zFar)/z,
 					  0				, 0				, -1				, 0);
-
+	//projection = cTransform * projection;
 	// Adjust fovy, aspect accordingly:
 	setFovAspectByParams();
 }
@@ -107,13 +110,13 @@ void Camera::setPerspectiveByFov()
 
 void Camera::setFovAspectByParams()
 {
-	c_fovy = 180 / M_PI * 2 * atan(c_top / c_zNear);
-	c_aspect = c_right / c_top;
+	c_fovy = (180 / M_PI) * 2 * atan(c_top / c_zNear);
+	c_aspect = (c_right-c_left) / (c_top-c_bottom);
 }
 
 void Camera::setParamsByFovAspect()
 {
-	c_top = c_zNear * tanf(M_PI / 180 * (c_fovy) / 2);
+	c_top = c_zNear * tanf(M_PI / 180 * (c_fovy / 2));
 	c_bottom = -c_top;
 	c_right = c_top * c_aspect;
 	c_left = -c_right;
@@ -121,12 +124,15 @@ void Camera::setParamsByFovAspect()
 
 void Camera::resetProjection()
 {
-	c_left = c_bottom = -DEF_PARAM_RANGE;
-	c_right = c_top = DEF_PARAM_RANGE;
-	c_zNear = -DEF_ZNEAR;
-	c_zFar = -DEF_ZFAR;
-	
+	c_left = c_bottom = -DEF_PARAM;
+	c_right = c_top = DEF_PARAM;
+	c_zNear = DEF_ZNEAR;
+	c_zFar = DEF_ZFAR;
+
 	setFovAspectByParams();
+	//c_fovy = DEF_FOV;
+	//c_aspect = DEF_ASPECT;
+	//setParamsByFovAspect();
 }
 
 void Camera::updateTransform()
@@ -516,8 +522,8 @@ void Scene::drawGUI()
 							ImGui::PopStyleColor();
 							ImGui::Text("zNear            zFar");
 							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 0, 2, 1));
-							ImGui::SliderFloat("##zNear_CP", g_zNear,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::SliderFloat("##zFar_CP", g_zFar,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
+							ImGui::SliderFloat("##zNear_CP", g_zNear, ZCAM_RANGE_MIN, ZCAM_RANGE_MAX, "%f"); ImGui::SameLine();
+							ImGui::SliderFloat("##zFar_CP", g_zFar, ZCAM_RANGE_MIN, ZCAM_RANGE_MAX, "%f");
 							ImGui::PopStyleColor();
 							ImGui::EndGroup();
 
@@ -631,6 +637,8 @@ void Scene::drawGUI()
 							ImGui::SliderFloat("##X_WT", &(trnsl_w->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
 							ImGui::SliderFloat("##Y_WT", &(trnsl_w->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
 							ImGui::SliderFloat("##Z_WT", &(trnsl_w->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+
+							// Handle keyboard navigation for FloatSliders
 							if (ImGui::Button("reset##WT"))
 							{
 								activeMesh->ResetUserTransform_translate_world();

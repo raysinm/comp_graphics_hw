@@ -11,10 +11,11 @@ using namespace std;
 #define CAMERA_DEFAULT_NAME "Camera"
 #define MODEL_DEFAULT_NAME "Model"
 
-#define DEF_PARAM_RANGE 5;
+#define DEF_PARAM_RANGE 20;
+#define DEF_PARAM 10;
 #define DEF_ZNEAR 1;
-#define DEF_ZFAR 10;
-#define DEF_FOV 70
+#define DEF_ZFAR 100;
+#define DEF_FOV 45
 #define DEF_ASPECT 1
 
 
@@ -55,6 +56,7 @@ private:
 public:
 
 	mat4 cTransform;
+	mat4 view_matrix;	// cTransform inversed
 	mat4 projection;
 
 	Camera::Camera();
