@@ -56,7 +56,7 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
+void Renderer::SetBufferOfModel(const vec2* vertecies, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
 		For example:
@@ -94,7 +94,7 @@ void Renderer::SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color)
 	}
 }
 
-void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
+void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 {
 
 	for (unsigned int  i = 0; i < len; i+=2)

@@ -4,6 +4,10 @@
 #include "mat.h"
 #include <string>
 
+
+using namespace std;
+
+
 enum MODEL_OBJECT{
 	MODEL,
 	BBOX,
@@ -11,6 +15,9 @@ enum MODEL_OBJECT{
 	F_NORMAL
 };
 using namespace std;
+
+
+
 
 class MeshModel : public Model
 {
@@ -59,7 +66,6 @@ public:
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
 	bool showBoundingBox = false;
-
 	MeshModel(string fileName);
 	~MeshModel(void);
 

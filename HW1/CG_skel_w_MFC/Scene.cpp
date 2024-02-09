@@ -41,6 +41,7 @@ Camera::Camera()
 	setOrtho();
 	//setPerspective();
 	name = CAMERA_DEFAULT_NAME;
+
 }
 
 void Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
@@ -79,6 +80,8 @@ void Camera::setPerspective()
 
 	//c_left = left; c_right = right; c_top = top; c_bottom = bottom;
 	//c_zNear = zNear; c_zFar = zFar;
+
+	// caculate params considering camera transformation
 
 
 	GLfloat x = c_right - c_left;
@@ -143,6 +146,13 @@ void Camera::updateTransform()
 	mat4 trnsl = Translate(c_trnsl);
 
 	cTransform = rot_z * rot_y * rot_x * trnsl; // yaw pitch roll order
+
+	/*cTransform_inv.;
+	mat3 cTransform_rot = TopLeft3(cTransform);
+	mat3 cTransform_rot_inv = transpose(cTransform_rot);
+	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
+	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));*/
+
 }
 
 
@@ -244,6 +254,15 @@ void Scene::draw()
 				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0,0,1));
 		}
 
+	}
+
+	if (showGrid)
+	{
+		grid->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		vec2* grid_vertices = grid->Get2dBuffer();
+		unsigned int len = grid->Get2dBuffer_len();
+		if (grid_vertices)
+			m_renderer->SetBufferLines(grid_vertices, len, vec4(164, 0, 179));
 	}
 
 	//6. Update the texture. (OpenGL stuff)
@@ -436,6 +455,10 @@ void Scene::drawGUI()
 			}
 		}
 
+		if (ImGui::Button("Show Grid"))
+		{
+			showGrid = !showGrid;
+		}
 
 		ImGui::EndMainMenuBar();
 	}

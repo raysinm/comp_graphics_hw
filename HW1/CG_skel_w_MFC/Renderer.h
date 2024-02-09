@@ -38,8 +38,8 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void SetDemoBuffer();
-	void SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color= vec4(0, 0, 0, 1));
-	void SetBufferLines(vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
+	void SetBufferOfModel(const vec2* vertecies, unsigned int len, vec4 color= vec4(0, 0, 0, 1));
+	void SetBufferLines(const vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 
 	// New funcs
 	void CreateTexture();
