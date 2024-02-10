@@ -19,7 +19,7 @@ bool constScaleRatio_w = false;
 int transformationWindowWidth = 0;
 
 // TODO: Decide on ranges for transformations, projection
-const float FOV_RANGE_MIN = 0.01, FOV_RANGE_MAX = 89.99;
+const float FOV_RANGE_MIN = 0.001, FOV_RANGE_MAX = 89.999;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
 const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 20;
 const float ZCAM_RANGE_MIN = 0.001, ZCAM_RANGE_MAX = 100;
@@ -527,30 +527,17 @@ void Scene::drawGUI()
 							ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
 							ImGui::RadioButton("Perspective", &g_ortho, 0);
 
-							/*ImGui::TextColored(ImVec4(0, 1, 0, 1), "Left"); ImGui::SameLine;
-							ImGui::TextColored(ImVec4(1, 1, 0, 1), "Right"); 
-							ImGui::TextColored(ImVec4(0, 0, 1, 1), "Top"); ImGui::SameLine;
-							ImGui::TextColored(ImVec4(1, 0, 0, 1), "Bottom"); */
-							ImGui::BeginGroup();
-							ImGui::Text("    Left           Right           Top         Bottom");
-							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0,1,0,1)); 
-							ImGui::SliderFloat("##Left_CP", g_left,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::PopStyleColor();
-							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 1, 0, 1));
-							ImGui::SliderFloat("##Right_CP", g_right,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::PopStyleColor();
-							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0, 0, 1, 1));
-							ImGui::VSliderFloat("##Top_CP", ImVec2(40,70), g_top,		PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::PopStyleColor();
-							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 0, 0, 1));
-							ImGui::VSliderFloat("##Bottom_CP", ImVec2(40, 70), g_bottom,	PROJ_RANGE_MIN, PROJ_RANGE_MAX, "%f");
-							ImGui::PopStyleColor();
-							ImGui::Text("zNear            zFar");
-							ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1, 0, 2, 1));
-							ImGui::SliderFloat("##zNear_CP", g_zNear, ZCAM_RANGE_MIN, ZCAM_RANGE_MAX, "%f"); ImGui::SameLine();
-							ImGui::SliderFloat("##zFar_CP", g_zFar, ZCAM_RANGE_MIN, ZCAM_RANGE_MAX, "%f");
-							ImGui::PopStyleColor();
-							ImGui::EndGroup();
+
+							ImGui::DragFloat("##Left_CP", g_left, 0.01f, 0, 0, "Left = %.1f "); ImGui::SameLine();
+							ImGui::DragFloat("##Right_CP", g_right, 0.01f, 0, 0, "Right = %.1f ");
+
+
+							ImGui::DragFloat("##Top_CP", g_top, 0.01f, 0, 0, "Top = %.1f "); ImGui::SameLine();
+							ImGui::DragFloat("##Bottom_CP", g_bottom, 0.01f, 0, 0, "Bot = %.1f ");
+
+
+							ImGui::DragFloat("##zNear_CP", g_zNear, 0.01f, 0, 0, "z-Near = %.1f "); ImGui::SameLine();
+							ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
 
 							// Set Camera projection type
 							if (g_ortho == 1)
@@ -567,8 +554,8 @@ void Scene::drawGUI()
 								float prev_fovy = *g_fovy;
 								float prev_aspect = *g_aspect;
 
-								ImGui::SliderFloat("FovY", g_fovy, FOV_RANGE_MIN, FOV_RANGE_MAX, "%.01f"); ImGui::SameLine();
-								ImGui::SliderFloat("Aspect", g_aspect, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "%.01f");
+								ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
+								ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "A / R = %.1f ");
 
 								if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
 								{
@@ -582,7 +569,7 @@ void Scene::drawGUI()
 								}
 
 							}
-							if (ImGui::Button("reset_CP"))
+							if (ImGui::Button("reset"))
 							{
 								cameras[activeCamera]->resetProjection();
 							}
@@ -616,9 +603,9 @@ void Scene::drawGUI()
 							prev_rot = *g_rot;
 						}
 						ImGui::Text("Translation (X Y Z)");
-						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
-						ImGui::SliderFloat("##Y_MT", &(g_trnsl->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
-						ImGui::SliderFloat("##Z_MT", &(g_trnsl->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+						ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+						ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+						ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 						if (ImGui::Button("reset##MT"))
 						{
 							if (n == CAMERA_TAB_INDEX)
@@ -632,9 +619,9 @@ void Scene::drawGUI()
 						}
 
 						ImGui::Text("Rotation (X Y Z)");
-						ImGui::SliderFloat("##X_MR", &(g_rot->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
-						ImGui::SliderFloat("##Y_MR", &(g_rot->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
-						ImGui::SliderFloat("##Z_MR", &(g_rot->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+						ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+						ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+						ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
 						if (ImGui::Button("reset##MR"))
 						{
 							if (n == CAMERA_TAB_INDEX)
@@ -662,16 +649,17 @@ void Scene::drawGUI()
 
 							ImGui::Text("Scale (X Y Z)");
 							ImGui::Checkbox("keep ratio", &constScaleRatio);
-							ImGui::SliderFloat("##X_MS", &(g_scale->x), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 							if (constScaleRatio)
 							{
 								g_scale->y = g_scale->z = g_scale->x;
 							}
 							else
 							{
-								ImGui::SliderFloat("##Y_MS", &(g_scale->y), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
-								ImGui::SliderFloat("##Z_MS", &(g_scale->z), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+								ImGui::DragFloat("##Y_MS", &(g_scale->y),0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+								ImGui::DragFloat("##Z_MS", &(g_scale->z),0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 							}
+							
 							if (ImGui::Button("reset##MS"))
 							{
 									activeMesh->ResetUserTransform_scale_model();
@@ -686,9 +674,9 @@ void Scene::drawGUI()
 							vec4* scale_w = &(activeMesh->_scale_w);
 
 							ImGui::Text("Translation (X Y Z)");
-							ImGui::SliderFloat("##X_WT", &(trnsl_w->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Y_WT", &(trnsl_w->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Z_WT", &(trnsl_w->z), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
+							ImGui::DragFloat("##X_WT", &(trnsl_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##Y_WT", &(trnsl_w->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##Z_WT", &(trnsl_w->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 
 							// Handle keyboard navigation for FloatSliders
 							if (ImGui::Button("reset##WT"))
@@ -699,26 +687,26 @@ void Scene::drawGUI()
 
 
 							ImGui::Text("Rotation (X Y Z)");
-							ImGui::SliderFloat("##X_WR", &(rot_w->x), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Y_WR", &(rot_w->y), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Z_WR", &(rot_w->z), ROT_RANGE_MIN, ROT_RANGE_MAX, "%.0f"); ImGui::SameLine();
+							ImGui::DragFloat("##X_WR", &(rot_w->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+							ImGui::DragFloat("##Y_WR", &(rot_w->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+							ImGui::DragFloat("##Z_WR", &(rot_w->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
 							if (ImGui::Button("reset##WR"))
 							{
 								activeMesh->ResetUserTransform_rotate_world();
 							}
 
 
-							ImGui::Text("Scale (X Y Z)"); ImGui::SameLine();
-							ImGui::Checkbox("keep ratio- world", &constScaleRatio_w);
-							ImGui::SliderFloat("##X_WS", &(scale_w->x), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::Text("Scale (X Y Z)");
+							ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
+							ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 							if (constScaleRatio_w)
 							{
 								scale_w->y = scale_w->z = scale_w->x;
 							}
 							else
 							{
-							ImGui::SliderFloat("##Y_WS", &(scale_w->y), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
-							ImGui::SliderFloat("##Z_WS", &(scale_w->z), SCALE_RANGE_MIN, SCALE_RANGE_MAX, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##Y_WS", &(scale_w->y),  0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##Z_WS", &(scale_w->z),  0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 							}
 							if (ImGui::Button("reset##WS"))
 							{
