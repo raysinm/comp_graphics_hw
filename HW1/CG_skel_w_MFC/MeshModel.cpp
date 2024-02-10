@@ -305,8 +305,10 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 	mat3 cTransform_rot = TopLeft3(cTransform);
 	mat3 cTransform_rot_inv = transpose(cTransform_rot);
+
 	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
 	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
+
 
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
@@ -466,6 +468,22 @@ void MeshModel::updateTransformWorld()
 	mat4 rot_m_z_inv = transpose(rot_m_z);
 	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
 	_world_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
+}
+
+vec4 MeshModel::getCenterOffMass()
+{
+/* In world space */
+
+	updateTransform();
+	updateTransformWorld();
+
+	vec4 c(0);
+	for (auto p : vertex_positions_raw)
+		c += _world_transform * (_model_transform * p);
+
+	c /= vertex_positions_raw.size();
+	c.w = 0;
+	return vec4(c);
 }
 
 void MeshModel::setTranslation(vec3& trnsl)

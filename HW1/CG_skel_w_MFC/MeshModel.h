@@ -66,10 +66,12 @@ public:
 	vec2* Get2dBuffer(MODEL_OBJECT obj);
 	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
 	void loadFile(string fileName);
-	void MeshModel::draw(mat4& cTransform, mat4& projection);
+	void draw(mat4& cTransform, mat4& projection);
 
-	void MeshModel::updateTransform();
-	void MeshModel::updateTransformWorld();
+	void updateTransform();
+	void updateTransformWorld();
+
+	vec4 getCenterOffMass();
 
 	//Model space:
 	void setTranslation(vec3& trnsl);

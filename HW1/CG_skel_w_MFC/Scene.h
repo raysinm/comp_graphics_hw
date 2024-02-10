@@ -38,7 +38,6 @@ public:
 
 };
 
-
 class Light {
 
 };
@@ -46,10 +45,11 @@ class Light {
 class Camera
 {
 private:
-	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
+	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
 	string name = "";
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot;
+	vec4 target;
 
 	friend class Scene;	// To acces transformations;
 
@@ -60,8 +60,10 @@ public:
 	mat4 projection;
 
 	Camera::Camera();
-	void setTransformation(const mat4& transform);	//TODO: change to vectors for trnsl, rot
+	
 	void LookAt(const Model* target);		//Called from keyboard event.
+	void LookAt();
+
 	void Ortho( const float left, const float right,
 		const float bottom, const float top,
 		const float zNear, const float zFar );
@@ -80,9 +82,11 @@ public:
 	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
+	vec4 getTranslation() { return vec4(c_trnsl); }
+	void setStartPosition(vec4& pos) { c_trnsl = pos; }
 	
 	void updateTransform();
-	void ResetTranslation() { c_trnsl = vec4(0); }
+	void ResetTranslation() { c_trnsl = vec4(0,0,10,0); }
 	void ResetRotation() { c_rot = vec4(0); }
 	
 	bool selected = false;

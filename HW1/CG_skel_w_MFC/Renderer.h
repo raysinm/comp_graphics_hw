@@ -30,13 +30,8 @@ public:
 	Renderer(int width, int height, GLFWwindow* window);
 	~Renderer(void);
 	void Init();
-	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* normals=NULL);
-	void SetCameraTransform(const mat4& cTransform);
-	void SetProjection(const mat4& projection);
-	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
 	void SwapBuffers();
-	void ClearColorBuffer();
-	void ClearDepthBuffer();
+
 	void SetDemoBuffer();
 	void SetBufferOfModel(vec2* vertecies, unsigned int len, vec4 color= vec4(0, 0, 0, 1));
 	void SetBufferLines(vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));

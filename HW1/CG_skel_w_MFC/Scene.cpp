@@ -33,38 +33,60 @@ const float SCALE_RANGE_MIN = -1, SCALE_RANGE_MAX = 20;
 //--------------------------------------------------
 //-------------------- CAMERA ----------------------
 //--------------------------------------------------
-
 Camera::Camera()
 {
-	// Default camera projection - Perspective
+	name = CAMERA_DEFAULT_NAME;
+	
+	ResetRotation();
+	ResetTranslation();
 	resetProjection();
 	setOrtho();
-	//setPerspective();
-	name = CAMERA_DEFAULT_NAME;
 }
 
-void Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
+mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 {
-	//TODO: Implement
+	vec4 n = normalize(eye - at);
+	vec4 u = normalize(cross(up, n));
+	vec4 v = normalize(cross(n, u));
+	
+	vec4 t = vec4(0.0, 0.0, 0.0, 1.0);
+	mat4 c = mat4(u, v, n, t);
+
+	return c * Translate(-eye);
+
 }
 
+//This function is called from keyboard manager (pressed F to set focus)
 void Camera::LookAt(const Model* target)
 {
-	//This function is called from keyboard manager (pressed F to set focus)
-	//TODO: Implement
+	mat4 total_rotation = RotateZ(c_rot.z) * (RotateY(c_rot.y) * RotateX(c_rot.x));
+	vec4 up = total_rotation[1];
+
+	this->target = ((MeshModel*)target)->getCenterOffMass();
+	
+	cTransform = LookAt(c_trnsl, this->target, up);
+}
+
+void Camera::LookAt()
+{
+	mat4 total_rotation = RotateZ(c_rot.z) * (RotateY(c_rot.y) * RotateX(c_rot.x));
+	vec4 up = total_rotation[1];
+
+	
+	cTransform = LookAt(c_trnsl, this->target, up);
 }
 
 
-void Camera::setOrtho()	// Check input? here or in GUI?
+void Camera::setOrtho()
 {
 	GLfloat x = c_right - c_left;
 	GLfloat y = c_top - c_bottom;
 	GLfloat z = c_zFar - c_zNear;
 
-	projection = mat4(2 / x, 0, 0, -(c_left + c_right) / x,
-		0, 2 / y, 0, -(c_top + c_bottom) / y,
-		0, 0, -2 / z, -(c_zFar + c_zNear) / z,
-		0, 0, 0, 1);
+	projection = mat4(  2 / x, 0, 0, -(c_left + c_right) / x,
+							0, 2 / y, 0, -(c_top + c_bottom) / y,
+							0, 0, -2 / z, -(c_zFar + c_zNear) / z,
+							0, 0, 0, 1);
 }
 
 // TODO: Test
@@ -130,9 +152,7 @@ void Camera::resetProjection()
 	c_zFar = DEF_ZFAR;
 
 	setFovAspectByParams();
-	//c_fovy = DEF_FOV;
-	//c_aspect = DEF_ASPECT;
-	//setParamsByFovAspect();
+
 }
 
 void Camera::updateTransform()
@@ -142,7 +162,7 @@ void Camera::updateTransform()
 	mat4 rot_z = RotateZ(c_rot.z);
 	mat4 trnsl = Translate(c_trnsl);
 
-	cTransform = rot_z * rot_y * rot_x * trnsl; // yaw pitch roll order
+	cTransform = rot_z * rot_y * rot_x * trnsl ; // yaw pitch roll order
 }
 
 
@@ -166,7 +186,7 @@ void Scene::loadOBJModel(string fileName)
 	MeshModel* model = new MeshModel(fileName);
 
 	/* Get the filename as the default name */
-	string extractedName = "Model name";
+	string extractedName = MODEL_DEFAULT_NAME;
 	unsigned int pos = fileName.find_last_of('\\');
 	if (pos != std::string::npos)
 	{
@@ -206,7 +226,7 @@ void Scene::draw()
 	m_renderer->clearBuffer();
 
 	//3. Update camera transformation matrix (cTransform)
-	cameras[activeCamera]->updateTransform();
+	//cameras[activeCamera]->updateTransform();
 
 	//4. draw each MeshModel
 	for (auto model : models)
@@ -337,6 +357,11 @@ void Scene::drawGUI()
 			{
 				AddCamera();
 				strcpy(nameBuffer, cameras.back()->getName().c_str());
+				vec4 c_trnsl = cameras.back()->getTranslation();
+				posBuffer[0] = c_trnsl.x;
+				posBuffer[1] = c_trnsl.y;
+				posBuffer[2] = c_trnsl.z;
+
 				add_showCamDlg = true;
 				showTransWindow = true;
 			}
@@ -487,6 +512,8 @@ void Scene::drawGUI()
 						const char* name = names[n];
 						vec4* g_trnsl = nullptr;
 						vec4* g_rot   = nullptr;
+						vec4 prev_trnsl;
+						vec4 prev_rot;
 
 						if (n == CAMERA_TAB_INDEX)
 						{
@@ -581,6 +608,11 @@ void Scene::drawGUI()
 						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "Camera space";
 						ImGui::SeparatorText(sep_text.c_str());
 
+						if (n == CAMERA_TAB_INDEX)
+						{
+							prev_trnsl = *g_trnsl;
+							prev_rot = *g_rot;
+						}
 						ImGui::Text("Translation (X Y Z)");
 						ImGui::SliderFloat("##X_MT", &(g_trnsl->x), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
 						ImGui::SliderFloat("##Y_MT", &(g_trnsl->y), TRNSL_RANGE_MIN, TRNSL_RANGE_MAX, "%.2f"); ImGui::SameLine();
@@ -613,6 +645,15 @@ void Scene::drawGUI()
 							}
 						}
 						
+						if (n == CAMERA_TAB_INDEX)
+						{
+							if (prev_trnsl != *g_trnsl || prev_rot != *g_rot)
+							{
+								cameras[activeCamera]->LookAt();
+							}
+						}
+
+
 						if (n == MODEL_TAB_INDEX)
 						{
 							vec4* g_scale = &(activeMesh->_scale);
@@ -826,7 +867,7 @@ void Scene::drawGUI()
 			currCamera->setName(nameBuffer);
 			
 			//TODO: translate the camera to given position;
-			
+			currCamera->setStartPosition(vec4(posBuffer[0], posBuffer[1], posBuffer[2], 0));
 			ResetPopUpFlags();
 		}
 		else if (GUI_popup_pressedCANCEL)
