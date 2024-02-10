@@ -86,7 +86,7 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	case V_NORMAL:
 		return num_vertices_raw*2;
 	case F_NORMAL:
-		return num_faces*2;
+		return num_faces;
 
 	default:
 		return -1;
@@ -399,12 +399,12 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		for (unsigned int j = 0; j < num_faces; j++)
+		for (unsigned int j = 0; j < face_normals.size(); j++)
 		{
 			vec4 v_n(face_normals[j]);
 
 			//Transform the normal vector:
-			v_n = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_n));
+			v_n = cTransform_inv * (_world_transform_inv * (_model_transform_inv * v_n));
 			
 			//Project the vector:
 			v_n = projection * v_n;
@@ -421,8 +421,8 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			vec4 end_point = vec4(start_point) + v_n;
 
 
-			buffer2d_f_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
-			buffer2d_f_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
+			buffer2d_f_normals[ (j * 2) + 0] = vec2(start_point.x, start_point.y);
+			buffer2d_f_normals[ (j * 2) + 1] = vec2(end_point.x, end_point.y);
 
 		}
 	}

@@ -649,15 +649,15 @@ void Scene::drawGUI()
 
 							ImGui::Text("Scale (X Y Z)");
 							ImGui::Checkbox("keep ratio", &constScaleRatio);
-							ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
 							if (constScaleRatio)
 							{
 								g_scale->y = g_scale->z = g_scale->x;
 							}
 							else
 							{
-								ImGui::DragFloat("##Y_MS", &(g_scale->y),0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-								ImGui::DragFloat("##Z_MS", &(g_scale->z),0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+								ImGui::DragFloat("##Y_MS", &(g_scale->y),0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+								ImGui::DragFloat("##Z_MS", &(g_scale->z),0.01f, 0, 0, "%.3f"); ImGui::SameLine();
 							}
 							
 							if (ImGui::Button("reset##MS"))
@@ -698,15 +698,15 @@ void Scene::drawGUI()
 
 							ImGui::Text("Scale (X Y Z)");
 							ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
-							ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
 							if (constScaleRatio_w)
 							{
 								scale_w->y = scale_w->z = scale_w->x;
 							}
 							else
 							{
-							ImGui::DragFloat("##Y_WS", &(scale_w->y),  0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-							ImGui::DragFloat("##Z_WS", &(scale_w->z),  0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+							ImGui::DragFloat("##Y_WS", &(scale_w->y),  0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+							ImGui::DragFloat("##Z_WS", &(scale_w->z),  0.01f, 0, 0, "%.3f"); ImGui::SameLine();
 							}
 							if (ImGui::Button("reset##WS"))
 							{
@@ -752,7 +752,6 @@ void Scene::drawGUI()
 	bool open_popup_AddObject = true; //Must be here unless it won't work... (Weird ImGui stuff i guess)
 	if (ImGui::BeginPopupModal(ADD_INPUT_POPUP_TITLE, 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse))
 	{
-		ImGui::SetKeyboardFocusHere();
 		ImGui::InputText("Name", nameBuffer, IM_ARRAYSIZE(nameBuffer));
 		ImGui::InputFloat3("Position (x,y,z)", posBuffer);
 

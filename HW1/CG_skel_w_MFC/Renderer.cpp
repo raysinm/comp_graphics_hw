@@ -113,7 +113,7 @@ void Renderer::SetBufferLines(vec2* points, unsigned int len, vec4 color)
 		vec2 B_Pxl = vec2(max(min(m_width - 1, (B.x * (m_width - 1))), 0), max(min(m_height - 1, (B.y * (m_height - 1))), 0));
 		
 
-		/* At this point, we have 3 points, in screen space, in-bound */
+		/* At this point, we have 2 points, in screen space, in-bound */
 
 		/* Draw the line */
 		DrawLine(A_Pxl, B_Pxl, false, color);
