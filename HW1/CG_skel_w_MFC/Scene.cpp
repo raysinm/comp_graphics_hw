@@ -164,6 +164,20 @@ void Scene::AddCamera()
 void Scene::loadOBJModel(string fileName)
 {
 	MeshModel* model = new MeshModel(fileName);
+
+	/* Get the filename as the default name */
+	string extractedName = "Model name";
+	unsigned int pos = fileName.find_last_of('\\');
+	if (pos != std::string::npos)
+	{
+		extractedName = fileName.substr(pos + 1);
+		pos = extractedName.find_last_of('.');
+		if(pos != std::string::npos)
+			extractedName = extractedName.substr(0, pos); //Cut the .obj in the end of the name
+	}
+	model->setName(extractedName);
+
+	/* Add model to the models array */
 	models.push_back(model);
 }
 
@@ -187,18 +201,14 @@ void Scene::draw()
 {
 	//1. GUI
 	drawGUI();
-	
-	//2. Update the buffer (if needed) before rasterization.
-	//const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	
-				
-	//3 Clear the pixel buffer before drawing new frame
+					
+	//2. Clear the pixel buffer before drawing new frame
 	m_renderer->clearBuffer();
 
-	//4 Update camera transformation matrix (cTransform)
+	//3. Update camera transformation matrix (cTransform)
 	cameras[activeCamera]->updateTransform();
 
-	//5. draw each MeshModel
+	//4. draw each MeshModel
 	for (auto model : models)
 	{
 		//Don't draw new model before user clicked 'OK'.
@@ -206,9 +216,6 @@ void Scene::draw()
 			continue;
 
 		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
-
-		//4. TODO: Add camera ' + ' signs. 
-
 
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
@@ -245,8 +252,10 @@ void Scene::draw()
 		}
 
 	}
+	
+	//TODO: Add camera ' + ' signs. 
 
-	//6. Update the texture. (OpenGL stuff)
+	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
 
 
@@ -295,6 +304,8 @@ void Scene::drawGUI()
 					{
 						std::string filename((LPCTSTR)dlg.GetPathName());
 						loadOBJModel(filename);
+
+						strcpy(nameBuffer, models.back()->getName().c_str());
 						add_showModelDlg = true;
 						showTransWindow = true;
 					}
@@ -306,7 +317,6 @@ void Scene::drawGUI()
 					Cube* cube = new Cube();
 					models.push_back(cube);
 
-					//cube->setName("Cube");
 					strcpy(nameBuffer, cube->getName().c_str());
 					add_showModelDlg = true;
 					showTransWindow = true;
@@ -316,7 +326,6 @@ void Scene::drawGUI()
 					TriPyramid* tri_pyr = new TriPyramid();
 					models.push_back(tri_pyr);
 
-					//cube->setName("Cube");
 					strcpy(nameBuffer, tri_pyr->getName().c_str());
 					add_showModelDlg = true;
 					showTransWindow = true;
@@ -327,7 +336,7 @@ void Scene::drawGUI()
 			if (ImGui::MenuItem("Camera"))
 			{
 				AddCamera();
-				strcpy(nameBuffer, cameras[cameras.size() - 1]->getName().c_str());
+				strcpy(nameBuffer, cameras.back()->getName().c_str());
 				add_showCamDlg = true;
 				showTransWindow = true;
 			}
@@ -699,14 +708,12 @@ void Scene::drawGUI()
 
 
 	//---------------------------------------------------------
-	//Check if the popup should be shown
+	//-------- Check if the popup should be shown -------------
 	//---------------------------------------------------------
 	if (add_showModelDlg || add_showCamDlg)
 	{
 		ImGui::OpenPopup(ADD_INPUT_POPUP_TITLE);
 	}
-
-	
 
 	//---------------------------------------------------
 	//------- Begin pop up - MUST BE IN THIS SCOPE ------
@@ -835,8 +842,6 @@ void Scene::drawGUI()
 	//--------------------------------------------------------------
 	//------ Draw the ImGui::Image (Used for displaying our texture)
  	//--------------------------------------------------------------
-
-
 	ImVec2 imgPos = ImVec2(viewportX, viewportY);
 	ImVec2 imgSize = ImVec2(viewportWidth, viewportHeight);
 
