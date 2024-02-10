@@ -72,11 +72,12 @@ public:
 		const float zNear, const float zFar );	// Sets projection matrix
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);	// Calls frustum
+
 	void setOrtho();
 	void setPerspective();
 	void setPerspectiveByFov();
-	void setFovAspectByParams();
-	void setParamsByFovAspect();
+	void setPerspectiveByParams();
+
 	void resetProjection();
 	
 	
