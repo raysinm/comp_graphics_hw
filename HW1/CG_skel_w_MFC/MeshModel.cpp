@@ -320,6 +320,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 	// Model buffer - Add to 2d-buffer all vertecies
 	num_vertices_to_draw = 0;
+	int buffer_i = 0;
 	for (unsigned int j = 0; j < num_faces; j++)
 	{
 		/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
@@ -346,9 +347,10 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			for (unsigned int v = 0; v < 3; v++)
 			{
 				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
-				buffer2d[(j * 3) + v] = vec2(point.x, point.y);
+				buffer2d[(buffer_i * 3) + v] = vec2(point.x, point.y);
 				num_vertices_to_draw++;
 			}
+			buffer_i++;
 		}
 	}
 

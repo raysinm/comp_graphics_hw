@@ -13,8 +13,8 @@ using namespace std;
 
 #define DEF_PARAM_RANGE 20;
 #define DEF_PARAM 10;
-#define DEF_ZNEAR (9.5);
-#define DEF_ZFAR (10.5);
+#define DEF_ZNEAR (1);
+#define DEF_ZFAR (10);
 #define DEF_FOV 45
 #define DEF_ASPECT 1
 
