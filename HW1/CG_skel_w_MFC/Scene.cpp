@@ -95,7 +95,6 @@ void Camera::LookAt(const Model* target)
 	updateTransform();
 }
 
-
 void Camera::setOrtho()
 {
 	GLfloat x = c_right - c_left;
@@ -577,7 +576,7 @@ void Scene::drawGUI()
 								float prev_aspect = *g_aspect;
 
 								ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
-								ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "A / R = %.1f ");
+								ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
 
 								if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
 								{

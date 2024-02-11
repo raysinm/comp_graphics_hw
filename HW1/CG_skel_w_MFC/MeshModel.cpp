@@ -325,7 +325,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
 			If yes: Add the face to buffer2d
 			else: Don't add the face*/
-		bool atleast_one_vertex_in_bound = true;
+		bool atleast_one_vertex_in_bound = false;
 		for (unsigned int v = 0; v < 3; v++)
 		{
 			vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
