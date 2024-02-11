@@ -61,8 +61,7 @@ public:
 
 	Camera::Camera();
 	
-	void LookAt(const Model* target);		//Called from keyboard event.
-	void LookAt();
+	void Camera::LookAt(const Model* target = nullptr);
 
 	void Ortho( const float left, const float right,
 		const float bottom, const float top,
@@ -87,8 +86,8 @@ public:
 	void setStartPosition(vec4& pos) { c_trnsl = pos; }
 	
 	void updateTransform();
-	void ResetTranslation() { c_trnsl = vec4(0,0,10,0); }
-	void ResetRotation() { c_rot = vec4(0); }
+	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
+	void ResetRotation() { c_rot = vec4(0,0,0,1); }
 	
 	bool selected = false;
 };

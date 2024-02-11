@@ -41,6 +41,8 @@ Camera::Camera()
 	ResetTranslation();
 	resetProjection();
 	setOrtho();
+
+	LookAt();
 }
 
 mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
@@ -50,30 +52,47 @@ mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 	vec4 v = normalize(cross(n, u));
 	
 	vec4 t = vec4(0.0, 0.0, 0.0, 1.0);
+	n.w = u.w = v.w = 0;
 	mat4 c = mat4(u, v, n, t);
 
-	return c * Translate(-eye);
+	mat4 result = c * Translate(-eye);
+
+	cout << "(debug) LookAt result:" << endl << result << endl;
+	return result;
 
 }
 
 //This function is called from keyboard manager (pressed F to set focus)
 void Camera::LookAt(const Model* target)
 {
-	mat4 total_rotation = RotateZ(c_rot.z) * (RotateY(c_rot.y) * RotateX(c_rot.x));
-	vec4 up = total_rotation[1];
+	/* Camera position */
+	vec4 eye = c_trnsl;
+ 
+	/* Target position */
+	if (target)
+		this->target = ((MeshModel*)target)->getCenterOffMass();
+	else
+		this->target = vec4(0, 0, 0, 1);
 
-	this->target = ((MeshModel*)target)->getCenterOffMass();
-	
-	cTransform = LookAt(c_trnsl, this->target, up);
-}
+	/* Up vector */
+	vec4 up = vec4(0, 1, 0, 1);
 
-void Camera::LookAt()
-{
-	mat4 total_rotation = RotateZ(c_rot.z) * (RotateY(c_rot.y) * RotateX(c_rot.x));
-	vec4 up = total_rotation[1];
+	mat4 lookAtMat = LookAt(eye, this->target, up);
 
-	
-	cTransform = LookAt(c_trnsl, this->target, up);
+
+	/* Retreive the new rotation values */
+	float tetaX = atan2f(lookAtMat[2][1], lookAtMat[2][2]);
+	float tetaY = atan2f(-lookAtMat[2][0], sqrtf(lookAtMat[2][1]*lookAtMat[2][1] + lookAtMat[2][2]*lookAtMat[2][2]));
+	float tetaZ = atan2f(lookAtMat[1][0], lookAtMat[0][0]);
+
+	tetaX *= 180 / M_PI;
+	tetaY *= 180 / M_PI;
+	tetaZ *= 180 / M_PI;
+
+	c_rot = vec4(-tetaX, tetaY, tetaZ, 1);
+
+	/* TODO: Handle edge cases */
+	updateTransform();
 }
 
 
@@ -126,7 +145,6 @@ void Camera::setPerspectiveByParams()
 
 }
 
-
 void Camera::resetProjection()
 {
 	c_left = c_bottom = -DEF_PARAM;
@@ -143,9 +161,13 @@ void Camera::updateTransform()
 	mat4 rot_x = RotateX(c_rot.x);
 	mat4 rot_y = RotateY(c_rot.y);
 	mat4 rot_z = RotateZ(c_rot.z);
-	mat4 trnsl = Translate(c_trnsl);
 
-	cTransform = rot_z * rot_y * rot_x * trnsl ; // yaw pitch roll order
+	mat4 rot = transpose(rot_z * (rot_y * rot_x));
+	mat4 trnsl = Translate(-c_trnsl);
+
+	// C-t  = R^T * T^-1
+
+	cTransform = rot * trnsl ; // yaw pitch roll order
 }
 
 
@@ -638,7 +660,7 @@ void Scene::drawGUI()
 						{
 							if (prev_trnsl != *g_trnsl || prev_rot != *g_rot)
 							{
-								cameras[activeCamera]->LookAt();
+								cameras[activeCamera]->updateTransform();
 							}
 						}
 

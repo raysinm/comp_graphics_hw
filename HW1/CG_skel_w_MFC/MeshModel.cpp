@@ -303,26 +303,19 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	updateTransform();	
 	updateTransformWorld();
 
-	mat3 cTransform_rot = TopLeft3(cTransform);
-	mat3 cTransform_rot_inv = transpose(cTransform_rot);
-
-	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
-	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
-
-
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
 	{
 		vec4 v_i(vertex_positions_raw[i]);
 
 		//Apply model-view transformation
-		v_i = cTransform_inv * (_world_transform * (_model_transform * v_i));
+		v_i = cTransform * (_world_transform * (_model_transform * v_i));
 
 		//Apply projection:
 		v_i = projection * v_i;
 		
 		// Save result
-		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z);
+		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z) / v_i.w;
 	}
 
 	// Model buffer - Add to 2d-buffer all vertecies
@@ -365,7 +358,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		for (unsigned int j = 0; j < num_bbox_vertices; j++)
 		{
 			vec4 v_j (b_box_vertices[j]);
-			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j)));
+			v_j = projection * (cTransform * (_world_transform * (_model_transform * v_j)));
 
 			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
 		}
@@ -380,7 +373,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 
 			//Transform the normal vector:
-			v_j = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j));
+			v_j = cTransform * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j));
 
 			//Project the vector:
 			v_j = projection * v_j;
@@ -404,7 +397,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			vec4 v_n(face_normals[j]);
 
 			//Transform the normal vector:
-			v_n = cTransform_inv * (_world_transform_inv * (_model_transform_inv * v_n));
+			v_n = cTransform * (_world_transform_inv * (_model_transform_inv * v_n));
 			
 			//Project the vector:
 			v_n = projection * v_n;
@@ -430,14 +423,14 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 
 void MeshModel::updateTransform()
 {
-	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
 	mat4 rot_m_x = RotateX(_rot.x);
 	mat4 rot_m_y = RotateY(_rot.y);
 	mat4 rot_m_z = RotateZ(_rot.z);
+	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
 	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
 
 
-	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
+	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x))); // TEST IF ORDER MATTERS
 
 
 	// Inverse
@@ -453,12 +446,12 @@ void MeshModel::updateTransform()
 
 void MeshModel::updateTransformWorld()
 {
-	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 rot_m_x = RotateX(_rot_w.x);
 	mat4 rot_m_y = RotateY(_rot_w.y);
 	mat4 rot_m_z = RotateZ(_rot_w.z);
+	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
-	_world_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
+	_world_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x))); // TEST IF ORDER MATTERS
 	
 
 	// Inverse
@@ -482,7 +475,7 @@ vec4 MeshModel::getCenterOffMass()
 		c += _world_transform * (_model_transform * p);
 
 	c /= vertex_positions_raw.size();
-	c.w = 0;
+	c.w = 1;
 	return vec4(c);
 }
 
