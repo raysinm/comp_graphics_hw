@@ -428,7 +428,7 @@ void MeshModel::updateTransform()
 	mat4 rot_m_x = RotateX(_rot.x);
 	mat4 rot_m_y = RotateY(_rot.y);
 	mat4 rot_m_z = RotateZ(_rot.z);
-	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
+	mat4 trnsl_m = Translate(_trnsl);
 	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
 
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
