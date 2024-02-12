@@ -19,7 +19,6 @@ bool constScaleRatio_w = false;
 int transformationWindowWidth = 0;
 
 // TODO: Decide on ranges for transformations, projection
-const float FOV_RANGE_MIN = 0.001, FOV_RANGE_MAX = 89.999;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
 const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 20;
 const float ZCAM_RANGE_MIN = 0.001, ZCAM_RANGE_MAX = 100;
@@ -125,9 +124,9 @@ void Camera::setPerspectiveByFov()
 	c_top = c_zNear * tan((M_PI / 180) * c_fovy);
 	c_right = c_top * c_aspect;
 	
-	
-	//c_bottom = -c_top;
-	//c_left = -c_right;
+	c_bottom = -c_top;
+	c_left = -c_right;
+
 	
 	setPerspective();
 }
@@ -146,12 +145,19 @@ void Camera::setPerspectiveByParams()
 
 void Camera::resetProjection()
 {
+
 	c_left = c_bottom = -DEF_PARAM;
 	c_right = c_top = DEF_PARAM;
 	c_zNear = DEF_ZNEAR;
 	c_zFar = DEF_ZFAR;
 
-	setPerspectiveByParams();
+	c_fovy = DEF_FOV;
+	c_aspect = DEF_ASPECT;
+
+	if (isOrtho)
+		setOrtho();
+	else
+		setPerspectiveByFov();
 
 }
 
@@ -169,6 +175,25 @@ void Camera::updateTransform()
 	cTransform = rot * trnsl ; // yaw pitch roll order
 }
 
+
+void Camera::zoom(double s_offset, double update_rate)
+{
+	// Change projection according to the scroll offset of the user
+	double offset_tot = s_offset * update_rate;
+	c_top -= offset_tot;
+	c_bottom += offset_tot;
+	c_right -= offset_tot;
+	c_left += offset_tot;
+	/*c_zNear += offset_tot;
+	c_zFar += offset_tot;*/
+
+
+	if (isOrtho)
+		setOrtho();
+	else
+		setPerspectiveByParams();
+
+}
 
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
@@ -563,6 +588,11 @@ void Scene::drawGUI()
 							// Set Camera projection type
 							if (g_ortho == 1)
 							{
+								if (cameras[activeCamera]->isOrtho == false)
+								{
+									cameras[activeCamera]->isOrtho = true;
+									cameras[activeCamera]->setOrtho();
+								}
 								if (prev_left   != *g_left   || prev_right != *g_right ||
 									prev_bottom != *g_bottom || prev_top   != *g_top   ||
 									prev_zNear  != *g_zNear  || prev_zFar  != *g_zFar)
@@ -572,6 +602,14 @@ void Scene::drawGUI()
 							}
 							else
 							{
+								if (cameras[activeCamera]->isOrtho == true)
+								{
+									cameras[activeCamera]->isOrtho = false;
+
+									cameras[activeCamera]->resetProjection();
+									cameras[activeCamera]->setPerspective();
+								}
+								cameras[activeCamera]->isOrtho = false;
 								float prev_fovy = *g_fovy;
 								float prev_aspect = *g_aspect;
 

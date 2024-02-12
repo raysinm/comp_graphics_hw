@@ -102,6 +102,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 	//Our callback:
 	mouse_scroll = yoffset;
+	//float update_rate = 0.1;
+	scene->zoom(mouse_scroll);
 }
 
 //resize window

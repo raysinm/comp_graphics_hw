@@ -78,7 +78,7 @@ public:
 	void setPerspectiveByParams();
 
 	void resetProjection();
-	
+	void zoom(double s_offset, double update_rate = 0.1);
 	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
@@ -90,6 +90,7 @@ public:
 	void ResetRotation() { c_rot = vec4(0,0,0,1); }
 	
 	bool selected = false;
+	bool isOrtho = true;
 };
 
 class Scene {
@@ -122,6 +123,7 @@ public:
 	void drawGUI();
 	void resize_callback_handle(int width, int height);
 	void setViewPort(vec4& vp);
+	void zoom(double s_offset) { cameras[activeCamera]->zoom(s_offset); };
 	friend bool showInputDialog();
 
 	Camera* GetActiveCamera();
