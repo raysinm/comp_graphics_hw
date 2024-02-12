@@ -86,7 +86,7 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	case V_NORMAL:
 		return num_vertices_raw*2;
 	case F_NORMAL:
-		return num_faces;
+		return num_faces*2;
 
 	default:
 		return -1;
@@ -394,12 +394,12 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		for (unsigned int j = 0; j < face_normals.size(); j++)
+		for (unsigned int j = 0; j < num_faces; j++)
 		{
 			vec4 v_n(face_normals[j]);
 
 			//Transform the normal vector:
-			v_n = cTransform * (_world_transform_inv * (_model_transform_inv * v_n));
+			v_n = cTransform * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_n));
 			
 			//Project the vector:
 			v_n = projection * v_n;
@@ -408,9 +408,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			v_n = normalize(v_n);
 
 			// Cacluate center of face as the start point:
-			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 0]];
-			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 1]];
-			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 2]];
+			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 0]];
+			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 1]];
+			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 2]];
 
 			vec3 start_point = vec3(v0 + v1 + v2) / 3;
 			vec4 end_point = vec4(start_point) + v_n;
@@ -431,19 +431,18 @@ void MeshModel::updateTransform()
 	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
 	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
 
+	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 
-	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x))); // TEST IF ORDER MATTERS
 
 
 	// Inverse
-	mat4 trnsl_m_inv = Translate(-_trnsl.x, -_trnsl.y, -_trnsl.z);	//minus
 	mat4 rot_m_x_inv = transpose(rot_m_x);
 	mat4 rot_m_y_inv = transpose(rot_m_y);
 	mat4 rot_m_z_inv = transpose(rot_m_z);
+	mat4 trnsl_m_inv = Translate(- _trnsl);	
 	mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
 
-	_model_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
-
+	_model_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
 }
 
 void MeshModel::updateTransformWorld()
@@ -453,16 +452,19 @@ void MeshModel::updateTransformWorld()
 	mat4 rot_m_z = RotateZ(_rot_w.z);
 	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
-	_world_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x))); // TEST IF ORDER MATTERS
+	
+	_world_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 	
 
+
 	// Inverse
-	mat4 trnsl_m_inv = Translate(-_trnsl_w.x, -_trnsl_w.y, -_trnsl_w.z);	//minus
 	mat4 rot_m_x_inv = transpose(rot_m_x);
 	mat4 rot_m_y_inv = transpose(rot_m_y);
 	mat4 rot_m_z_inv = transpose(rot_m_z);
+	mat4 trnsl_m_inv = Translate(- _trnsl_w);
 	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
-	_world_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
+	
+	_world_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
 }
 
 vec4 MeshModel::getCenterOffMass()

@@ -12,21 +12,18 @@
 using namespace std;
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
+static int g_ortho = 1;
 bool add_showModelDlg = false, add_showCamDlg = false;
 bool showTransWindow = false;
 bool constScaleRatio = false;
 bool constScaleRatio_w = false;
 int transformationWindowWidth = 0;
-
-// TODO: Decide on ranges for transformations, projection
+bool closedTransfWindowFlag = false;
 
 const float FOV_RANGE_MIN = -179, FOV_RANGE_MAX = 179;
-
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
 const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 20;
 const float ZCAM_RANGE_MIN = 0.001, ZCAM_RANGE_MAX = 100;
-//const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 10;
-
 const float TRNSL_RANGE_MIN = -40, TRNSL_RANGE_MAX = 40;
 const float ROT_RANGE_MIN = -180, ROT_RANGE_MAX = 180;
 const float SCALE_RANGE_MIN = -1, SCALE_RANGE_MAX = 20;
@@ -187,7 +184,6 @@ void Camera::updateTransform()
 
 }
 
-
 void Camera::zoom(double s_offset, double update_rate)
 {
 	// Change projection according to the scroll offset of the user
@@ -205,6 +201,16 @@ void Camera::zoom(double s_offset, double update_rate)
 		setPerspectiveByParams();
 
 }
+
+
+
+
+
+
+
+
+
+
 
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
@@ -322,109 +328,250 @@ void Scene::draw()
 
 }
 
-
 void Scene::drawCameraTab()
 {
+	string name("Name: ");
+	name += cameras[activeCamera]->getName();
+	ImGui::Text(name.c_str());
+
+	float* g_left = &(cameras[activeCamera]->c_left);
+	float* g_right = &(cameras[activeCamera]->c_right);
+	float* g_top = &(cameras[activeCamera]->c_top);
+	float* g_bottom = &(cameras[activeCamera]->c_bottom);
+	float* g_zNear = &(cameras[activeCamera]->c_zNear);
+	float* g_zFar = &(cameras[activeCamera]->c_zFar);
+	float* g_fovy = &(cameras[activeCamera]->c_fovy);
+	float* g_aspect = &(cameras[activeCamera]->c_aspect);
+	vec4* g_rot = &(cameras[activeCamera]->c_rot);
+	vec4* g_trnsl = &(cameras[activeCamera]->c_trnsl);
+
+
+	float prev_left = *g_left;
+	float prev_right = *g_right;
+	float prev_bottom = *g_bottom;
+	float prev_top = *g_top;
+	float prev_zNear = *g_zNear;
+	float prev_zFar = *g_zFar;
+
+	ImGui::SeparatorText("Projection");
+	ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
+	ImGui::RadioButton("Perspective", &g_ortho, 0);
+
+
+	ImGui::DragFloat("##Left_CP", g_left, 0.01f, 0, 0, "Left = %.1f "); ImGui::SameLine();
+	ImGui::DragFloat("##Right_CP", g_right, 0.01f, 0, 0, "Right = %.1f ");
+
+
+	ImGui::DragFloat("##Top_CP", g_top, 0.01f, 0, 0, "Top = %.1f "); ImGui::SameLine();
+	ImGui::DragFloat("##Bottom_CP", g_bottom, 0.01f, 0, 0, "Bot = %.1f ");
+
+
+	ImGui::DragFloat("##zNear_CP", g_zNear, 0.01f, 0, 0, "z-Near = %.1f "); ImGui::SameLine();
+	ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
+
+
+	// Set Camera projection type
+	if (g_ortho == 1)
+	{
+		if (cameras[activeCamera]->isOrtho == false)
+		{
+			cameras[activeCamera]->isOrtho = true;
+			cameras[activeCamera]->setOrtho();
+		}
+		if (prev_left != *g_left || prev_right != *g_right ||
+			prev_bottom != *g_bottom || prev_top != *g_top ||
+			prev_zNear != *g_zNear || prev_zFar != *g_zFar)
+		{
+			cameras[activeCamera]->setOrtho();
+		}
+	}
+	else
+	{
+		if (cameras[activeCamera]->isOrtho == true)
+		{
+			cameras[activeCamera]->isOrtho = false;
+
+			cameras[activeCamera]->resetProjection();
+			cameras[activeCamera]->setPerspective();
+		}
+		cameras[activeCamera]->isOrtho = false;
+		float prev_fovy = *g_fovy;
+		float prev_aspect = *g_aspect;
+
+		ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
+		ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
+
+		if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
+		{
+			cameras[activeCamera]->setPerspectiveByFov();
+		}
+		else if (prev_left != *g_left || prev_right != *g_right ||
+			prev_bottom != *g_bottom || prev_top != *g_top ||
+			prev_zNear != *g_zNear || prev_zFar != *g_zFar)
+		{
+			cameras[activeCamera]->setPerspectiveByParams();
+		}
+
+	}
+	
 	if (ImGui::Button("reset"))
 	{
 		cameras[activeCamera]->resetProjection();
 	}
 
-	//string name("Name: ");
-	//name += cameras[activeCamera]->getName();
-	//ImGui::Text(name.c_str());
 
-	//float* g_left = &(cameras[activeCamera]->c_left);
-	//float* g_right = &(cameras[activeCamera]->c_right);
-	//float* g_top = &(cameras[activeCamera]->c_top);
-	//float* g_bottom = &(cameras[activeCamera]->c_bottom);
-	//float* g_zNear = &(cameras[activeCamera]->c_zNear);
-	//float* g_zFar = &(cameras[activeCamera]->c_zFar);
-	//float* g_fovy = &(cameras[activeCamera]->c_fovy);
-	//float* g_aspect = &(cameras[activeCamera]->c_aspect);
-	//auto g_rot = &(cameras[activeCamera]->c_rot);
-	//auto g_trnsl = &(cameras[activeCamera]->c_trnsl);
-	//auto g_rot_view = &(cameras[activeCamera]->c_rot_viewspace);
-	//auto g_trnsl_view = &(cameras[activeCamera]->c_trnsl_viewspace);
-
-	//static int g_ortho = 1;
-	//float prev_left = *g_left;
-	//float prev_right = *g_right;
-	//float prev_bottom = *g_bottom;
-	//float prev_top = *g_top;
-	//float prev_zNear = *g_zNear;
-	//float prev_zFar = *g_zFar;
-
-	//ImGui::SeparatorText("Projection");
-	//ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
-	//ImGui::RadioButton("Perspective", &g_ortho, 0);
+	ImGui::SeparatorText("View space");
 
 
-	//ImGui::DragFloat("##Left_CP", g_left, 0.01f, 0, 0, "Left = %.1f "); ImGui::SameLine();
-	//ImGui::DragFloat("##Right_CP", g_right, 0.01f, 0, 0, "Right = %.1f ");
 
+	vec4 prev_trnsl = *g_trnsl;
+	vec4 prev_rot = *g_rot;
+	
+	ImGui::Text("Translation (X Y Z)");
+	ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	if (ImGui::Button("reset##MT"))
+	{
+		cameras[activeCamera]->ResetTranslation();
+	}
 
-	//ImGui::DragFloat("##Top_CP", g_top, 0.01f, 0, 0, "Top = %.1f "); ImGui::SameLine();
-	//ImGui::DragFloat("##Bottom_CP", g_bottom, 0.01f, 0, 0, "Bot = %.1f ");
+	ImGui::Text("Rotation (X Y Z)");
+	ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	if (ImGui::Button("reset##MR"))
+	{
+		cameras[activeCamera]->ResetRotation();
+	}
 
-
-	//ImGui::DragFloat("##zNear_CP", g_zNear, 0.01f, 0, 0, "z-Near = %.1f "); ImGui::SameLine();
-	//ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
-
-	//// Set Camera projection type
-	//if (g_ortho == 1)
-	//{
-	//	if (cameras[activeCamera]->isOrtho == false)
-	//	{
-	//		cameras[activeCamera]->isOrtho = true;
-	//		cameras[activeCamera]->setOrtho();
-	//	}
-	//	if (prev_left != *g_left || prev_right != *g_right ||
-	//		prev_bottom != *g_bottom || prev_top != *g_top ||
-	//		prev_zNear != *g_zNear || prev_zFar != *g_zFar)
-	//	{
-	//		cameras[activeCamera]->setOrtho();
-	//	}
-	//}
-	//else
-	//{
-	//	if (cameras[activeCamera]->isOrtho == true)
-	//	{
-	//		cameras[activeCamera]->isOrtho = false;
-
-	//		cameras[activeCamera]->resetProjection();
-	//		cameras[activeCamera]->setPerspective();
-	//	}
-	//	cameras[activeCamera]->isOrtho = false;
-	//	float prev_fovy = *g_fovy;
-	//	float prev_aspect = *g_aspect;
-
-	//	ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
-	//	ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
-
-	//	if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
-	//	{
-	//		cameras[activeCamera]->setPerspectiveByFov();
-	//	}
-	//	else if (prev_left != *g_left || prev_right != *g_right ||
-	//		prev_bottom != *g_bottom || prev_top != *g_top ||
-	//		prev_zNear != *g_zNear || prev_zFar != *g_zFar)
-	//	{
-	//		cameras[activeCamera]->setPerspectiveByParams();
-	//	}
-
-	//}
-	//if (ImGui::Button("reset"))
-	//{
-	//	cameras[activeCamera]->resetProjection();
-	//}
-
-	//prev_trnsl = *g_trnsl;
-	//prev_rot = *g_rot;
-
+	if (prev_trnsl != *g_trnsl || prev_rot != *g_rot)
+	{
+		cameras[activeCamera]->updateTransform();
+	}
 }
 
-bool closedTransfWindowFlag = false;
+void Scene::drawModelTab()
+{
+	MeshModel* activeMesh = (MeshModel*)models[activeModel];
+	string name("Name: ");
+	name += models[activeModel]->getName();
+	ImGui::Text(name.c_str());
+
+	vec4* g_trnsl = &(activeMesh->_trnsl);
+	vec4* g_rot = &(activeMesh->_rot);
+
+	bool* dispFaceNormal = &(activeMesh->showFaceNormals);
+	bool* dispVertexNormal = &(activeMesh->showVertexNormals);
+	bool* dispBoundingBox = &(activeMesh->showBoundingBox);
+
+	ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
+	ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
+	ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
+
+
+	ImGui::SeparatorText("Model space");
+
+
+	ImGui::Text("Translation (X Y Z)");
+	ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	if (ImGui::Button("reset##MT"))
+	{
+		activeMesh->ResetUserTransform_translate_model();
+	}
+
+	ImGui::Text("Rotation (X Y Z)");
+	ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	if (ImGui::Button("reset##MR"))
+	{
+		activeMesh->ResetUserTransform_rotate_model();
+	}
+
+	vec4* g_scale = &(activeMesh->_scale);
+
+	ImGui::Text("Scale (X Y Z)");
+	ImGui::Checkbox("keep ratio", &constScaleRatio);
+	ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+	if (constScaleRatio)
+	{
+		g_scale->y = g_scale->z = g_scale->x;
+	}
+	else
+	{
+		ImGui::DragFloat("##Y_MS", &(g_scale->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+		ImGui::DragFloat("##Z_MS", &(g_scale->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+	}
+
+	if (ImGui::Button("reset##MS"))
+	{
+		activeMesh->ResetUserTransform_scale_model();
+	}
+
+
+	// World transformations
+	ImGui::SeparatorText("World space");
+
+	vec4* trnsl_w = &(activeMesh->_trnsl_w);
+	vec4* rot_w = &(activeMesh->_rot_w);
+	vec4* scale_w = &(activeMesh->_scale_w);
+
+
+	ImGui::Text("Translation (X Y Z)");
+	ImGui::DragFloat("##X_WT", &(trnsl_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_WT", &(trnsl_w->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_WT", &(trnsl_w->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+
+	if (ImGui::Button("reset##WT"))
+	{
+		activeMesh->ResetUserTransform_translate_world();
+	}
+
+
+
+
+	ImGui::Text("Rotation (X Y Z)");
+	ImGui::DragFloat("##X_WR", &(rot_w->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_WR", &(rot_w->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_WR", &(rot_w->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	if (ImGui::Button("reset##WR"))
+	{
+		activeMesh->ResetUserTransform_rotate_world();
+	}
+
+
+	ImGui::Text("Scale (X Y Z)");
+	ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
+	ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+	if (constScaleRatio_w)
+	{
+		scale_w->y = scale_w->z = scale_w->x;
+	}
+	else
+	{
+		ImGui::DragFloat("##Y_WS", &(scale_w->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+		ImGui::DragFloat("##Z_WS", &(scale_w->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+	}
+	if (ImGui::Button("reset##WS"))
+	{
+		activeMesh->ResetUserTransform_scale_world();
+	}
+
+	// Delete model
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
+	if (ImGui::Button("Delete model"))
+	{
+		models.erase(models.begin() + activeModel);
+		activeModel = NOT_SELECTED;
+	}
+	ImGui::PopStyleColor(3);
+}
+
 void Scene::drawGUI()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -637,8 +784,8 @@ void Scene::drawGUI()
 			}
 
 			const char* names[2] = { 0 };
+			names[MODEL_TAB_INDEX]  = "Model";
 			names[CAMERA_TAB_INDEX] = "Camera";
-			names[MODEL_TAB_INDEX] = "Model";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
@@ -648,264 +795,22 @@ void Scene::drawGUI()
 				{
 					if (activeModel == NOT_SELECTED && n == MODEL_TAB_INDEX)
 						continue;
-					MeshModel* activeMesh = nullptr;
+
 					if (ImGui::BeginTabItem(names[n], 0, tab_bar_flags))
 					{
-						const char* name = names[n];
-						vec4* g_trnsl = nullptr;
-						vec4* g_rot   = nullptr;
-						vec4 prev_trnsl;
-						vec4 prev_rot;
-
 						if (n == CAMERA_TAB_INDEX)
 						{
-							//drawCameraTab();
-							string name("Name: ");
-							name += cameras[activeCamera]->getName();
-							ImGui::Text(name.c_str());
-
-							float* g_left = &(cameras[activeCamera]->c_left);
-							float* g_right = &(cameras[activeCamera]->c_right);
-							float* g_top = &(cameras[activeCamera]->c_top);
-							float* g_bottom = &(cameras[activeCamera]->c_bottom);
-							float* g_zNear = &(cameras[activeCamera]->c_zNear);
-							float* g_zFar = &(cameras[activeCamera]->c_zFar);
-							float* g_fovy = &(cameras[activeCamera]->c_fovy);
-							float* g_aspect = &(cameras[activeCamera]->c_aspect);
-							g_rot = &(cameras[activeCamera]->c_rot);
-							g_trnsl = &(cameras[activeCamera]->c_trnsl);
-							//g_rot_view = &(cameras[activeCamera]->c_rot_viewspace);
-							//g_trnsl_view = &(cameras[activeCamera]->c_trnsl_viewspace);
-
-							static int g_ortho = 1;
-							float prev_left = *g_left;
-							float prev_right = *g_right;
-							float prev_bottom = *g_bottom;
-							float prev_top = *g_top;
-							float prev_zNear = *g_zNear;
-							float prev_zFar = *g_zFar;
-
-							ImGui::SeparatorText("Projection");
-							ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
-							ImGui::RadioButton("Perspective", &g_ortho, 0);
-
-
-							ImGui::DragFloat("##Left_CP", g_left, 0.01f, 0, 0, "Left = %.1f "); ImGui::SameLine();
-							ImGui::DragFloat("##Right_CP", g_right, 0.01f, 0, 0, "Right = %.1f ");
-
-
-							ImGui::DragFloat("##Top_CP", g_top, 0.01f, 0, 0, "Top = %.1f "); ImGui::SameLine();
-							ImGui::DragFloat("##Bottom_CP", g_bottom, 0.01f, 0, 0, "Bot = %.1f ");
-
-
-							ImGui::DragFloat("##zNear_CP", g_zNear, 0.01f, 0, 0, "z-Near = %.1f "); ImGui::SameLine();
-							ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
-
-							// Set Camera projection type
-							if (g_ortho == 1)
-							{
-								if (cameras[activeCamera]->isOrtho == false)
-								{
-									cameras[activeCamera]->isOrtho = true;
-									cameras[activeCamera]->setOrtho();
-								}
-								if (prev_left   != *g_left   || prev_right != *g_right ||
-									prev_bottom != *g_bottom || prev_top   != *g_top   ||
-									prev_zNear  != *g_zNear  || prev_zFar  != *g_zFar)
-								{
-									cameras[activeCamera]->setOrtho();
-								}
-							}
-							else
-							{
-								if (cameras[activeCamera]->isOrtho == true)
-								{
-									cameras[activeCamera]->isOrtho = false;
-
-									cameras[activeCamera]->resetProjection();
-									cameras[activeCamera]->setPerspective();
-								}
-								cameras[activeCamera]->isOrtho = false;
-								float prev_fovy = *g_fovy;
-								float prev_aspect = *g_aspect;
-
-								ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
-								ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
-
-								if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
-								{
-									cameras[activeCamera]->setPerspectiveByFov();
-								}
-								else if (prev_left   != *g_left   || prev_right != *g_right ||
-										 prev_bottom != *g_bottom || prev_top   != *g_top   ||
-										 prev_zNear  != *g_zNear  || prev_zFar  != *g_zFar)
-								{
-									cameras[activeCamera]->setPerspectiveByParams();
-								}
-
-							}
-							drawCameraTab();/*
-							if (ImGui::Button("reset"))
-							{
-								cameras[activeCamera]->resetProjection();
-							}*/
-
-
+							drawCameraTab();
 						}
 						else if (n == MODEL_TAB_INDEX)
 						{
-							activeMesh = (MeshModel*)models[activeModel];
-							string name("Name: ");
-							name += models[activeModel]->getName();
-							ImGui::Text(name.c_str());
-
-							g_trnsl = &(activeMesh->_trnsl);
-							g_rot   = &(activeMesh->_rot);
-							bool* dispFaceNormal   = &(activeMesh->showFaceNormals);
-							bool* dispVertexNormal = &(activeMesh->showVertexNormals);
-							bool* dispBoundingBox = &(activeMesh->showBoundingBox);
-
-							ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
-							ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
-							ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
-						}
-						
-						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "View space";
-						ImGui::SeparatorText(sep_text.c_str());
-
-						if (n == CAMERA_TAB_INDEX)
-						{
-							//prev_trnsl = *g_trnsl;
-							//prev_rot = *g_rot;
-						}
-						ImGui::Text("Translation (X Y Z)");
-						ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-						ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-						ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-						if (ImGui::Button("reset##MT"))
-						{
-							if (n == CAMERA_TAB_INDEX)
-							{
-								cameras[activeCamera]->ResetTranslation();
-							}
-							else if (n == MODEL_TAB_INDEX)
-							{
-								activeMesh->ResetUserTransform_translate_model();
-							}
-						}
-
-						ImGui::Text("Rotation (X Y Z)");
-						ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-						ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-						ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-						if (ImGui::Button("reset##MR"))
-						{
-							if (n == CAMERA_TAB_INDEX)
-							{
-								cameras[activeCamera]->ResetRotation();
-							}
-							else if (n == MODEL_TAB_INDEX)
-							{
-								activeMesh->ResetUserTransform_rotate_model();
-							}
-						}
-						
-						if (n == CAMERA_TAB_INDEX)
-						{
-							if (prev_trnsl != *g_trnsl || prev_rot != *g_rot)
-							{
-								cameras[activeCamera]->updateTransform();
-							}
-						}
-
-
-						if (n == MODEL_TAB_INDEX)
-						{
-							vec4* g_scale = &(activeMesh->_scale);
-
-							ImGui::Text("Scale (X Y Z)");
-							ImGui::Checkbox("keep ratio", &constScaleRatio);
-							ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-							if (constScaleRatio)
-							{
-								g_scale->y = g_scale->z = g_scale->x;
-							}
-							else
-							{
-								ImGui::DragFloat("##Y_MS", &(g_scale->y),0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-								ImGui::DragFloat("##Z_MS", &(g_scale->z),0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-							}
-							
-							if (ImGui::Button("reset##MS"))
-							{
-									activeMesh->ResetUserTransform_scale_model();
-							}
-							
-							
-							// World transformations
-							ImGui::SeparatorText("World space");
-
-							vec4* trnsl_w = &(activeMesh->_trnsl_w);
-							vec4* rot_w   = &(activeMesh->_rot_w);
-							vec4* scale_w = &(activeMesh->_scale_w);
-
-							ImGui::Text("Translation (X Y Z)");
-							ImGui::DragFloat("##X_WT", &(trnsl_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-							ImGui::DragFloat("##Y_WT", &(trnsl_w->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-							ImGui::DragFloat("##Z_WT", &(trnsl_w->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-
-							// Handle keyboard navigation for FloatSliders
-							if (ImGui::Button("reset##WT"))
-							{
-								activeMesh->ResetUserTransform_translate_world();
-							}
-
-
-
-							ImGui::Text("Rotation (X Y Z)");
-							ImGui::DragFloat("##X_WR", &(rot_w->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-							ImGui::DragFloat("##Y_WR", &(rot_w->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-							ImGui::DragFloat("##Z_WR", &(rot_w->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-							if (ImGui::Button("reset##WR"))
-							{
-								activeMesh->ResetUserTransform_rotate_world();
-							}
-
-
-							ImGui::Text("Scale (X Y Z)");
-							ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
-							ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-							if (constScaleRatio_w)
-							{
-								scale_w->y = scale_w->z = scale_w->x;
-							}
-							else
-							{
-							ImGui::DragFloat("##Y_WS", &(scale_w->y),  0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-							ImGui::DragFloat("##Z_WS", &(scale_w->z),  0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-							}
-							if (ImGui::Button("reset##WS"))
-							{
-								activeMesh->ResetUserTransform_scale_world();
-							}
-
-							// Delete model
-							ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
-							if (ImGui::Button("Delete model"))
-							{
-								models.erase(models.begin() + activeModel);
-								activeModel = NOT_SELECTED;
-							}
-							ImGui::PopStyleColor(3);
+							drawModelTab();
 						}
 						
 						ImGui::EndTabItem();
 					}
 				}
 				ImGui::PopItemWidth();
-
 				ImGui::EndTabBar();
 			}
 			

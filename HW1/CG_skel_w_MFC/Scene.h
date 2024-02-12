@@ -106,6 +106,7 @@ private:
 
 	void ResetPopUpFlags();
 	void drawCameraTab();
+	void drawModelTab();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	int viewportX;
 	int viewportY;
