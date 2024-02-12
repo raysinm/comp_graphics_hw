@@ -58,16 +58,23 @@ void Camera::iconInit()
 	icon[5] = vec3(0, 0, -0.1);	// optional
 }
 
-void Camera::iconDraw()
+bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 {
+
 	for (int i = 0; i < num_icon_vertices; i++)
 	{
 		
 		vec4 v_i(icon[i]);
-		v_i = cTransform * v_i;
+		v_i = active_projection * (active_cTransform * (cTransform* v_i));
+
+		if (v_i.x < -1 || v_i.x > 1 || v_i.y < -1 || v_i.y >1 || v_i.z < -1 || v_i.z >1)
+		{
+			return false;
+		}
 
 		iconBuffer[i] = vec2(v_i.x, v_i.y);
 	}
+	return true;
 }
 
 vec2* Camera::getIconBuffer() { return iconBuffer; }
@@ -356,19 +363,21 @@ void Scene::draw()
 
 
 	}
+
+	// Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
-		if (renderAllCameras || camera->renderCamera)
+		if (renderAllCameras || camera->renderCamera && camera!=cameras[activeCamera])
 		{
-			camera->iconDraw();
-			vec2* icon_vertices = camera->getIconBuffer();
-			unsigned int len = camera->getIconBufferSize();
-			if (icon_vertices)
-				m_renderer->SetBufferLines(icon_vertices, len, vec4(112, 0, 120));
+			if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
+			{
+				vec2* icon_vertices = camera->getIconBuffer();
+				unsigned int len = camera->getIconBufferSize();
+				if (icon_vertices)
+					m_renderer->SetBufferLines(icon_vertices, len, vec4(112, 0, 120));
+			}
 		}
 	}
-	
-	//TODO: Add camera ' + ' signs. 
 
 	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
