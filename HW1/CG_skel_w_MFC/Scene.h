@@ -88,6 +88,9 @@ public:
 	void updateTransform();
 	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
 	void ResetRotation() { c_rot = vec4(0,0,0,1); }
+
+	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }
+	void ResetRotation_viewspace() { c_rot_viewspace = vec4(0,0,0,1); }
 	
 	bool selected = false;
 	bool isOrtho = true;

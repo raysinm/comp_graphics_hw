@@ -56,7 +56,6 @@ mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 
 	mat4 result = c * Translate(-eye);
 
-	cout << "(debug) LookAt result:" << endl << result << endl;
 	return result;
 
 }
@@ -345,6 +344,9 @@ void Scene::drawCameraTab()
 	vec4* g_rot = &(cameras[activeCamera]->c_rot);
 	vec4* g_trnsl = &(cameras[activeCamera]->c_trnsl);
 
+	vec4* g_rot_view   = &(cameras[activeCamera]->c_rot_viewspace);
+	vec4* g_trnsl_view = &(cameras[activeCamera]->c_trnsl_viewspace);
+
 
 	float prev_left = *g_left;
 	float prev_right = *g_right;
@@ -422,11 +424,38 @@ void Scene::drawCameraTab()
 
 	ImGui::SeparatorText("View space");
 
+	vec4 prev_trnsl_view = *g_trnsl_view;
+	vec4 prev_rot_view = *g_rot_view;
 
+	ImGui::Text("Translation (X Y Z)");
+	ImGui::DragFloat("##X_VT", &(g_trnsl_view->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_VT", &(g_trnsl_view->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_VT", &(g_trnsl_view->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+	if (ImGui::Button("reset##VT"))
+	{
+		cameras[activeCamera]->ResetTranslation_viewspace();
+	}
+
+	ImGui::Text("Rotation (X Y Z)");
+	ImGui::DragFloat("##X_VR", &(g_rot_view->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Y_VR", &(g_rot_view->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	ImGui::DragFloat("##Z_VR", &(g_rot_view->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+	if (ImGui::Button("reset##VR"))
+	{
+		cameras[activeCamera]->ResetRotation_viewspace();
+	}
+
+	if (prev_trnsl_view != *g_trnsl_view || prev_rot_view != *g_rot_view)
+	{
+		cameras[activeCamera]->updateTransform();
+	}
+
+
+	ImGui::SeparatorText("World space");
 
 	vec4 prev_trnsl = *g_trnsl;
 	vec4 prev_rot = *g_rot;
-	
+
 	ImGui::Text("Translation (X Y Z)");
 	ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 	ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
