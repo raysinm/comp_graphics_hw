@@ -471,16 +471,19 @@ vec4 MeshModel::getCenterOffMass()
 {
 /* In world space */
 
-	updateTransform();
-	updateTransformWorld();
+	//updateTransform();
+	//updateTransformWorld();
 
-	vec4 c(0);
-	for (auto p : vertex_positions_raw)
-		c += _world_transform * (_model_transform * p);
+	//vec4 c(0);
+	//for (auto p : vertex_positions_raw)
+	//	c += _world_transform * (_model_transform * p);
 
-	c /= vertex_positions_raw.size();
-	c.w = 1;
-	return vec4(c);
+	//c /= vertex_positions_raw.size();
+	//c.w = 1;
+
+
+	//return vec4(c);
+	return _trnsl_w + _trnsl;
 }
 
 void MeshModel::setTranslation(vec3& trnsl)

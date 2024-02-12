@@ -13,8 +13,8 @@ using namespace std;
 
 #define DEF_PARAM_RANGE 20;
 #define DEF_PARAM 10;
-#define DEF_ZNEAR (0.1);
-#define DEF_ZFAR (100);
+#define DEF_ZNEAR (1);
+#define DEF_ZFAR (20);
 #define DEF_FOV 45
 #define DEF_ASPECT 1
 
@@ -51,6 +51,8 @@ private:
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
+
+	mat4 transform_mid_worldspace, transform_mid_viewspace;
 	
 	// Icon stuff
 	vec3* icon;
@@ -100,8 +102,8 @@ public:
 	
 	void iconInit();
 	bool iconDraw(mat4& active_cTransform, mat4& active_projection);
-	vec2* getIconBuffer();
-	unsigned int getIconBufferSize();
+	vec2* getIconBuffer() { return iconBuffer; }
+	unsigned int getIconBufferSize() { return num_icon_vertices; }
 
 
 	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }

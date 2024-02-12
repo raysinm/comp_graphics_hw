@@ -50,36 +50,41 @@ void Camera::iconInit()
 	num_icon_vertices = 6;	// Or 4 - optional
 	icon = new vec3[num_icon_vertices];
 	iconBuffer = new vec2[num_icon_vertices];
-	icon[0] = vec3(0.1, 0, 0);
-	icon[1] = vec3(-0.1, 0, 0);
-	icon[2] = vec3(0, 0.1, 0);
-	icon[3] = vec3(0, -0.1, 0);
-	icon[4] = vec3(0, 0, 0.1);	// Optional
-	icon[5] = vec3(0, 0, -0.1);	// optional
+	icon[0] = vec3(1, 0, 0);
+	icon[1] = vec3(-1, 0, 0);
+	icon[2] = vec3(0, 1, 0);
+	icon[3] = vec3(0, -1, 0);
+	icon[4] = vec3(0, 0, 0);	// Optional
+	icon[5] = vec3(0, 0, -1);	// optional
 }
 
 bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 {
-
 	for (int i = 0; i < num_icon_vertices; i++)
 	{
 		
 		vec4 v_i(icon[i]);
-		v_i = active_projection * (active_cTransform * (cTransform* v_i));
 
-		if (v_i.x < -1 || v_i.x > 1 || v_i.y < -1 || v_i.y >1 || v_i.z < -1 || v_i.z >1)
+		//Apply transformations:
+		v_i = active_cTransform * (transform_mid_worldspace * v_i);
+
+		//Project:
+		v_i = active_projection * v_i;
+		
+		v_i /= v_i.w;
+
+		//Clip it:
+		if (v_i.x < -1 || v_i.x > 1 || v_i.y < -1 || v_i.y > 1 || v_i.z < -1 || v_i.z > 1)
 		{
 			return false;
 		}
 
+		//Add to buffer:
 		iconBuffer[i] = vec2(v_i.x, v_i.y);
 	}
+	
 	return true;
 }
-
-vec2* Camera::getIconBuffer() { return iconBuffer; }
-unsigned int Camera::getIconBufferSize() { return num_icon_vertices; }
-
 
 mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 {
@@ -203,6 +208,8 @@ void Camera::resetProjection()
 	else
 		setPerspectiveByFov();
 
+	updateTransform();
+
 }
 
 void Camera::updateTransform()
@@ -214,17 +221,25 @@ void Camera::updateTransform()
 	mat4 rot = transpose(rot_z * (rot_y * rot_x));
 	mat4 trnsl = Translate(-c_trnsl);
 
+	//Save mid results for camera icon view
+	transform_mid_worldspace = Translate(c_trnsl) * transpose(rot);
+	
 	// C-t  = R^T * T^-1
+	cTransform = rot * trnsl ; // Mid result of cTransform
 
-	cTransform = rot * trnsl ; // yaw pitch roll order
 
+	//Apply view-space transformations:
 	mat4 rot_x_view = RotateX(c_rot_viewspace.x);
 	mat4 rot_y_view = RotateY(c_rot_viewspace.y);
 	mat4 rot_z_view = RotateZ(c_rot_viewspace.z);
 
+	mat4 rot_view = rot_z_view * (rot_y_view * rot_x_view);
 	mat4 trnsl_view = Translate(c_trnsl_viewspace);
 	
-	cTransform = trnsl_view * (rot_z_view * (rot_y_view * (rot_x_view * cTransform)));
+	cTransform = trnsl_view * (rot_view * cTransform);
+
+	//Save mid results for camera icon view
+	transform_mid_viewspace = trnsl_view * (rot_view * transform_mid_worldspace);
 
 }
 
@@ -236,7 +251,7 @@ void Camera::zoom(double s_offset, double update_rate)
 	c_bottom += offset_tot;
 	c_right -= offset_tot;
 	c_left += offset_tot;
-
+	lockFov_GUI = false; //Unlock the params
 
 
 	if (isOrtho)
@@ -315,9 +330,6 @@ void Scene::draw()
 	//2. Clear the pixel buffer before drawing new frame
 	m_renderer->clearBuffer();
 
-	//3. Update camera transformation matrix (cTransform)
-	//cameras[activeCamera]->updateTransform();
-
 	//4. draw each MeshModel
 	for (auto model : models)
 	{
@@ -374,7 +386,10 @@ void Scene::draw()
 				vec2* icon_vertices = camera->getIconBuffer();
 				unsigned int len = camera->getIconBufferSize();
 				if (icon_vertices)
-					m_renderer->SetBufferLines(icon_vertices, len, vec4(112, 0, 120));
+				{
+					m_renderer->SetBufferLines(icon_vertices, len-2, vec4(112, 0, 120));
+					m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 255, 0));
+				}
 			}
 		}
 	}
@@ -431,8 +446,7 @@ void Scene::drawCameraTab()
 	ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
 
 
-	// Set Camera projection type
-	if (g_ortho == 1)
+	if (g_ortho == 1) /* Ortho type */
 	{
 		if (cameras[activeCamera]->isOrtho == false)
 		{
@@ -447,7 +461,7 @@ void Scene::drawCameraTab()
 			cameras[activeCamera]->setOrtho();
 		}
 	}
-	else
+	else /* Perspective type */
 	{
 		if (cameras[activeCamera]->isOrtho == true)
 		{
