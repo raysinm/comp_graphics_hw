@@ -13,8 +13,8 @@ using namespace std;
 
 #define DEF_PARAM_RANGE 20;
 #define DEF_PARAM 10;
-#define DEF_ZNEAR (1);
-#define DEF_ZFAR (10);
+#define DEF_ZNEAR (0.1);
+#define DEF_ZFAR (100);
 #define DEF_FOV 45
 #define DEF_ASPECT 1
 
@@ -50,6 +50,7 @@ private:
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
+	bool lockFov_GUI = false;
 
 	friend class Scene;	// To acces transformations;
 
@@ -92,6 +93,8 @@ public:
 	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }
 	void ResetRotation_viewspace() { c_rot_viewspace = vec4(0,0,0,1); }
 	
+	void unLockFovy() { lockFov_GUI = false; }
+	bool* getLockFovyPTR() { return &lockFov_GUI; }
 	bool selected = false;
 	bool isOrtho = true;
 };

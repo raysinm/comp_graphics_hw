@@ -131,14 +131,22 @@ void Camera::setPerspectiveByFov()
 }
 
 void Camera::setPerspectiveByParams()
-{
-	float width  = (c_right - c_left);
-	float height = (c_top - c_bottom);
+{	
+	if (!lockFov_GUI)
+	{
+		float width  = (c_right - c_left);
+		float height = (c_top - c_bottom);
+		c_aspect = c_right / c_top;
+		c_fovy = (180 / M_PI) * atanf(c_top / c_zNear);
+		setPerspective();
+	}
+	else
+	{
+		// Fovy is locked + user changed zNear
+		// Calcualte new left right top bottom
+		setPerspectiveByFov();
+	}
 	
-	
-	c_fovy = (180 / M_PI) * atanf(c_top / c_zNear);
-	c_aspect = c_right / c_top;
-	setPerspective();
 
 }
 
@@ -396,21 +404,28 @@ void Scene::drawCameraTab()
 			cameras[activeCamera]->resetProjection();
 			cameras[activeCamera]->setPerspective();
 		}
+		
 		cameras[activeCamera]->isOrtho = false;
 		float prev_fovy = *g_fovy;
 		float prev_aspect = *g_aspect;
 
 		ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
-		ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
+		ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f "); ImGui::SameLine();
+		ImGui::Checkbox("Lock FovY", cameras[activeCamera]->getLockFovyPTR());
 
 		if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
 		{
 			cameras[activeCamera]->setPerspectiveByFov();
 		}
-		else if (prev_left != *g_left || prev_right != *g_right ||
-			prev_bottom != *g_bottom || prev_top != *g_top ||
-			prev_zNear != *g_zNear || prev_zFar != *g_zFar)
+		else if( prev_left != *g_left || prev_right != *g_right || prev_bottom != *g_bottom ||
+				 prev_top  != *g_top  || prev_zNear != *g_zNear || prev_zFar != *g_zFar )
 		{
+			if (prev_zNear == *g_zNear)
+			{
+				//zNear didn't changed - other paramater changed - UnLock fovy.
+				cameras[activeCamera]->unLockFovy();
+			}
+			
 			cameras[activeCamera]->setPerspectiveByParams();
 		}
 
@@ -965,8 +980,9 @@ void Scene::drawGUI()
 			auto currCamera = cameras.back();
 			currCamera->setName(nameBuffer);
 			
-			//TODO: translate the camera to given position;
+			
 			currCamera->setStartPosition(vec4(posBuffer[0], posBuffer[1], posBuffer[2], 0));
+			currCamera->updateTransform();
 			ResetPopUpFlags();
 		}
 		else if (GUI_popup_pressedCANCEL)
