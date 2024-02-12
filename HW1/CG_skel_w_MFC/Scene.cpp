@@ -120,18 +120,41 @@ void Camera::LookAt(const Model* target)
 	mat4 lookAtMat = LookAt(eye, this->target, up);
 
 
-	/* Retreive the new rotation values */
-	float tetaX = atan2f(lookAtMat[2][1], lookAtMat[2][2]);
-	float tetaY = atan2f(-lookAtMat[2][0], sqrtf(lookAtMat[2][1]*lookAtMat[2][1] + lookAtMat[2][2]*lookAtMat[2][2]));
-	float tetaZ = atan2f(lookAtMat[1][0], lookAtMat[0][0]);
+	cout << "Lookat matrix: " << endl << lookAtMat << endl;
+
+	float tetaX = 0;
+	float tetaY = 0;
+	float tetaZ = 0;
+
+	if (lookAtMat[2][0] != -1 && lookAtMat[2][0] != 1)
+	{
+		tetaY = -asinf(lookAtMat[2][0]);
+
+		tetaX = atan2f(lookAtMat[2][1] / cosf(tetaY), lookAtMat[2][2] / cosf(tetaY));
+		tetaZ = atan2f(lookAtMat[1][0] / cosf(tetaY), lookAtMat[0][0] / cosf(tetaY));
+	}
+	else
+	{
+		/* Edge case of tetaY == +/-90  */
+		tetaZ = 0;
+		if (lookAtMat[2][0] == -1)
+		{
+			tetaY = M_PI / 2.0f;
+			tetaX = tetaZ + atan2f(lookAtMat[0][1], lookAtMat[0][2]);
+		}
+		else
+		{
+			tetaY = -M_PI / 2.0f;
+			tetaX = -tetaZ + atan2f(-lookAtMat[0][1], -lookAtMat[0][2]);
+		}
+	}
 
 	tetaX *= 180 / M_PI;
 	tetaY *= 180 / M_PI;
 	tetaZ *= 180 / M_PI;
-
+	
 	c_rot = vec4(-tetaX, tetaY, tetaZ, 1);
 
-	/* TODO: Handle edge cases */
 	updateTransform();
 }
 

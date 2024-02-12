@@ -483,7 +483,9 @@ vec4 MeshModel::getCenterOffMass()
 
 
 	//return vec4(c);
-	return _trnsl_w + _trnsl;
+	vec4 res = _trnsl_w + _trnsl;
+	res.w = 1;
+	return res;
 }
 
 void MeshModel::setTranslation(vec3& trnsl)
@@ -540,23 +542,23 @@ void MeshModel::setScaleWorld(vec3& scale)
 
 void MeshModel::ResetAllUserTransforms()
 {
-	_trnsl = vec4(0);
-	_rot = vec4(0);
+	_trnsl = vec4(0, 0, 0);
+	_rot = vec4(0, 0, 0);
 	_scale = vec4(1);
 
-	_trnsl_w = vec4(0);
-	_rot_w = vec4(0);
+	_trnsl_w = vec4(0, 0, 0);
+	_rot_w = vec4(0, 0, 0);
 	_scale_w = vec4(1);
 }
 
 void MeshModel::ResetUserTransform_translate_model()
 {
-	_trnsl = vec4(0);
+	_trnsl = vec4(0,0,0);
 }
 
 void MeshModel::ResetUserTransform_rotate_model()
 {
-	_rot = vec4(0);
+	_rot = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_scale_model()
@@ -566,12 +568,12 @@ void MeshModel::ResetUserTransform_scale_model()
 
 void MeshModel::ResetUserTransform_translate_world()
 {
-	_trnsl_w = vec4(0);
+	_trnsl_w = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_rotate_world()
 {
-	_rot_w = vec4(0);
+	_rot_w = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_scale_world()
