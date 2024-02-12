@@ -48,7 +48,7 @@ private:
 	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
 	string name = "";
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
-	vec4 c_trnsl, c_rot;
+	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
 
 	friend class Scene;	// To acces transformations;
@@ -105,6 +105,7 @@ private:
 	void UpdateModelSelection();
 
 	void ResetPopUpFlags();
+	void drawCameraTab();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	int viewportX;
 	int viewportY;

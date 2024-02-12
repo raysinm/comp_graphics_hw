@@ -19,6 +19,9 @@ bool constScaleRatio_w = false;
 int transformationWindowWidth = 0;
 
 // TODO: Decide on ranges for transformations, projection
+
+const float FOV_RANGE_MIN = -179, FOV_RANGE_MAX = 179;
+
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
 const float PROJ_RANGE_MIN = -20, PROJ_RANGE_MAX = 20;
 const float ZCAM_RANGE_MIN = 0.001, ZCAM_RANGE_MAX = 100;
@@ -173,6 +176,15 @@ void Camera::updateTransform()
 	// C-t  = R^T * T^-1
 
 	cTransform = rot * trnsl ; // yaw pitch roll order
+
+	mat4 rot_x_view = RotateX(c_rot_viewspace.x);
+	mat4 rot_y_view = RotateY(c_rot_viewspace.y);
+	mat4 rot_z_view = RotateZ(c_rot_viewspace.z);
+
+	mat4 trnsl_view = Translate(c_trnsl_viewspace);
+	
+	cTransform = trnsl_view * (rot_z_view * (rot_y_view * (rot_x_view * cTransform)));
+
 }
 
 
@@ -184,8 +196,7 @@ void Camera::zoom(double s_offset, double update_rate)
 	c_bottom += offset_tot;
 	c_right -= offset_tot;
 	c_left += offset_tot;
-	/*c_zNear += offset_tot;
-	c_zFar += offset_tot;*/
+
 
 
 	if (isOrtho)
@@ -308,6 +319,108 @@ void Scene::draw()
 	m_renderer->updateTexture();
 
 
+
+}
+
+
+void Scene::drawCameraTab()
+{
+	if (ImGui::Button("reset"))
+	{
+		cameras[activeCamera]->resetProjection();
+	}
+
+	//string name("Name: ");
+	//name += cameras[activeCamera]->getName();
+	//ImGui::Text(name.c_str());
+
+	//float* g_left = &(cameras[activeCamera]->c_left);
+	//float* g_right = &(cameras[activeCamera]->c_right);
+	//float* g_top = &(cameras[activeCamera]->c_top);
+	//float* g_bottom = &(cameras[activeCamera]->c_bottom);
+	//float* g_zNear = &(cameras[activeCamera]->c_zNear);
+	//float* g_zFar = &(cameras[activeCamera]->c_zFar);
+	//float* g_fovy = &(cameras[activeCamera]->c_fovy);
+	//float* g_aspect = &(cameras[activeCamera]->c_aspect);
+	//auto g_rot = &(cameras[activeCamera]->c_rot);
+	//auto g_trnsl = &(cameras[activeCamera]->c_trnsl);
+	//auto g_rot_view = &(cameras[activeCamera]->c_rot_viewspace);
+	//auto g_trnsl_view = &(cameras[activeCamera]->c_trnsl_viewspace);
+
+	//static int g_ortho = 1;
+	//float prev_left = *g_left;
+	//float prev_right = *g_right;
+	//float prev_bottom = *g_bottom;
+	//float prev_top = *g_top;
+	//float prev_zNear = *g_zNear;
+	//float prev_zFar = *g_zFar;
+
+	//ImGui::SeparatorText("Projection");
+	//ImGui::RadioButton("Orthographic", &g_ortho, 1); ImGui::SameLine();
+	//ImGui::RadioButton("Perspective", &g_ortho, 0);
+
+
+	//ImGui::DragFloat("##Left_CP", g_left, 0.01f, 0, 0, "Left = %.1f "); ImGui::SameLine();
+	//ImGui::DragFloat("##Right_CP", g_right, 0.01f, 0, 0, "Right = %.1f ");
+
+
+	//ImGui::DragFloat("##Top_CP", g_top, 0.01f, 0, 0, "Top = %.1f "); ImGui::SameLine();
+	//ImGui::DragFloat("##Bottom_CP", g_bottom, 0.01f, 0, 0, "Bot = %.1f ");
+
+
+	//ImGui::DragFloat("##zNear_CP", g_zNear, 0.01f, 0, 0, "z-Near = %.1f "); ImGui::SameLine();
+	//ImGui::DragFloat("##zFar_CP", g_zFar, 0.01f, 0, 0, "z-Far = %.1f ");
+
+	//// Set Camera projection type
+	//if (g_ortho == 1)
+	//{
+	//	if (cameras[activeCamera]->isOrtho == false)
+	//	{
+	//		cameras[activeCamera]->isOrtho = true;
+	//		cameras[activeCamera]->setOrtho();
+	//	}
+	//	if (prev_left != *g_left || prev_right != *g_right ||
+	//		prev_bottom != *g_bottom || prev_top != *g_top ||
+	//		prev_zNear != *g_zNear || prev_zFar != *g_zFar)
+	//	{
+	//		cameras[activeCamera]->setOrtho();
+	//	}
+	//}
+	//else
+	//{
+	//	if (cameras[activeCamera]->isOrtho == true)
+	//	{
+	//		cameras[activeCamera]->isOrtho = false;
+
+	//		cameras[activeCamera]->resetProjection();
+	//		cameras[activeCamera]->setPerspective();
+	//	}
+	//	cameras[activeCamera]->isOrtho = false;
+	//	float prev_fovy = *g_fovy;
+	//	float prev_aspect = *g_aspect;
+
+	//	ImGui::DragFloat("##FovY", g_fovy, 0.01f, FOV_RANGE_MIN, FOV_RANGE_MAX, "FovY = %.1f "); ImGui::SameLine();
+	//	ImGui::DragFloat("##Aspect", g_aspect, 0.01f, ASPECT_RANGE_MIN, ASPECT_RANGE_MAX, "Aspect = %.1f ");
+
+	//	if (prev_fovy != *g_fovy || prev_aspect != *g_aspect) //User changed FOV or Aspect Ratio
+	//	{
+	//		cameras[activeCamera]->setPerspectiveByFov();
+	//	}
+	//	else if (prev_left != *g_left || prev_right != *g_right ||
+	//		prev_bottom != *g_bottom || prev_top != *g_top ||
+	//		prev_zNear != *g_zNear || prev_zFar != *g_zFar)
+	//	{
+	//		cameras[activeCamera]->setPerspectiveByParams();
+	//	}
+
+	//}
+	//if (ImGui::Button("reset"))
+	//{
+	//	cameras[activeCamera]->resetProjection();
+	//}
+
+	//prev_trnsl = *g_trnsl;
+	//prev_rot = *g_rot;
 
 }
 
@@ -546,6 +659,7 @@ void Scene::drawGUI()
 
 						if (n == CAMERA_TAB_INDEX)
 						{
+							//drawCameraTab();
 							string name("Name: ");
 							name += cameras[activeCamera]->getName();
 							ImGui::Text(name.c_str());
@@ -560,7 +674,9 @@ void Scene::drawGUI()
 							float* g_aspect = &(cameras[activeCamera]->c_aspect);
 							g_rot = &(cameras[activeCamera]->c_rot);
 							g_trnsl = &(cameras[activeCamera]->c_trnsl);
-								
+							//g_rot_view = &(cameras[activeCamera]->c_rot_viewspace);
+							//g_trnsl_view = &(cameras[activeCamera]->c_trnsl_viewspace);
+
 							static int g_ortho = 1;
 							float prev_left = *g_left;
 							float prev_right = *g_right;
@@ -628,10 +744,11 @@ void Scene::drawGUI()
 								}
 
 							}
+							drawCameraTab();/*
 							if (ImGui::Button("reset"))
 							{
 								cameras[activeCamera]->resetProjection();
-							}
+							}*/
 
 
 						}
@@ -653,13 +770,13 @@ void Scene::drawGUI()
 							ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
 						}
 						
-						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "Camera space";
+						string sep_text = n == MODEL_TAB_INDEX ? "Model space" : "View space";
 						ImGui::SeparatorText(sep_text.c_str());
 
 						if (n == CAMERA_TAB_INDEX)
 						{
-							prev_trnsl = *g_trnsl;
-							prev_rot = *g_rot;
+							//prev_trnsl = *g_trnsl;
+							//prev_rot = *g_rot;
 						}
 						ImGui::Text("Translation (X Y Z)");
 						ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
