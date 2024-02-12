@@ -386,8 +386,9 @@ void Scene::drawCameraTab()
 		if (cameras[activeCamera]->isOrtho == false)
 		{
 			cameras[activeCamera]->isOrtho = true;
-			cameras[activeCamera]->setOrtho();
+			cameras[activeCamera]->resetProjection();
 		}
+
 		if (prev_left != *g_left || prev_right != *g_right ||
 			prev_bottom != *g_bottom || prev_top != *g_top ||
 			prev_zNear != *g_zNear || prev_zFar != *g_zFar)
@@ -400,12 +401,9 @@ void Scene::drawCameraTab()
 		if (cameras[activeCamera]->isOrtho == true)
 		{
 			cameras[activeCamera]->isOrtho = false;
-
 			cameras[activeCamera]->resetProjection();
-			cameras[activeCamera]->setPerspective();
 		}
 		
-		cameras[activeCamera]->isOrtho = false;
 		float prev_fovy = *g_fovy;
 		float prev_aspect = *g_aspect;
 
