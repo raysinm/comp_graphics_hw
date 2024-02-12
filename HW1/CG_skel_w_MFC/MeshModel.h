@@ -58,7 +58,7 @@ public:
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
-	bool showBoundingBox = false;
+	bool showBoundingBox    = false;
 
 	MeshModel(string fileName);
 	~MeshModel(void);

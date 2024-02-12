@@ -13,8 +13,8 @@ using namespace std;
 
 #define DEF_PARAM_RANGE 20;
 #define DEF_PARAM 10;
-#define DEF_ZNEAR (1);
-#define DEF_ZFAR (10);
+#define DEF_ZNEAR (0.1);
+#define DEF_ZFAR (100);
 #define DEF_FOV 45
 #define DEF_ASPECT 1
 
@@ -51,12 +51,16 @@ private:
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
+<<<<<<< HEAD
 	
 	// Icon stuff
 	vec3* icon;
 	vec2* iconBuffer;
 
 	unsigned int num_icon_vertices;
+=======
+	bool lockFov_GUI = false;
+>>>>>>> 6b0b2e3c52781cf7f83a99c9b0cb0d28780abdbe
 
 	friend class Scene;	// To acces transformations;
 
@@ -95,12 +99,20 @@ public:
 	void updateTransform();
 	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
 	void ResetRotation() { c_rot = vec4(0,0,0,1); }
+
+	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }
+	void ResetRotation_viewspace() { c_rot_viewspace = vec4(0,0,0,1); }
 	
+<<<<<<< HEAD
 	void iconInit();
 	void iconDraw();
 	vec2* getIconBuffer();
 	unsigned int getIconBufferSize();
 
+=======
+	void unLockFovy() { lockFov_GUI = false; }
+	bool* getLockFovyPTR() { return &lockFov_GUI; }
+>>>>>>> 6b0b2e3c52781cf7f83a99c9b0cb0d28780abdbe
 	bool selected = false;
 	bool isOrtho = true;
 	bool renderCamera = false;
