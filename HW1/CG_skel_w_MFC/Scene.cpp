@@ -36,6 +36,7 @@ Camera::Camera()
 {
 	name = CAMERA_DEFAULT_NAME;
 	
+	iconInit();
 	ResetRotation();
 	ResetTranslation();
 	resetProjection();
@@ -43,6 +44,35 @@ Camera::Camera()
 
 	LookAt();
 }
+
+void Camera::iconInit()
+{
+	num_icon_vertices = 6;	// Or 4 - optional
+	icon = new vec3[num_icon_vertices];
+	iconBuffer = new vec2[num_icon_vertices];
+	icon[0] = vec3(0.1, 0, 0);
+	icon[1] = vec3(-0.1, 0, 0);
+	icon[2] = vec3(0, 0.1, 0);
+	icon[3] = vec3(0, -0.1, 0);
+	icon[4] = vec3(0, 0, 0.1);	// Optional
+	icon[5] = vec3(0, 0, -0.1);	// optional
+}
+
+void Camera::iconDraw()
+{
+	for (int i = 0; i < num_icon_vertices; i++)
+	{
+		
+		vec4 v_i(icon[i]);
+		v_i = cTransform * v_i;
+
+		iconBuffer[i] = vec2(v_i.x, v_i.y);
+	}
+}
+
+vec2* Camera::getIconBuffer() { return iconBuffer; }
+unsigned int Camera::getIconBufferSize() { return num_icon_vertices; }
+
 
 mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 {
@@ -222,8 +252,8 @@ void Scene::AddCamera()
 	cameras.push_back(cam);
 
 	string s = cam->getName();
-	s += " " + std::to_string(cameras.size());
-	cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
+s += " " + std::to_string(cameras.size());
+cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
 
 }
 
@@ -238,7 +268,7 @@ void Scene::loadOBJModel(string fileName)
 	{
 		extractedName = fileName.substr(pos + 1);
 		pos = extractedName.find_last_of('.');
-		if(pos != std::string::npos)
+		if (pos != std::string::npos)
 			extractedName = extractedName.substr(0, pos); //Cut the .obj in the end of the name
 	}
 	model->setName(extractedName);
@@ -254,10 +284,10 @@ void Scene::ResetPopUpFlags()
 	add_showCamDlg = false;				// Reset flag
 	add_showModelDlg = false;			// Reset flag
 	memset(nameBuffer, 0, IM_ARRAYSIZE(nameBuffer));
-	memset(posBuffer, 0, sizeof(float)*3);
+	memset(posBuffer, 0, sizeof(float) * 3);
 }
 
-/*  
+/*
 	Main draw function.
 	This will draw:
 		1. GUI
@@ -267,7 +297,7 @@ void Scene::draw()
 {
 	//1. GUI
 	drawGUI();
-					
+
 	//2. Clear the pixel buffer before drawing new frame
 	m_renderer->clearBuffer();
 
@@ -286,37 +316,49 @@ void Scene::draw()
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
 		unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(MODEL);
-		if(vertecies)
+		if (vertecies)
 			m_renderer->SetBufferOfModel(vertecies, len);
-		
+
 		// Bounding Box
 		if (((MeshModel*)model)->showBoundingBox)
 		{
 			vec2* bbox_vertices = ((MeshModel*)model)->Get2dBuffer(BBOX);
 			len = ((MeshModel*)model)->Get2dBuffer_len(BBOX);
 			if (bbox_vertices)
-				m_renderer->SetBufferOfModel(bbox_vertices, len, vec4(0,1,0,1));
+				m_renderer->SetBufferOfModel(bbox_vertices, len, vec4(0, 1, 0, 1));
 		}
-		
+
 		// Vertex Normals
 		if (((MeshModel*)model)->showVertexNormals)
 		{
 			vec2* v_norm_vertices = ((MeshModel*)model)->Get2dBuffer(V_NORMAL);
 			len = ((MeshModel*)model)->Get2dBuffer_len(V_NORMAL);
 			if (v_norm_vertices)
-				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1,0,0));
+				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1, 0, 0));
 
 		}
-		
+
 		// Face normals
 		if (((MeshModel*)model)->showFaceNormals)
 		{
 			vec2* f_norm_vertices = ((MeshModel*)model)->Get2dBuffer(F_NORMAL);
 			len = ((MeshModel*)model)->Get2dBuffer_len(F_NORMAL);
 			if (f_norm_vertices)
-				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0,0,1));
+				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0, 0, 1));
 		}
 
+
+	}
+	for (auto camera : cameras)
+	{
+		if (renderAllCameras || camera->renderCamera)
+		{
+			camera->iconDraw();
+			vec2* icon_vertices = camera->getIconBuffer();
+			unsigned int len = camera->getIconBufferSize();
+			if (icon_vertices)
+				m_renderer->SetBufferLines(icon_vertices, len, vec4(112, 0, 120));
+		}
 	}
 	
 	//TODO: Add camera ' + ' signs. 
@@ -448,6 +490,11 @@ void Scene::drawCameraTab()
 	if (prev_trnsl != *g_trnsl || prev_rot != *g_rot)
 	{
 		cameras[activeCamera]->updateTransform();
+	}
+
+	if (ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera))
+	{
+		renderAllCameras = false;
 	}
 }
 
@@ -758,6 +805,14 @@ void Scene::drawGUI()
 				ImGui::EndMenu(); //End delete
 			}
 		}
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - 140);
+		bool curr_render_val = renderAllCameras;
+		if (!curr_render_val)
+			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 1, 0, 1));
+		ImGui::MenuItem("Render all cameras", "", &renderAllCameras);
+		if (!curr_render_val)
+			ImGui::PopStyleColor();
+
 
 
 		ImGui::EndMainMenuBar();

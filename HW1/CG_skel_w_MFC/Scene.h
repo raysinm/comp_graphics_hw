@@ -46,10 +46,17 @@ class Camera
 {
 private:
 	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
+
 	string name = "";
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
+	
+	// Icon stuff
+	vec3* icon;
+	vec2* iconBuffer;
+
+	unsigned int num_icon_vertices;
 
 	friend class Scene;	// To acces transformations;
 
@@ -89,8 +96,14 @@ public:
 	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
 	void ResetRotation() { c_rot = vec4(0,0,0,1); }
 	
+	void iconInit();
+	void iconDraw();
+	vec2* getIconBuffer();
+	unsigned int getIconBufferSize();
+
 	bool selected = false;
 	bool isOrtho = true;
+	bool renderCamera = false;
 };
 
 class Scene {
@@ -134,4 +147,6 @@ public:
 	int activeModel  = NOT_SELECTED;
 	int activeLight  = NOT_SELECTED;
 	int activeCamera = 0;	// Always at least one camera
+
+	bool renderAllCameras = false;
 };
