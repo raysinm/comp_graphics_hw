@@ -120,7 +120,6 @@ void Camera::LookAt(const Model* target)
 	mat4 lookAtMat = LookAt(eye, this->target, up);
 
 
-	cout << "Lookat matrix: " << endl << lookAtMat << endl;
 
 	float tetaX = 0;
 	float tetaY = 0;

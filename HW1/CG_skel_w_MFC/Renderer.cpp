@@ -245,9 +245,7 @@ void Renderer::InitOpenGLRendering()
 	a = glGetError();
 	glGenTextures(1, &gScreenTex);
 	a = glGetError();
-#ifdef _DEBUG
-	printf("ERROR in Renderer: %s\n", glewGetErrorString(a));
-#endif
+
 	glGenVertexArrays(1, &gScreenVtc);
 	GLuint buffer;
 	glBindVertexArray(gScreenVtc);
