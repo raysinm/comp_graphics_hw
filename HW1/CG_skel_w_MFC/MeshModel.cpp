@@ -302,6 +302,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 
 	updateTransform();	
 	updateTransformWorld();
+	updateTransformCombinedInv();
 
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
@@ -386,7 +387,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 
 
 			//Transform the normal vector:
-			v_j = cTransform * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j));
+			v_j = cTransform * (transpose(combined_inv) * v_j);
 
 			//Project the vector:
 			v_j = projection * v_j;
@@ -412,8 +413,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			vec4 v_n(face_normals[j]);
 
 			//Transform the normal vector:
-			v_n = cTransform * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_n));
-			
+			//v_n = cTransform * (transpose(_world_transform_inv * _model_transform_inv) * v_n);
+			v_n = cTransform * (transpose(combined_inv) * v_n);
+
 			//Project the vector:
 			v_n = projection * v_n;
 
@@ -426,7 +428,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 2]];
 
 			vec3 start_point = vec3(v0 + v1 + v2) / 3;
-			vec4 end_point = vec4(start_point) + v_n;
+			vec3 end_point = start_point + vec3(v_n.x, v_n.y, v_n.z);
 
 
 			buffer2d_f_normals[ (buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
@@ -435,6 +437,18 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 		}
 	}
 }
+
+void MeshModel::updateTransformCombinedInv()
+{
+	mat4 rot_m_x = transpose(RotateX(_rot_w.x + _rot_w.x));
+	mat4 rot_m_y = transpose(RotateY(_rot_w.y + _rot_w.y));
+	mat4 rot_m_z = transpose(RotateZ(_rot_w.z + _rot_w.z));
+	mat4 trnsl_m = Translate(-_trnsl - _trnsl_w);
+	mat4 scale_m = Scale(1/(_scale_w.x+_scale.x), 1 / (_scale_w.y + _scale.y), 1 / (_scale_w.z + _scale.z));
+
+	combined_inv = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
+}
+
 
 void MeshModel::updateTransform()
 {
@@ -448,14 +462,16 @@ void MeshModel::updateTransform()
 
 
 
-	// Inverse
-	mat4 rot_m_x_inv = transpose(rot_m_x);
-	mat4 rot_m_y_inv = transpose(rot_m_y);
-	mat4 rot_m_z_inv = transpose(rot_m_z);
-	mat4 trnsl_m_inv = Translate(- _trnsl);	
-	mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
+	//// Inverse
+	//mat4 rot_m_x_inv = transpose(rot_m_x);
+	//mat4 rot_m_y_inv = transpose(rot_m_y);
+	//mat4 rot_m_z_inv = transpose(rot_m_z);
+	//mat4 trnsl_m_inv = Translate(- _trnsl);	
+	//mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
 
-	_model_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
+	//_model_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
+	//updateTransformCombinedInv();
+
 }
 
 void MeshModel::updateTransformWorld()
@@ -470,15 +486,18 @@ void MeshModel::updateTransformWorld()
 	
 
 
-	// Inverse
-	mat4 rot_m_x_inv = transpose(rot_m_x);
-	mat4 rot_m_y_inv = transpose(rot_m_y);
-	mat4 rot_m_z_inv = transpose(rot_m_z);
-	mat4 trnsl_m_inv = Translate(- _trnsl_w);
-	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
-	
-	_world_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
+	//// Inverse
+	//mat4 rot_m_x_inv = transpose(rot_m_x);
+	//mat4 rot_m_y_inv = transpose(rot_m_y);
+	//mat4 rot_m_z_inv = transpose(rot_m_z);
+	//mat4 trnsl_m_inv = Translate(- _trnsl_w);
+	//mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
+	//
+	//_world_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
+	//updateTransformCombinedInv();
+
 }
+
 
 vec4 MeshModel::getCenterOffMass()
 {

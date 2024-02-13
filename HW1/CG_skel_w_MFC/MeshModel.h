@@ -43,6 +43,7 @@ protected:
 
 	mat4 _world_transform;
 	mat4 _model_transform;
+	mat4 combined_inv;
 	mat4 _world_transform_inv;	// Needed for normal
 	mat4 _model_transform_inv;	// Needed for normal
 
@@ -71,6 +72,7 @@ public:
 
 	void updateTransform();
 	void updateTransformWorld();
+	void updateTransformCombinedInv();
 
 	vec4 getCenterOffMass();
 
