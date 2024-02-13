@@ -295,7 +295,7 @@ void MeshModel::estimateVertexNormals()
 	}
 }
 
-void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
+void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
 {
 	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
 		return;
@@ -324,7 +324,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 	num_vertices_to_draw = 0;
 	int buffer_i = 0;
 	vector<int> faces_to_draw;
-	for (unsigned int j = 0; j < num_faces; j++)
+	for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 	{
 		bool atleast_one_vertex_in_bound = false;
 		if (allowClipping)
@@ -334,21 +334,21 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 				else: Don't add the face*/
 			for (unsigned int v = 0; v < 3; v++)
 			{
-				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
 
 				if (point.x >= -1 && point.x <= 1 &&
 					point.y >= -1 && point.y <= 1 &&
 					point.z >= -1 && point.z <= 1)
 				{
 					atleast_one_vertex_in_bound = true;
-					faces_to_draw.push_back(j);
+					faces_to_draw.push_back(face_indx);
 					break;
 				}
 			}
 		}
 		else
 		{
-			faces_to_draw.push_back(j);
+			faces_to_draw.push_back(face_indx);
 		}
 
 		/* add the 3 points of the current face: */
@@ -356,7 +356,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 		{
 			for (unsigned int v = 0; v < 3; v++)
 			{
-				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
 				buffer2d[(buffer_i * 3) + v] = vec2(point.x, point.y);
 				num_vertices_to_draw++;
 			}
@@ -385,9 +385,8 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 		{
 			vec4 v_j (vertex_normals[j]);
 
-
 			//Transform the normal vector:
-			v_j = cTransform * (transpose(combined_inv) * v_j);
+			v_j = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_j));
 
 			//Project the vector:
 			v_j = projection * v_j;
@@ -396,7 +395,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			v_j = normalize(v_j);
 
 			vec4 start_point = t_vertex_positions_normalized[j];
-			vec4 end_point	 = start_point + v_j;
+			vec4 end_point	 = start_point + (v_j * length_vertex_normals);
 
 			buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
 			buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
@@ -407,15 +406,14 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 	if (showFaceNormals)
 	{
 		//for (unsigned int j = 0; j < num_faces; j++)
-		int buffer_i = 0;
-		for (int j: faces_to_draw)
+		unsigned int buffer_i = 0;
+		for (int face_indx : faces_to_draw)
 		{
-			vec4 v_n(face_normals[j]);
+			vec4 v_n(face_normals[face_indx]);
 
 			//Transform the normal vector:
-			//v_n = cTransform * (transpose(_world_transform_inv * _model_transform_inv) * v_n);
-			v_n = cTransform * (transpose(combined_inv) * v_n);
-
+			v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
+			
 			//Project the vector:
 			v_n = projection * v_n;
 
@@ -423,12 +421,12 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			v_n = normalize(v_n);
 
 			// Cacluate center of face as the start point:
-			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 0]];
-			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 1]];
-			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(j * 3) + 2]];
+			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
+			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
+			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
 
 			vec3 start_point = vec3(v0 + v1 + v2) / 3;
-			vec3 end_point = start_point + vec3(v_n.x, v_n.y, v_n.z);
+			vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
 
 
 			buffer2d_f_normals[ (buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
@@ -440,9 +438,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 
 void MeshModel::updateTransformCombinedInv()
 {
-	mat4 rot_m_x = transpose(RotateX(_rot_w.x + _rot_w.x));
-	mat4 rot_m_y = transpose(RotateY(_rot_w.y + _rot_w.y));
-	mat4 rot_m_z = transpose(RotateZ(_rot_w.z + _rot_w.z));
+	mat4 rot_m_x = transpose(RotateX(_rot_w.x + _rot.x));
+	mat4 rot_m_y = transpose(RotateY(_rot_w.y + _rot.y));
+	mat4 rot_m_z = transpose(RotateZ(_rot_w.z + _rot.z));
 	mat4 trnsl_m = Translate(-_trnsl - _trnsl_w);
 	mat4 scale_m = Scale(1/(_scale_w.x+_scale.x), 1 / (_scale_w.y + _scale.y), 1 / (_scale_w.z + _scale.z));
 
@@ -457,10 +455,10 @@ void MeshModel::updateTransform()
 	mat4 rot_m_z = RotateZ(_rot.z);
 	mat4 trnsl_m = Translate(_trnsl);
 	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
+	mat4 scale_inverse_m = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);	
 
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
-
-
+	_model_transform_for_normals = rot_m_z * (rot_m_y * rot_m_x);
 
 	//// Inverse
 	//mat4 rot_m_x_inv = transpose(rot_m_x);
@@ -468,7 +466,6 @@ void MeshModel::updateTransform()
 	//mat4 rot_m_z_inv = transpose(rot_m_z);
 	//mat4 trnsl_m_inv = Translate(- _trnsl);	
 	//mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
-
 	//_model_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
 	//updateTransformCombinedInv();
 
@@ -481,8 +478,10 @@ void MeshModel::updateTransformWorld()
 	mat4 rot_m_z = RotateZ(_rot_w.z);
 	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
+	mat4 scale_inverse_m = Scale(1/_scale_w.x, 1/_scale_w.y, 1/_scale_w.z);
 	
 	_world_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
+	_world_transform_for_normals = rot_m_z * (rot_m_y * rot_m_x);
 	
 
 
@@ -492,7 +491,6 @@ void MeshModel::updateTransformWorld()
 	//mat4 rot_m_z_inv = transpose(rot_m_z);
 	//mat4 trnsl_m_inv = Translate(- _trnsl_w);
 	//mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
-	//
 	//_world_transform_inv = scale_m_inv * (trnsl_m_inv *(rot_m_z_inv * (rot_m_y_inv * rot_m_x_inv)));
 	//updateTransformCombinedInv();
 

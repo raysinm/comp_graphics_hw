@@ -27,7 +27,7 @@ protected:
 	bool userInitFinished = false;
 
 public:
-	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping)=0;
+	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot) = 0;
 
 	void setName(std::string newName) { name = newName; }
 	void SetUserInitFinished() { userInitFinished = true; }
@@ -69,6 +69,7 @@ public:
 	mat4 cTransform;
 	mat4 view_matrix;	// cTransform inversed
 	mat4 projection;
+	mat4 rotationMat_normals;
 
 	Camera::Camera();
 	

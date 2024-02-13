@@ -15,6 +15,7 @@ using namespace std;
 class MeshModel : public Model
 {
 protected:
+	friend class Scene;
 
 	MeshModel();
 	
@@ -35,6 +36,8 @@ protected:
 	unsigned int num_faces_to_draw;
 	unsigned int num_vertices_to_draw;
 	const unsigned int num_bbox_vertices = 36;
+	float length_face_normals   = 1.0f;
+	float length_vertex_normals = 1.0f;
 	
 	vec2* buffer2d = nullptr;					//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
 	vec2* buffer2d_bbox = nullptr;				//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
@@ -44,12 +47,11 @@ protected:
 	mat4 _world_transform;
 	mat4 _model_transform;
 	mat4 combined_inv;
-	mat4 _world_transform_inv;	// Needed for normal
-	mat4 _model_transform_inv;	// Needed for normal
+	mat4 _world_transform_for_normals;
+	mat4 _model_transform_for_normals;		
 
 	mat3 _normal_transform;		// FOR NORMALS!!! G = (M^(-1))^T
 
-	friend class Scene;
 
 	void initBoundingBox();
 	void calculateFaceNormals();
@@ -58,6 +60,7 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
+
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
 	bool showBoundingBox    = false;
@@ -67,14 +70,18 @@ public:
 
 	vec2* Get2dBuffer(MODEL_OBJECT obj);
 	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
+
 	void loadFile(string fileName);
-	void draw(mat4& cTransform, mat4& projection, bool allowClipping);
+	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);
 
 	void updateTransform();
 	void updateTransformWorld();
 	void updateTransformCombinedInv();
 
 	vec4 getCenterOffMass();
+
+	float* getLengthFaceNormal()   { return &length_face_normals; }
+	float* getLengthVertexNormal() { return &length_vertex_normals; }
 
 	//Model space:
 	void setTranslation(vec3& trnsl);

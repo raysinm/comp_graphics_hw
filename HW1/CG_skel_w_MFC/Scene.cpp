@@ -66,7 +66,7 @@ bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 		vec4 v_i(icon[i]);
 
 		//Apply transformations:
-		v_i = active_cTransform * (transform_mid_worldspace*(transform_mid_viewspace * v_i));
+		v_i = active_cTransform * (transform_mid_worldspace * (transform_mid_viewspace * v_i));
 
 		//Project:
 		v_i = active_projection * v_i;
@@ -246,11 +246,13 @@ void Camera::updateTransform()
 	mat4 rot = transpose(rot_z * (rot_y * rot_x));
 	mat4 trnsl = Translate(-c_trnsl);
 
+
+
 	//Save mid results for camera icon view
 	transform_mid_worldspace = Translate(c_trnsl) * transpose(rot);
 	
 	// C-t  = R^T * T^-1
-	cTransform = rot * trnsl ; // Mid result of cTransform
+	cTransform = rot * trnsl; // Mid result of cTransform
 
 
 	//Apply view-space transformations:
@@ -265,6 +267,9 @@ void Camera::updateTransform()
 
 	//Save mid results for camera icon view
 	transform_mid_viewspace = trnsl_view * (rot_view * transform_mid_worldspace);
+
+	//Save the inverse rotation matrix for normals display:
+	rotationMat_normals = rot_view * rot;
 
 }
 
@@ -364,7 +369,8 @@ void Scene::draw()
 
 		model->draw(cameras[activeCamera]->cTransform, 
 					cameras[activeCamera]->projection,
-					cameras[activeCamera]->allowClipping);
+					cameras[activeCamera]->allowClipping,
+					cameras[activeCamera]->rotationMat_normals);
 
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
@@ -406,7 +412,7 @@ void Scene::draw()
 	// Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
-		if (camera->renderCamera && camera!=cameras[activeCamera])
+		if (camera->renderCamera && camera != cameras[activeCamera])
 		{
 			if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
 			{
@@ -618,8 +624,24 @@ void Scene::drawModelTab()
 	bool* dispVertexNormal = &(activeMesh->showVertexNormals);
 	bool* dispBoundingBox = &(activeMesh->showBoundingBox);
 
+	float* lenFaceNormal = activeMesh->getLengthFaceNormal();
+	float* lenVertNormal = activeMesh->getLengthVertexNormal();
+
 	ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
+	
+	if (*dispFaceNormal)
+	{
+		ImGui::SameLine();
+		ImGui::DragFloat("Length##Length_Face_normal", lenFaceNormal, 0.001f, 0, 0, "%.3f");
+	}
+
 	ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
+	if (*dispVertexNormal)
+	{
+		ImGui::SameLine();
+		ImGui::DragFloat("Length##Length_Vert_normal", lenVertNormal, 0.001f, 0, 0, "%.3f");
+	}
+
 	ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
 
 
