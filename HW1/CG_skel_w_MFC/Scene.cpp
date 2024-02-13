@@ -154,6 +154,8 @@ void Camera::LookAt(const Model* target)
 	tetaZ *= 180 / M_PI;
 	
 	c_rot = vec4(-tetaX, tetaY, tetaZ, 1);
+	c_rot_viewspace = vec4(0, 0, 0, 1);
+	c_trnsl_viewspace = vec4(0, 0, 0, 1);
 
 	updateTransform();
 }
