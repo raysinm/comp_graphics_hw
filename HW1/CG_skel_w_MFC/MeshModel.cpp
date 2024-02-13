@@ -86,7 +86,7 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	case V_NORMAL:
 		return num_vertices_raw*2;
 	case F_NORMAL:
-		return num_faces_to_draw*2;
+		return num_faces*2;
 
 	default:
 		return -1;
@@ -261,7 +261,7 @@ void MeshModel::initBoundingBox()
 			1,5,6
 	};
 
-	for (int i = 0; i < num_bbox_vertices; i++)
+	for (unsigned int i = 0; i < num_bbox_vertices; i++)
 		b_box_vertices[i] = v[indices[i]];
 }
 
@@ -371,10 +371,16 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	{
 		for (unsigned int j = 0; j < num_bbox_vertices; j++)
 		{
-			vec4 v_j (b_box_vertices[j]);
-			v_j = projection * (cTransform * (_world_transform * (_model_transform * v_j)));
+			vec4 v_j(b_box_vertices[j]);
 
-			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
+			//Apply model-view transformations:
+			v_j = cTransform * (_world_transform * (_model_transform * v_j));
+
+			//Project:
+			v_j = projection * v_j;
+
+			//Add to 2d buffer: 
+			buffer2d_bbox[j] = vec2(v_j.x, v_j.y) / v_j.w;
 		}
 	}
 
@@ -405,9 +411,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		//for (unsigned int j = 0; j < num_faces; j++)
 		unsigned int buffer_i = 0;
-		for (int face_indx : faces_to_draw)
+		//for (int face_indx : faces_to_draw)
+		for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 		{
 			vec4 v_n(face_normals[face_indx]);
 
