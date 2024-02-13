@@ -958,16 +958,6 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu();	// End Options menu
 		}
-		//ImGui::SameLine(ImGui::GetContentRegionMax().x - 140);
-		//bool curr_render_val = renderAllCameras;
-		//if (!curr_render_val)
-		//	ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 1, 0, 1));
-		//ImGui::MenuItem("Render all cameras", "", &renderAllCameras);
-		//if (!curr_render_val)
-		//	ImGui::PopStyleColor();
-
-
-
 		ImGui::EndMainMenuBar();
 	}
 

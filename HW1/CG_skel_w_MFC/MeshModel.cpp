@@ -450,7 +450,7 @@ void MeshModel::updateTransform()
 	mat4 scale_inverse_m = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);	
 
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
-	_model_transform_for_normals = rot_m_z * (rot_m_y * rot_m_x);
+	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 }
 
 void MeshModel::updateTransformWorld()
@@ -463,7 +463,7 @@ void MeshModel::updateTransformWorld()
 	mat4 scale_inverse_m = Scale(1/_scale_w.x, 1/_scale_w.y, 1/_scale_w.z);
 	
 	_world_transform = scale_m * (rot_m_z * (rot_m_y * (rot_m_x * trnsl_m)));
-	_world_transform_for_normals = rot_m_z * (rot_m_y * rot_m_x);
+	_world_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 }
 
 vec4 MeshModel::getCenterOffMass()
