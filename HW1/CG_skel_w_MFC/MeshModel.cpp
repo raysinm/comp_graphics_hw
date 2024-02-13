@@ -86,7 +86,7 @@ unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
 	case V_NORMAL:
 		return num_vertices_raw*2;
 	case F_NORMAL:
-		return num_faces*2;
+		return num_faces_to_draw*2;
 
 	default:
 		return -1;
@@ -322,6 +322,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 	// Clipping
 	num_vertices_to_draw = 0;
 	int buffer_i = 0;
+	vector<int> faces_to_draw;
 	for (unsigned int j = 0; j < num_faces; j++)
 	{
 		bool atleast_one_vertex_in_bound = false;
@@ -339,9 +340,14 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 					point.z >= -1 && point.z <= 1)
 				{
 					atleast_one_vertex_in_bound = true;
+					faces_to_draw.push_back(j);
 					break;
 				}
 			}
+		}
+		else
+		{
+			faces_to_draw.push_back(j);
 		}
 
 		/* add the 3 points of the current face: */
@@ -355,7 +361,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			}
 			buffer_i++;
 		}
+
 	}
+	num_faces_to_draw = faces_to_draw.size();
 
 	// Bounding box buffer
 	if (showBoundingBox)
@@ -397,7 +405,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		for (unsigned int j = 0; j < num_faces; j++)
+		//for (unsigned int j = 0; j < num_faces; j++)
+		int buffer_i = 0;
+		for (int j: faces_to_draw)
 		{
 			vec4 v_n(face_normals[j]);
 
@@ -419,9 +429,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 			vec4 end_point = vec4(start_point) + v_n;
 
 
-			buffer2d_f_normals[ (j * 2) + 0] = vec2(start_point.x, start_point.y);
-			buffer2d_f_normals[ (j * 2) + 1] = vec2(end_point.x, end_point.y);
-
+			buffer2d_f_normals[ (buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
+			buffer2d_f_normals[ (buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
+			++buffer_i;
 		}
 	}
 }
