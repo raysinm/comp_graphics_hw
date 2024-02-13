@@ -295,7 +295,7 @@ void MeshModel::estimateVertexNormals()
 	}
 }
 
-void MeshModel::draw(mat4& cTransform, mat4& projection)
+void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping)
 {
 	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
 		return;
@@ -319,30 +319,33 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	}
 
 	// Model buffer - Add to 2d-buffer all vertecies
+	// Clipping
 	num_vertices_to_draw = 0;
 	int buffer_i = 0;
 	for (unsigned int j = 0; j < num_faces; j++)
 	{
-		/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
-			If yes: Add the face to buffer2d
-			else: Don't add the face*/
 		bool atleast_one_vertex_in_bound = false;
-		for (unsigned int v = 0; v < 3; v++)
+		if (allowClipping)
 		{
-			vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
-
-			if (point.x >= -1 && point.x <= 1 &&
-				point.y >= -1 && point.y <= 1 &&
-				point.z >= -1 && point.z <= 1 )
+			/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
+				If yes: Add the face to buffer2d
+				else: Don't add the face*/
+			for (unsigned int v = 0; v < 3; v++)
 			{
-				atleast_one_vertex_in_bound = true;
-				break;
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
+
+				if (point.x >= -1 && point.x <= 1 &&
+					point.y >= -1 && point.y <= 1 &&
+					point.z >= -1 && point.z <= 1)
+				{
+					atleast_one_vertex_in_bound = true;
+					break;
+				}
 			}
 		}
 
-
 		/* add the 3 points of the current face: */
-		if (atleast_one_vertex_in_bound)
+		if (atleast_one_vertex_in_bound || !allowClipping)
 		{
 			for (unsigned int v = 0; v < 3; v++)
 			{

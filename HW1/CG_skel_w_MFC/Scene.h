@@ -27,7 +27,7 @@ protected:
 	bool userInitFinished = false;
 
 public:
-	void virtual draw(mat4& cTransform, mat4& projection)=0;
+	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping)=0;
 
 	void setName(std::string newName) { name = newName; }
 	void SetUserInitFinished() { userInitFinished = true; }
@@ -114,6 +114,7 @@ public:
 	bool selected = false;
 	bool isOrtho = true;
 	bool renderCamera = false;
+	bool allowClipping = true;
 };
 
 class Scene {
@@ -157,6 +158,4 @@ public:
 	int activeModel  = NOT_SELECTED;
 	int activeLight  = NOT_SELECTED;
 	int activeCamera = 0;	// Always at least one camera
-
-	bool renderAllCameras = false;
 };

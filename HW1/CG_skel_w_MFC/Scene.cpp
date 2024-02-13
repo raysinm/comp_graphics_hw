@@ -66,7 +66,7 @@ bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 		vec4 v_i(icon[i]);
 
 		//Apply transformations:
-		v_i = active_cTransform * (transform_mid_worldspace * v_i);
+		v_i = active_cTransform * (transform_mid_worldspace*(transform_mid_viewspace * v_i));
 
 		//Project:
 		v_i = active_projection * v_i;
@@ -360,7 +360,9 @@ void Scene::draw()
 		if (!model->GetUserInitFinished())
 			continue;
 
-		model->draw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection);
+		model->draw(cameras[activeCamera]->cTransform, 
+					cameras[activeCamera]->projection,
+					cameras[activeCamera]->allowClipping);
 
 		//values: [-1, 1]
 		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
@@ -402,7 +404,7 @@ void Scene::draw()
 	// Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
-		if (renderAllCameras || camera->renderCamera && camera!=cameras[activeCamera])
+		if (camera->renderCamera && camera!=cameras[activeCamera])
 		{
 			if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
 			{
@@ -410,8 +412,8 @@ void Scene::draw()
 				unsigned int len = camera->getIconBufferSize();
 				if (icon_vertices)
 				{
-					m_renderer->SetBufferLines(icon_vertices, len-2, vec4(112, 0, 120));
-					m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 255, 0));
+					m_renderer->SetBufferLines(icon_vertices, len-2, vec4(0.75, 0, 0.8));
+					m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 0.8, 0.15));
 				}
 			}
 		}
@@ -429,6 +431,11 @@ void Scene::drawCameraTab()
 	string name("Name: ");
 	name += cameras[activeCamera]->getName();
 	ImGui::Text(name.c_str());
+
+	ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera); ImGui::SameLine();
+	bool* g_allowClipping = &(cameras[activeCamera]->allowClipping);
+	ImGui::Checkbox("Allow clipping", g_allowClipping);
+
 
 	float* g_left = &(cameras[activeCamera]->c_left);
 	float* g_right = &(cameras[activeCamera]->c_right);
@@ -580,9 +587,18 @@ void Scene::drawCameraTab()
 		cameras[activeCamera]->updateTransform();
 	}
 
-	if (ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera))
+	if (cameras.size() > 1)
 	{
-		renderAllCameras = false;
+		// Delete camera
+		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
+		if (ImGui::Button("Delete camera"))
+		{
+			cameras.erase(cameras.begin() + activeCamera);
+			activeCamera = max(0, activeCamera - 1);
+		}
+		ImGui::PopStyleColor(3);
 	}
 }
 
@@ -893,13 +909,39 @@ void Scene::drawGUI()
 				ImGui::EndMenu(); //End delete
 			}
 		}
-		ImGui::SameLine(ImGui::GetContentRegionMax().x - 140);
-		bool curr_render_val = renderAllCameras;
-		if (!curr_render_val)
-			ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 1, 0, 1));
-		ImGui::MenuItem("Render all cameras", "", &renderAllCameras);
-		if (!curr_render_val)
-			ImGui::PopStyleColor();
+		if (ImGui::BeginMenu("Options..."))
+		{
+			ImGui::SeparatorText("Cameras options");
+			if (ImGui::MenuItem("Render all cameras"))
+			{
+				for (auto camera : cameras)
+					camera->renderCamera=true;
+			}
+			if (ImGui::MenuItem("Un-Render all cameras"))
+			{
+				for (auto camera : cameras)
+					camera->renderCamera = false;
+			}
+			if (ImGui::MenuItem("Allow clippping"))
+			{
+				for (auto camera : cameras)
+					camera->allowClipping = true;
+			}
+			if (ImGui::MenuItem("Disable clippping"))
+			{
+				for (auto camera : cameras)
+					camera->allowClipping = false;
+			}
+
+			ImGui::EndMenu();	// End Options menu
+		}
+		//ImGui::SameLine(ImGui::GetContentRegionMax().x - 140);
+		//bool curr_render_val = renderAllCameras;
+		//if (!curr_render_val)
+		//	ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 1, 0, 1));
+		//ImGui::MenuItem("Render all cameras", "", &renderAllCameras);
+		//if (!curr_render_val)
+		//	ImGui::PopStyleColor();
 
 
 

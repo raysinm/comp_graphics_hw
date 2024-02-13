@@ -66,7 +66,7 @@ public:
 	vec2* Get2dBuffer(MODEL_OBJECT obj);
 	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
 	void loadFile(string fileName);
-	void draw(mat4& cTransform, mat4& projection);
+	void draw(mat4& cTransform, mat4& projection, bool allowClipping);
 
 	void updateTransform();
 	void updateTransformWorld();
