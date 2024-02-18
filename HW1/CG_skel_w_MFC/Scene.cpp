@@ -55,7 +55,7 @@ void Camera::iconInit()
 	icon[2] = vec3(0, 1, 0);
 	icon[3] = vec3(0, -1, 0);
 	icon[4] = vec3(0, 0, 0);	// Optional
-	icon[5] = vec3(0, 0, -1);	// optional
+	icon[5] = vec3(0, 0, -2);	// optional
 }
 
 bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
@@ -66,7 +66,7 @@ bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 		vec4 v_i(icon[i]);
 
 		//Apply transformations:
-		v_i = active_cTransform * (transform_mid_worldspace * (transform_mid_viewspace * v_i));
+		v_i = active_cTransform * (transform_mid_worldspace * v_i);
 
 		//Project:
 		v_i = active_projection * v_i;
@@ -117,45 +117,36 @@ void Camera::LookAt(const Model* target)
 	/* Up vector */
 	vec4 up = vec4(0, 1, 0, 1);
 
+	/* Get LookAt matrix */
 	mat4 lookAtMat = LookAt(eye, this->target, up);
 
-
-
-	float tetaX = 0;
-	float tetaY = 0;
-	float tetaZ = 0;
-
-	if (lookAtMat[2][0] != -1 && lookAtMat[2][0] != 1)
+	/* Get Euler angles by rotation matrix */
+	const float m11 = lookAtMat[0][0], m12 = lookAtMat[0][1], m13 = lookAtMat[0][2];
+	const float m21 = lookAtMat[1][0], m22 = lookAtMat[1][1], m23 = lookAtMat[1][2];
+	const float m31 = lookAtMat[2][0], m32 = lookAtMat[2][1], m33 = lookAtMat[2][2];
+	float x, y, z;
+	y = asinf(m13);
+	if (abs(m13) < 0.9999999)
 	{
-		tetaY = -asinf(lookAtMat[2][0]);
-
-		tetaX = atan2f(lookAtMat[2][1] / cosf(tetaY), lookAtMat[2][2] / cosf(tetaY));
-		tetaZ = atan2f(lookAtMat[1][0] / cosf(tetaY), lookAtMat[0][0] / cosf(tetaY));
+		x = atan2f(-m23, m33);
+		z = atan2f(-m12, m11);
 	}
 	else
 	{
-		/* Edge case of tetaY == +/-90  */
-		tetaZ = 0;
-		if (lookAtMat[2][0] == -1)
-		{
-			tetaY = M_PI / 2.0f;
-			tetaX = tetaZ + atan2f(lookAtMat[0][1], lookAtMat[0][2]);
-		}
-		else
-		{
-			tetaY = -M_PI / 2.0f;
-			tetaX = -tetaZ + atan2f(-lookAtMat[0][1], -lookAtMat[0][2]);
-		}
+		x = atan2f(m32, m22);
+		z = 0;
 	}
 
-	tetaX *= 180 / M_PI;
-	tetaY *= 180 / M_PI;
-	tetaZ *= 180 / M_PI;
+	/* Radians to Degrees */
+	x *= 180 / M_PI;
+	y *= 180 / M_PI;
+	z *= 180 / M_PI;
 	
-	c_rot = vec4(-tetaX, tetaY, tetaZ, 1);
+
+	/* Update camera's vectors*/
+	c_rot = vec4(-x, y, z, 1);
 	c_rot_viewspace = vec4(0, 0, 0, 1);
 	c_trnsl_viewspace = vec4(0, 0, 0, 1);
-
 	updateTransform();
 }
 
