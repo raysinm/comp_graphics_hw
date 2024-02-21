@@ -4,7 +4,10 @@
 #include <vector>
 #include <string>
 #include "Renderer.h"
+#include "Grid.h"
+
 using namespace std;
+
 
 #define NOT_SELECTED -1
 #define ADD_INPUT_POPUP_TITLE "Object Properties"
@@ -25,9 +28,9 @@ protected:
 	virtual ~Model() {}
 	string name = MODEL_DEFAULT_NAME;
 	bool userInitFinished = false;
-
 public:
 	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot) = 0;
+
 
 	void setName(std::string newName) { name = newName; }
 	void SetUserInitFinished() { userInitFinished = true; }
@@ -124,6 +127,8 @@ class Scene {
 	vector<Light*> lights;
 	vector<Camera*> cameras;
 	Renderer* m_renderer;
+	Grid* grid;
+	vec2* bufferGrid;
 
 private:
 	void AddCamera();
@@ -133,6 +138,7 @@ private:
 	void drawCameraTab();
 	void drawModelTab();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
+	bool showGrid = false;
 	int viewportX;
 	int viewportY;
 	int viewportWidth;
@@ -144,6 +150,7 @@ public:
 		AddCamera();							//Add the first default camera
 		activeCamera = 0;						//index = 0 because it is the first
 		cameras[activeCamera]->selected = true; //Select it because it is the default
+		grid = new Grid();
 	};
 	void loadOBJModel(string fileName);
 	void draw();

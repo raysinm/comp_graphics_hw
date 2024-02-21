@@ -41,8 +41,8 @@ Camera::Camera()
 	ResetTranslation();
 	resetProjection();
 	setOrtho();
-
 	LookAt();
+	name = CAMERA_DEFAULT_NAME;
 }
 
 void Camera::iconInit()
@@ -149,6 +149,7 @@ void Camera::LookAt(const Model* target)
 	c_trnsl_viewspace = vec4(0, 0, 0, 1);
 	updateTransform();
 }
+
 
 void Camera::setOrtho()
 {
@@ -278,7 +279,6 @@ void Camera::zoom(double s_offset, double update_rate)
 		setOrtho();
 	else
 		setPerspectiveByParams();
-
 }
 
 
@@ -419,9 +419,7 @@ void Scene::draw()
 
 	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
-
-
-
+  
 }
 
 void Scene::drawCameraTab()
@@ -949,6 +947,7 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu();	// End Options menu
 		}
+
 		ImGui::EndMainMenuBar();
 	}
 
