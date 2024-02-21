@@ -468,8 +468,8 @@ void MeshModel::updateTransformWorld()
 
 vec4 MeshModel::getCenterOffMass()
 {
-	vec4 res = _trnsl_w + _trnsl;
-	res.w = 1;
+	vec4 res = vec4(0,0,0,1);
+	res = _world_transform * (_model_transform * res);
 	return res;
 }
 
