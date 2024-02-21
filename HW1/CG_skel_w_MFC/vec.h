@@ -288,6 +288,16 @@ struct vec3 {
         return *this;
     }
 
+    bool operator == (const vec3& v)
+    {
+        return (x == v.x && y == v.y && z == v.z);
+    }
+
+    bool operator != (const vec3& v)
+    {
+        return !(*this == v);
+    }
+
     //
     //  --- Insertion and Extraction Operators ---
     //

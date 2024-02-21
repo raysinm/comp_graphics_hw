@@ -6,6 +6,8 @@
 #include <string>
 #include <math.h>
 
+#define CLAMP(x, l, r) (min( max((x), (l)) , (r)))
+
 #define MODEL_TAB_INDEX  0
 #define CAMERA_TAB_INDEX 1
 
@@ -88,9 +90,18 @@ bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 
 mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 {
-	vec4 n = normalize(eye - at);
-	vec4 u = normalize(cross(up, n));
-	vec4 v = normalize(cross(n, u));
+	vec4 n, u, v;
+	n = normalize(eye - at);
+	
+	//Edge case: Camera is directly above / below the target (up is parallel to n)
+	if (vec3(n.x, n.y, n.z) == vec3(up.x, up.y, up.z) || vec3(n.x, n.y, n.z) == -vec3(up.x, up.y, up.z))
+	{
+		/* Add little noise so it won't divide by 0 ;) */
+		n.x += 0.001f;
+	}
+	
+	u = normalize(cross(up, n));
+	v = normalize(cross(n, u));
 	
 	vec4 t = vec4(0.0, 0.0, 0.0, 1.0);
 	n.w = u.w = v.w = 0;
@@ -125,7 +136,7 @@ void Camera::LookAt(const Model* target)
 	const float m21 = lookAtMat[1][0], m22 = lookAtMat[1][1], m23 = lookAtMat[1][2];
 	const float m31 = lookAtMat[2][0], m32 = lookAtMat[2][1], m33 = lookAtMat[2][2];
 	float x, y, z;
-	y = asinf(m13);
+	y = asinf(CLAMP(m13, -1, 1));
 	if (abs(m13) < 0.9999999)
 	{
 		x = atan2f(-m23, m33);
