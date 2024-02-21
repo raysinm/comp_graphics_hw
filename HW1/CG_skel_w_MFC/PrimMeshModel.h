@@ -56,27 +56,27 @@ public:
 
 		 faces_v_indices =
 		 {
-			 0,2,3,	// Front
+			 0,3,2,	// Front
 			 0,1,3,
 
-			 2,6,7,	// Top
+			 2,7,6,	// Top
 			 2,3,7,
 
 			 0,4,5, // Bottom
-			 0,1,5,
+			 0,5,1,
 
 			 0,2,6,	// Left
-			 0,4,6,
+			 0,6,4,
 
-			 1,3,7,	// Right
+			 1,7,3,	// Right
 			 1,5,7,
 
 			 4,6,7,	// Back
-			 4,5,7
+			 4,7,5
 		 };
 
 
-			 
+		
 		 
 		 /* Call these functions after setting the vertex & faces data */
 		 initNeighbors();

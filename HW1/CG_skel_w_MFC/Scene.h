@@ -16,8 +16,8 @@ using namespace std;
 
 #define DEF_PARAM_RANGE 20;
 #define DEF_PARAM 10;
-#define DEF_ZNEAR 1;
-#define DEF_ZFAR 100;
+#define DEF_ZNEAR (1);
+#define DEF_ZFAR (20);
 #define DEF_FOV 45
 #define DEF_ASPECT 1
 
@@ -29,7 +29,8 @@ protected:
 	string name = MODEL_DEFAULT_NAME;
 	bool userInitFinished = false;
 public:
-	void virtual draw(mat4& cTransform, mat4& projection) = 0;
+	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot) = 0;
+
 
 	void setName(std::string newName) { name = newName; }
 	void SetUserInitFinished() { userInitFinished = true; }
@@ -40,7 +41,6 @@ public:
 
 };
 
-
 class Light {
 
 };
@@ -48,10 +48,22 @@ class Light {
 class Camera
 {
 private:
-	void LookAt(const vec4& eye, const vec4& at, const vec4& up );
+	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
+
 	string name = "";
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
-	vec4 c_trnsl, c_rot;
+	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
+	vec4 target;
+
+	mat4 transform_mid_worldspace, transform_mid_viewspace;
+	
+	// Icon stuff
+	vec3* icon;
+	vec2* iconBuffer;
+
+	unsigned int num_icon_vertices;
+
+	bool lockFov_GUI = false;
 
 	friend class Scene;	// To acces transformations;
 
@@ -60,10 +72,12 @@ public:
 	mat4 cTransform;
 	mat4 view_matrix;	// cTransform inversed
 	mat4 projection;
+	mat4 rotationMat_normals;
 
 	Camera::Camera();
-	void setTransformation(const mat4& transform);	//TODO: change to vectors for trnsl, rot
-	void LookAt(const Model* target);		//Called from keyboard event.
+	
+	void Camera::LookAt(const Model* target = nullptr);
+
 	void Ortho( const float left, const float right,
 		const float bottom, const float top,
 		const float zNear, const float zFar );
@@ -72,22 +86,39 @@ public:
 		const float zNear, const float zFar );	// Sets projection matrix
 	mat4 Perspective( const float fovy, const float aspect,
 		const float zNear, const float zFar);	// Calls frustum
+
 	void setOrtho();
 	void setPerspective();
 	void setPerspectiveByFov();
-	void setFovAspectByParams();
-	void setParamsByFovAspect();
+	void setPerspectiveByParams();
+
 	void resetProjection();
-	
+	void zoom(double s_offset, double update_rate = 0.1);
 	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
+	vec4 getTranslation() { return vec4(c_trnsl); }
+	void setStartPosition(vec4& pos) { c_trnsl = pos; }
 	
 	void updateTransform();
-	void ResetTranslation() { c_trnsl = vec4(0); }
-	void ResetRotation() { c_rot = vec4(0); }
+	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
+	void ResetRotation() { c_rot = vec4(0,0,0,1); }
 	
+	void iconInit();
+	bool iconDraw(mat4& active_cTransform, mat4& active_projection);
+	vec2* getIconBuffer() { return iconBuffer; }
+	unsigned int getIconBufferSize() { return num_icon_vertices; }
+
+
+	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }
+	void ResetRotation_viewspace() { c_rot_viewspace = vec4(0,0,0,1); }
+	
+	void unLockFovy() { lockFov_GUI = false; }
+	bool* getLockFovyPTR() { return &lockFov_GUI; }
 	bool selected = false;
+	bool isOrtho = true;
+	bool renderCamera = false;
+	bool allowClipping = true;
 };
 
 class Scene {
@@ -104,6 +135,8 @@ private:
 	void UpdateModelSelection();
 
 	void ResetPopUpFlags();
+	void drawCameraTab();
+	void drawModelTab();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;
 	int viewportX;
@@ -124,6 +157,7 @@ public:
 	void drawGUI();
 	void resize_callback_handle(int width, int height);
 	void setViewPort(vec4& vp);
+	void zoom(double s_offset) { cameras[activeCamera]->zoom(s_offset); };
 	friend bool showInputDialog();
 
 	Camera* GetActiveCamera();

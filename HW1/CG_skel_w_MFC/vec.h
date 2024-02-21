@@ -427,6 +427,16 @@ struct vec4 {
         return *this * r;
     }
 
+    bool operator == (const vec4& v)
+    {
+        return (x == v.x && y == v.y && z == v.z && w == v.w);
+    }
+
+    bool operator != (const vec4& v)
+    {
+        return ! (*this == v);
+    }
+
     //
     //  --- (modifying) Arithematic Operators ---
     //

@@ -262,7 +262,7 @@ void MeshModel::initBoundingBox()
 			1,5,6
 	};
 
-	for (int i = 0; i < num_bbox_vertices; i++)
+	for (unsigned int i = 0; i < num_bbox_vertices; i++)
 		b_box_vertices[i] = v[indices[i]];
 }
 
@@ -296,7 +296,7 @@ void MeshModel::estimateVertexNormals()
 	}
 }
 
-void MeshModel::draw(mat4& cTransform, mat4& projection)
+void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
 {
 	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
 		return;
@@ -304,69 +304,82 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	updateTransform();	
 	updateTransformWorld();
 
-	mat3 cTransform_rot = TopLeft3(cTransform);
-	mat3 cTransform_rot_inv = transpose(cTransform_rot);
-	vec3 cTransfrom_trnsl = RightMostVec(cTransform);
-	mat4 cTransform_inv(cTransform_rot_inv, -(cTransform_rot_inv * cTransfrom_trnsl));
-
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
 	{
 		vec4 v_i(vertex_positions_raw[i]);
 
 		//Apply model-view transformation
-		v_i = cTransform_inv * (_world_transform * (_model_transform * v_i));
+		v_i = cTransform * (_world_transform * (_model_transform * v_i));
 
 		//Apply projection:
 		v_i = projection * v_i;
 		
 		// Save result
-		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z);
+		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z) / v_i.w;
 	}
 
-	// Model buffer - Add to 2d-buffer all vertecies
+	// Clipping
 	num_vertices_to_draw = 0;
-	for (unsigned int j = 0; j < num_faces; j++)
+	int buffer_i = 0;
+	vector<int> faces_to_draw;
+	for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 	{
-		/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
-			If yes: Add the face to buffer2d
-			else: Don't add the face*/
-		bool atleast_one_vertex_in_bound = true;
-		for (unsigned int v = 0; v < 3; v++)
+		bool atleast_one_vertex_in_bound = false;
+		if (allowClipping)
 		{
-			vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
-
-			if (point.x >= -1 && point.x <= 1 &&
-				point.y >= -1 && point.y <= 1 &&
-				point.z >= -1 && point.z <= 1 )
+			/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
+				If yes: Add the face to buffer2d
+				else: Don't add the face*/
+			for (unsigned int v = 0; v < 3; v++)
 			{
-				atleast_one_vertex_in_bound = true;
-				break;
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
+
+				if (point.x >= -1 && point.x <= 1 &&
+					point.y >= -1 && point.y <= 1 &&
+					point.z >= -1 && point.z <= 1)
+				{
+					atleast_one_vertex_in_bound = true;
+					faces_to_draw.push_back(face_indx);
+					break;
+				}
 			}
 		}
-
+		else
+		{
+			faces_to_draw.push_back(face_indx);
+		}
 
 		/* add the 3 points of the current face: */
-		if (atleast_one_vertex_in_bound)
+		if (atleast_one_vertex_in_bound || !allowClipping)
 		{
 			for (unsigned int v = 0; v < 3; v++)
 			{
-				vec3 point = t_vertex_positions_normalized[faces_v_indices[(j * 3) + v]];
-				buffer2d[(j * 3) + v] = vec2(point.x, point.y);
+				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
+				buffer2d[(buffer_i * 3) + v] = vec2(point.x, point.y);
 				num_vertices_to_draw++;
 			}
+			buffer_i++;
 		}
+
 	}
+	num_faces_to_draw = faces_to_draw.size();
 
 	// Bounding box buffer
 	if (showBoundingBox)
 	{
 		for (unsigned int j = 0; j < num_bbox_vertices; j++)
 		{
-			vec4 v_j (b_box_vertices[j]);
-			v_j = projection * (cTransform_inv * (_world_transform * (_model_transform * v_j)));
+			vec4 v_j(b_box_vertices[j]);
 
-			buffer2d_bbox[j] = vec2(v_j.x, v_j.y);
+			//Apply model-view transformations:
+			v_j = cTransform * (_world_transform * (_model_transform * v_j));
+
+			//Project:
+			v_j = projection * v_j;
+
+			//Add to 2d buffer: 
+			buffer2d_bbox[j] = vec2(v_j.x, v_j.y) / v_j.w;
 		}
 	}
 
@@ -377,9 +390,8 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 		{
 			vec4 v_j (vertex_normals[j]);
 
-
 			//Transform the normal vector:
-			v_j = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_j));
+			v_j = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_j));
 
 			//Project the vector:
 			v_j = projection * v_j;
@@ -388,7 +400,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			v_j = normalize(v_j);
 
 			vec4 start_point = t_vertex_positions_normalized[j];
-			vec4 end_point	 = start_point + v_j;
+			vec4 end_point	 = start_point + (v_j * length_vertex_normals);
 
 			buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
 			buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
@@ -398,12 +410,14 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 	// Face normals buffer
 	if (showFaceNormals)
 	{
-		for (unsigned int j = 0; j < num_faces; j++)
+		unsigned int buffer_i = 0;
+		//for (int face_indx : faces_to_draw)
+		for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 		{
-			vec4 v_n(face_normals[j]);
+			vec4 v_n(face_normals[face_indx]);
 
 			//Transform the normal vector:
-			v_n = cTransform_inv * (transpose(_world_transform_inv) * (transpose(_model_transform_inv) * v_n));
+			v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
 			
 			//Project the vector:
 			v_n = projection * v_n;
@@ -412,61 +426,52 @@ void MeshModel::draw(mat4& cTransform, mat4& projection)
 			v_n = normalize(v_n);
 
 			// Cacluate center of face as the start point:
-			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 0]];
-			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 1]];
-			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[j * 3 + 2]];
+			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
+			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
+			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
 
 			vec3 start_point = vec3(v0 + v1 + v2) / 3;
-			vec4 end_point = vec4(start_point) + v_n;
+			vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
 
 
-			buffer2d_f_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
-			buffer2d_f_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
-
+			buffer2d_f_normals[ (buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
+			buffer2d_f_normals[ (buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
+			++buffer_i;
 		}
 	}
 }
 
 void MeshModel::updateTransform()
 {
-	mat4 trnsl_m = Translate(_trnsl.x, _trnsl.y, _trnsl.z);
 	mat4 rot_m_x = RotateX(_rot.x);
 	mat4 rot_m_y = RotateY(_rot.y);
 	mat4 rot_m_z = RotateZ(_rot.z);
+	mat4 trnsl_m = Translate(_trnsl);
 	mat4 scale_m = Scale(_scale.x, _scale.y, _scale.z);	
+	mat4 scale_inverse_m = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);	
 
-
-	_model_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
-
-
-	// Inverse
-	mat4 trnsl_m_inv = Translate(-_trnsl.x, -_trnsl.y, -_trnsl.z);	//minus
-	mat4 rot_m_x_inv = transpose(rot_m_x);
-	mat4 rot_m_y_inv = transpose(rot_m_y);
-	mat4 rot_m_z_inv = transpose(rot_m_z);
-	mat4 scale_m_inv = Scale(1/_scale.x, 1/_scale.y, 1/_scale.z);
-
-	_model_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
-
+	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
+	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 }
 
 void MeshModel::updateTransformWorld()
 {
-	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 rot_m_x = RotateX(_rot_w.x);
 	mat4 rot_m_y = RotateY(_rot_w.y);
 	mat4 rot_m_z = RotateZ(_rot_w.z);
+	mat4 trnsl_m = Translate(_trnsl_w.x, _trnsl_w.y, _trnsl_w.z);
 	mat4 scale_m = Scale(_scale_w.x, _scale_w.y, _scale_w.z);
-	_world_transform = scale_m * rot_m_z * rot_m_y * rot_m_x * trnsl_m; // TEST IF ORDER MATTERS
+	mat4 scale_inverse_m = Scale(1/_scale_w.x, 1/_scale_w.y, 1/_scale_w.z);
 	
+	_world_transform = scale_m * (rot_m_z * (rot_m_y * (rot_m_x * trnsl_m)));
+	_world_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
+}
 
-	// Inverse
-	mat4 trnsl_m_inv = Translate(-_trnsl_w.x, -_trnsl_w.y, -_trnsl_w.z);	//minus
-	mat4 rot_m_x_inv = transpose(rot_m_x);
-	mat4 rot_m_y_inv = transpose(rot_m_y);
-	mat4 rot_m_z_inv = transpose(rot_m_z);
-	mat4 scale_m_inv = Scale(1 / _scale_w.x, 1 / _scale_w.y, 1 / _scale_w.z);
-	_world_transform_inv = scale_m_inv * rot_m_z_inv * rot_m_y_inv * rot_m_x_inv * trnsl_m_inv; // TEST IF ORDER MATTERS
+vec4 MeshModel::getCenterOffMass()
+{
+	vec4 res = vec4(0,0,0,1);
+	res = _world_transform * (_model_transform * res);
+	return res;
 }
 
 void MeshModel::setTranslation(vec3& trnsl)
@@ -523,23 +528,23 @@ void MeshModel::setScaleWorld(vec3& scale)
 
 void MeshModel::ResetAllUserTransforms()
 {
-	_trnsl = vec4(0);
-	_rot = vec4(0);
+	_trnsl = vec4(0, 0, 0);
+	_rot = vec4(0, 0, 0);
 	_scale = vec4(1);
 
-	_trnsl_w = vec4(0);
-	_rot_w = vec4(0);
+	_trnsl_w = vec4(0, 0, 0);
+	_rot_w = vec4(0, 0, 0);
 	_scale_w = vec4(1);
 }
 
 void MeshModel::ResetUserTransform_translate_model()
 {
-	_trnsl = vec4(0);
+	_trnsl = vec4(0,0,0);
 }
 
 void MeshModel::ResetUserTransform_rotate_model()
 {
-	_rot = vec4(0);
+	_rot = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_scale_model()
@@ -549,12 +554,12 @@ void MeshModel::ResetUserTransform_scale_model()
 
 void MeshModel::ResetUserTransform_translate_world()
 {
-	_trnsl_w = vec4(0);
+	_trnsl_w = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_rotate_world()
 {
-	_rot_w = vec4(0);
+	_rot_w = vec4(0, 0, 0);
 }
 
 void MeshModel::ResetUserTransform_scale_world()

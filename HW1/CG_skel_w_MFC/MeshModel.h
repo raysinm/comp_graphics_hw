@@ -22,6 +22,7 @@ using namespace std;
 class MeshModel : public Model
 {
 protected:
+	friend class Scene;
 
 	MeshModel();
 	
@@ -39,22 +40,21 @@ protected:
 	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
 	unsigned int num_faces;
+	unsigned int num_faces_to_draw;
 	unsigned int num_vertices_to_draw;
 	const unsigned int num_bbox_vertices = 36;
+	float length_face_normals   = 1.0f;
+	float length_vertex_normals = 1.0f;
 	
-	vec2* buffer2d = nullptr;					//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
-	vec2* buffer2d_bbox = nullptr;				//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
-	vec2* buffer2d_v_normals = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
-	vec2* buffer2d_f_normals = nullptr;			//Use this buffer to send the renederer for Rasterazation process.   Initiate once, update each frame.
+	vec2* buffer2d = nullptr;			
+	vec2* buffer2d_bbox = nullptr;		
+	vec2* buffer2d_v_normals = nullptr;	
+	vec2* buffer2d_f_normals = nullptr;	
 
 	mat4 _world_transform;
 	mat4 _model_transform;
-	mat4 _world_transform_inv;	// Needed for normal
-	mat4 _model_transform_inv;	// Needed for normal
-
-	mat3 _normal_transform;		// FOR NORMALS!!! G = (M^(-1))^T
-
-	friend class Scene;
+	mat4 _world_transform_for_normals;
+	mat4 _model_transform_for_normals;
 
 	void initBoundingBox();
 	void calculateFaceNormals();
@@ -63,19 +63,28 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
+
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
-	bool showBoundingBox = false;
+	bool showBoundingBox    = false;
+
+
 	MeshModel(string fileName);
 	~MeshModel(void);
 
 	vec2* Get2dBuffer(MODEL_OBJECT obj);
 	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
-	void loadFile(string fileName);
-	void MeshModel::draw(mat4& cTransform, mat4& projection);
 
-	void MeshModel::updateTransform();
-	void MeshModel::updateTransformWorld();
+	void loadFile(string fileName);
+	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);
+
+	void updateTransform();
+	void updateTransformWorld();
+
+	vec4 getCenterOffMass();
+
+	float* getLengthFaceNormal()   { return &length_face_normals; }
+	float* getLengthVertexNormal() { return &length_vertex_normals; }
 
 	//Model space:
 	void setTranslation(vec3& trnsl);

@@ -102,6 +102,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 	//Our callback:
 	mouse_scroll = yoffset;
+	//float update_rate = 0.1;
+	scene->zoom(mouse_scroll);
 }
 
 //resize window
@@ -120,9 +122,6 @@ int my_main(int argc, char** argv)
 // ---------------------- glfw init ------------------------------------------
 //----------------------------------------------------------------------------
 	string title = "CG";
-#ifdef _DEBUG
-	title += " - DEBUG!";
-#endif
 
 	if (!glfwInit())
 	{
