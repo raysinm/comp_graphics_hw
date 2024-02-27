@@ -295,13 +295,6 @@ void Camera::zoom(double s_offset, double update_rate)
 
 
 
-
-
-
-
-
-
-
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
 //--------------------------------------------------
@@ -426,6 +419,18 @@ void Scene::draw()
 				}
 			}
 		}
+	}
+
+	if (showGrid)
+	{
+		grid->draw(cameras[activeCamera]->cTransform,
+				   cameras[activeCamera]->projection);
+
+		vec2* f_grid_vertices = grid->Get2dBuffer();
+		int len = grid->Get2dBuffer_len();
+		if (f_grid_vertices)
+			m_renderer->SetBufferLines(f_grid_vertices, len, vec4(0.8, 0, 0.2));
+
 	}
 
 	//5. Update the texture. (OpenGL stuff)
@@ -934,6 +939,11 @@ void Scene::drawGUI()
 		}
 		if (ImGui::BeginMenu("Options..."))
 		{
+			ImGui::SeparatorText("General");
+			if (ImGui::MenuItem("Show/Hide grid"))
+			{
+				this->showGrid = !(this->showGrid);
+			}
 			ImGui::SeparatorText("Cameras options");
 			if (ImGui::MenuItem("Render all cameras"))
 			{

@@ -17,7 +17,7 @@ private:
 	//rgb(164, 0, 179)
 public:
 	Grid(float inner_w = 1.0, int grid_size = GRID_SIZE) : inner_w(inner_w), grid_size(grid_size), 
-														   num_vertices((int)ceil(grid_size / inner_w * 4)),
+		num_vertices((int)ceil((grid_size * 2) / inner_w * 4)),
 														   vertices(num_vertices)
 	{
 		buffer = new vec2(num_vertices);
@@ -52,6 +52,7 @@ public:
 		}
 
 	}
+
 	void draw(mat4& cTransform, mat4& projection)
 	{
 		mat3 cTransform_rot = TopLeft3(cTransform);
