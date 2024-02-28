@@ -56,7 +56,10 @@ void Renderer::SetDemoBuffer()
 	}
 }
 
-void Renderer::SetBufferOfModel(const vec2* vertecies, unsigned int len, vec4 color)
+
+
+
+void Renderer::Rasterize_WireFrame(const vec3* vertecies, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
 		For example:

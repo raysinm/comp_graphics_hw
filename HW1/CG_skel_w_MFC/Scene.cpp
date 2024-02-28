@@ -372,27 +372,50 @@ void Scene::draw()
 					cameras[activeCamera]->projection,
 					cameras[activeCamera]->allowClipping,
 					cameras[activeCamera]->rotationMat_normals);
+		unsigned int len = 0;
+		switch (draw_algo)	// Light calculation, material calculation
+		{
+			case WIRE_FRAME:
+			{
+				//values: [-1, 1]
+				vec3* vertecies = ((MeshModel*)model)->GetBuffer();
+				len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+				if (vertecies)
+					m_renderer->Rasterize_WireFrame(vertecies, len);
+			}
+				break;
+			case FLAT:
+			{
 
-		//values: [-1, 1]
-		vec2* vertecies = ((MeshModel*)model)->Get2dBuffer(MODEL);
-		unsigned int len = ((MeshModel*)model)->Get2dBuffer_len(MODEL);
-		if (vertecies)
-			m_renderer->SetBufferOfModel(vertecies, len);
+			}
+				break;
+			case GOURAUD:
+			{
+
+			}
+				break;
+			case PHONG:
+			{
+
+			}
+				break;
+		}
+
 
 		// Bounding Box
 		if (((MeshModel*)model)->showBoundingBox)
 		{
-			vec2* bbox_vertices = ((MeshModel*)model)->Get2dBuffer(BBOX);
-			len = ((MeshModel*)model)->Get2dBuffer_len(BBOX);
+			vec2* bbox_vertices = ((MeshModel*)model)->GetBuffer(BBOX);
+			len = ((MeshModel*)model)->GetBuffer_len(BBOX);
 			if (bbox_vertices)
-				m_renderer->SetBufferOfModel(bbox_vertices, len, vec4(0, 1, 0, 1));
+				m_renderer->SetBufferLines(bbox_vertices, len, vec4(0, 1, 0, 1));
 		}
 
 		// Vertex Normals
 		if (((MeshModel*)model)->showVertexNormals)
 		{
-			vec2* v_norm_vertices = ((MeshModel*)model)->Get2dBuffer(V_NORMAL);
-			len = ((MeshModel*)model)->Get2dBuffer_len(V_NORMAL);
+			vec2* v_norm_vertices = ((MeshModel*)model)->GetBuffer(V_NORMAL);
+			len = ((MeshModel*)model)->GetBuffer_len(V_NORMAL);
 			if (v_norm_vertices)
 				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1, 0, 0));
 
@@ -401,8 +424,8 @@ void Scene::draw()
 		// Face normals
 		if (((MeshModel*)model)->showFaceNormals)
 		{
-			vec2* f_norm_vertices = ((MeshModel*)model)->Get2dBuffer(F_NORMAL);
-			len = ((MeshModel*)model)->Get2dBuffer_len(F_NORMAL);
+			vec2* f_norm_vertices = ((MeshModel*)model)->GetBuffer(F_NORMAL);
+			len = ((MeshModel*)model)->GetBuffer_len(F_NORMAL);
 			if (f_norm_vertices)
 				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0, 0, 1));
 		}
@@ -932,9 +955,19 @@ void Scene::drawGUI()
 				ImGui::EndMenu(); //End delete
 			}
 		}
-		if (ImGui::BeginMenu("Options..."))
+		if (ImGui::BeginMenu("Options"))
 		{
-			ImGui::SeparatorText("Cameras options");
+			ImGui::SeparatorText("General");
+			if(ImGui::BeginMenu("Shading Mode..."))
+			{
+				for (int i = 0; i < static_cast<int>(DrawAlgo::COUNT); ++i) {
+					DrawAlgo algo = static_cast<DrawAlgo>(i);
+					if (ImGui::MenuItem(drawAlgoToString(algo), NULL, this->draw_algo == algo))
+						this->draw_algo = algo;
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::SeparatorText("Cameras");
 			if (ImGui::MenuItem("Render all cameras"))
 			{
 				for (auto camera : cameras)

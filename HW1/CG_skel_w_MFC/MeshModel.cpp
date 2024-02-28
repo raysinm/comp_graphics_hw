@@ -61,12 +61,10 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-vec2* MeshModel::Get2dBuffer(MODEL_OBJECT obj)
+vec2* MeshModel::GetBuffer(MODEL_OBJECT obj)
 {
 	switch (obj)
 	{
-	case MODEL:
-		return buffer2d;
 	case BBOX:
 		return buffer2d_bbox;
 	case V_NORMAL:
@@ -76,7 +74,12 @@ vec2* MeshModel::Get2dBuffer(MODEL_OBJECT obj)
 	}
 }
 
-unsigned int MeshModel::Get2dBuffer_len(MODEL_OBJECT obj)
+vec3* MeshModel::GetBuffer()
+{
+	return buffer_vertrices;	
+}
+
+unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 {
 	switch (obj)
 	{
@@ -107,14 +110,14 @@ MeshModel::MeshModel(string fileName)
 	
 	initBoundingBox();
 
-	buffer2d = new vec2[num_vertices];
+	buffer_vertrices = new vec3[num_vertices];
 
 }
 
 MeshModel::~MeshModel(void)
 {
-	if (buffer2d)
-		delete[] buffer2d;
+	if (buffer_vertrices)
+		delete[] buffer_vertrices;
 	if (buffer2d_bbox)
 		delete[] buffer2d_bbox;
 	if (buffer2d_v_normals)
@@ -235,31 +238,38 @@ void MeshModel::initBoundingBox()
 	std::vector<vec3> v = {
 						   vec3(min_x, max_y, max_z),	//0
 						   vec3(min_x, max_y, min_z),
+
 						   vec3(max_x, max_y, min_z),
-						   vec3(max_x, max_y, max_z),	
+						   vec3(max_x, max_y, max_z),
+
 						   vec3(min_x, min_y, max_z),	
 						   vec3(min_x, min_y, min_z),
+
 						   vec3(max_x, min_y, min_z),
 						   vec3(max_x, min_y, max_z)	//7
 	};
 	std::vector<GLint> indices = {
-			0,1,2,	// Top
-			0,2,3,
+			0,1,	// Top
+			2,3,
+			1,2,
+			0,3,
 
-			4,5,6,	// Bottom
-			4,6,7,
+			4,5,	// Bottom
+			5,6,
+			4,7, 
+			6,7,
 
-			0,1,5,	// Left
-			0,4,5,
+			1,5,	// Left
+			0,4,
+			
+			3,7,	// Right
+			2,6
 
-			2,3,7,	// Right
-			2,6,7,
+			//0,4,7,	// Front
+			//0,3,7,
 
-			0,4,7,	// Front
-			0,3,7,
-
-			1,2,6,	// Back
-			1,5,6
+			//1,2,6,	// Back
+			//1,5,6
 	};
 
 	for (unsigned int i = 0; i < num_bbox_vertices; i++)
@@ -329,7 +339,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 		if (allowClipping)
 		{
 			/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
-				If yes: Add the face to buffer2d
+				If yes: Add the face to buffer_vertrices
 				else: Don't add the face*/
 			for (unsigned int v = 0; v < 3; v++)
 			{
@@ -356,7 +366,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 			for (unsigned int v = 0; v < 3; v++)
 			{
 				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
-				buffer2d[(buffer_i * 3) + v] = vec2(point.x, point.y);
+				buffer_vertrices[(buffer_i * 3) + v] = vec3(point.x, point.y, point.z);
 				num_vertices_to_draw++;
 			}
 			buffer_i++;

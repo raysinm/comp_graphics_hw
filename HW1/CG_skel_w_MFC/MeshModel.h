@@ -14,7 +14,6 @@ enum MODEL_OBJECT{
 	V_NORMAL,
 	F_NORMAL
 };
-using namespace std;
 
 
 
@@ -42,11 +41,11 @@ protected:
 	unsigned int num_faces;
 	unsigned int num_faces_to_draw;
 	unsigned int num_vertices_to_draw;
-	const unsigned int num_bbox_vertices = 36;
+	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
 	
-	vec2* buffer2d = nullptr;			
+	vec3* buffer_vertrices = nullptr;			
 	vec2* buffer2d_bbox = nullptr;		
 	vec2* buffer2d_v_normals = nullptr;	
 	vec2* buffer2d_f_normals = nullptr;	
@@ -72,8 +71,9 @@ public:
 	MeshModel(string fileName);
 	~MeshModel(void);
 
-	vec2* Get2dBuffer(MODEL_OBJECT obj);
-	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
+	vec3* GetBuffer();
+	vec2* GetBuffer(MODEL_OBJECT obj);
+	unsigned int GetBuffer_len(MODEL_OBJECT obj);
 
 	void loadFile(string fileName);
 	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);

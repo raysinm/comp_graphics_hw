@@ -33,7 +33,8 @@ public:
 	void SwapBuffers();
 
 	void SetDemoBuffer();
-	void SetBufferOfModel(const vec2* vertecies, unsigned int len, vec4 color= vec4(0, 0, 0, 1));
+	void Fill_Texture();
+	void Rasterize_WireFrame(const vec3* vertecies, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 
 	// New funcs
