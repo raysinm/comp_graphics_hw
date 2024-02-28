@@ -110,43 +110,64 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertecies, unsigned int len, ve
 
 void Renderer::Rasterize_Flat(const MeshModel* model)
 {
-	if (!model) return;
+	if (!model) return; /* Sanity check*/
 
-	//	1. Get vertices buffer from model
+	//	Get vertices buffer from model
 	MeshModel* pModel = (MeshModel*)model;
 	Vertex* vertecies = pModel->GetBuffer();
 	UINT len = pModel->GetBuffer_len(MODEL);
-	if (!vertecies)
+	if (!vertecies || len == 0)
 		return;	
+
+
 	vector<vec3>* vnormals = pModel->getVertexNormals();
 	vector<vec3>* pFaceNormals = pModel->getFaceNormals();
 	vector<Poly> polygons;
 
+	/* Add all polygons to polygons vector */
+	
 	for (UINT i = 0; i < len; i += 3)
 	{
 		// TODO: Clip wisely- Without disfiguring the triangle using the algorithm from clipping tutorial
 
-		/* Set range: [0, 1] */
-
+		/* Set range: [0, 1]  (All dimensions)*/
 		vec3 A = vec3((vertecies[i + 0].point.x + 1) / 2, (vertecies[i + 0].point.y + 1) / 2, (vertecies[i + 0].point.z + 1) / 2);
 		vec3 B = vec3((vertecies[i + 1].point.x + 1) / 2, (vertecies[i + 1].point.y + 1) / 2, (vertecies[i + 1].point.z + 1) / 2);
 		vec3 C = vec3((vertecies[i + 2].point.x + 1) / 2, (vertecies[i + 2].point.y + 1) / 2, (vertecies[i + 2].point.z + 1) / 2);
 
-		/*	Set range:   [0, m_wdith - 1]  (X)
+		/*	Set range:   [0, m_width - 1]  (X)
 						 [0, m_height - 1] (Y)
-						 [0, MAX_Z]		   (Z)
-			And (try to) convert to UINT for calculations
-			NOTICE: casting to UINT in vec3 class does not affect the number.
-			Resolution of Z values is 16 bits (2^16 - 1)	- MAXZ definition */
+						 [0, MAX_Z]		   (Z)  */
 		vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
 		vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
 		vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
 
 	
-		unsigned int faceId = i / 3;
-		Poly P = Poly(A_Pxl, B_Pxl, C_Pxl, (*vnormals)[vertecies[i].index], (*vnormals)[vertecies[i + 1].index], (*vnormals)[vertecies[i + 2].index], (*pFaceNormals)[faceId]);
+		if (vertecies[i].face_index != vertecies[i + 1].face_index || vertecies[i].face_index != vertecies[i + 2].face_index ||
+			vertecies[i + 1].face_index != vertecies[i + 2].face_index)
+		{
+			/* Should never get here....*/
+			/* Keep this just to make sure you and Maya agree on this...*/
+			cout << "ERRORRRR!!" << endl;
+			return;
+		}
+		Poly P = Poly( A_Pxl,                                      \
+					   B_Pxl,                                      \
+					   C_Pxl,                                      \
+					   (*vnormals)[vertecies[i + 0].vertex_index], \
+					   (*vnormals)[vertecies[i + 1].vertex_index], \
+					   (*vnormals)[vertecies[i + 2].vertex_index], \
+					   (*pFaceNormals)[vertecies[i].face_index]);
+		
 		polygons.push_back(P);
 	}
+	
+	/* -------------- 'polygons' vector is initialized-------------- */
+
+
+
+
+	/* Psudo Code - Z Buffer Scan line algo */
 	//	2. Calculate color/material per face?
 	//
 	//

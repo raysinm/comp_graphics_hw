@@ -34,7 +34,6 @@ protected:
 	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
 	unsigned int num_faces;
-	unsigned int num_faces_to_draw;
 	unsigned int num_vertices_to_draw;
 	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;

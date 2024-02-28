@@ -332,7 +332,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	// Clipping
 	num_vertices_to_draw = 0;
 	int buffer_i = 0;
-	vector<int> faces_to_draw;
 	for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 	{
 		bool atleast_one_vertex_in_bound = false;
@@ -350,14 +349,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 					point.z >= -1 && point.z <= 1)
 				{
 					atleast_one_vertex_in_bound = true;
-					faces_to_draw.push_back(face_indx);
 					break;
 				}
 			}
-		}
-		else
-		{
-			faces_to_draw.push_back(face_indx);
 		}
 
 		/* add the 3 points of the current face: */
@@ -367,14 +361,13 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 			{
 				UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
 				vec3 point = t_vertex_positions_normalized[vertIndex];
-				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex);
+				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx);
 				num_vertices_to_draw++;
 			}
 			buffer_i++;
 		}
 
 	}
-	num_faces_to_draw = faces_to_draw.size();
 
 	// Bounding box buffer
 	if (showBoundingBox)
@@ -422,7 +415,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	if (showFaceNormals)
 	{
 		unsigned int buffer_i = 0;
-		//for (int face_indx : faces_to_draw)
 		for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
 		{
 			vec4 v_n(face_normals[face_indx]);

@@ -12,10 +12,11 @@ typedef unsigned int UINT;
 
 typedef struct Vertex {
 	vec3 point;
-	UINT index;
+	UINT vertex_index;
+	UINT face_index;
 
-	Vertex() : point(0, 0, 0), index(0) {}
-	Vertex(vec3 a, UINT indx) { point = a; index = indx; }
+	Vertex() : point(0, 0, 0), vertex_index(0), face_index(0) {}
+	Vertex(vec3 a, UINT v_indx, UINT f_indx) { point = a; vertex_index = v_indx; face_index = f_indx; }
 	~Vertex() {}
 } Vertex;
 
