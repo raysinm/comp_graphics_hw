@@ -1,12 +1,10 @@
 #pragma once
-#include "scene.h"
+#include "Scene.h"
 #include "vec.h"
 #include "mat.h"
 #include <string>
 
-
 using namespace std;
-
 
 enum MODEL_OBJECT{
 	MODEL,
@@ -14,9 +12,6 @@ enum MODEL_OBJECT{
 	V_NORMAL,
 	F_NORMAL
 };
-
-
-
 
 class MeshModel : public Model
 {
@@ -45,10 +40,10 @@ protected:
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
 	
-	vec3* buffer_vertrices = nullptr;			
-	vec2* buffer2d_bbox = nullptr;		
-	vec2* buffer2d_v_normals = nullptr;	
-	vec2* buffer2d_f_normals = nullptr;	
+	Vertex* buffer_vertrices   = nullptr;			
+	vec2*   buffer2d_bbox      = nullptr;		
+	vec2*   buffer2d_v_normals = nullptr;	
+	vec2*   buffer2d_f_normals = nullptr;	
 
 	mat4 _world_transform;
 	mat4 _model_transform;
@@ -71,7 +66,9 @@ public:
 	MeshModel(string fileName);
 	~MeshModel(void);
 
-	vec3* GetBuffer();
+	vector<vec3>* getVertexNormals() { return &vertex_normals; }
+	vector<vec3>* getFaceNormals() { return   &face_normals; }
+	Vertex* GetBuffer();
 	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);
 

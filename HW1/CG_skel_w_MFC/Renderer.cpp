@@ -3,11 +3,14 @@
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
 #include "GL\freeglut.h"
+#include "Poly.h"
+#include "MeshModel.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
 #define RED   0
 #define GREEN 1
 #define BLUE  2
+#define MAX_Z 65535
 
 Renderer::Renderer(int width, int height, GLFWwindow* window) :m_width(width), m_height(height)
 {
@@ -21,80 +24,24 @@ Renderer::~Renderer(void)
 {
 	if(m_outBuffer)
 		delete[] (m_outBuffer);
+
+	if (m_zbuffer)
+		delete[] m_zbuffer;
 }
 
 void Renderer::CreateBuffers(int width, int height)
 {
 	CreateOpenGLBuffer(); //Do not remove this line.
 
-	m_outBuffer = new float[3 * m_width * m_height];
-	for (int i = 0; i < 3 * m_width * m_height; i++)
+	m_outBuffer = new float[3 * width * height];
+	for (UINT i = 0; i < 3 * width * height; i++)
 		m_outBuffer[i] = 1.0f; //Set all pixels to pure white.
-}
 
-void Renderer::SetDemoBuffer()
-{
-
-	//vertical line
-	for(int i=0; i<m_height; i++)
-	{
-		int vert_pos = m_width / 2;
-		m_outBuffer[INDEX(m_width, vert_pos, i, RED)] = 1;
-		m_outBuffer[INDEX(m_width, vert_pos, i, GREEN)] = 0;
-		m_outBuffer[INDEX(m_width, vert_pos, i, BLUE)] = 0;
-
-	}
-
-	//horizontal line
-	for(int i=0; i<m_width; i++)
-	{
-		int horz_pos = m_height / 2;
-		m_outBuffer[INDEX(m_width, i, horz_pos, RED)] = 0;
-		m_outBuffer[INDEX(m_width,i, horz_pos,GREEN)]=0;
-		m_outBuffer[INDEX(m_width,i, horz_pos,BLUE)]=1;
-
-	}
-}
+	m_zbuffer = new UINT[width * height];
+	for (UINT i = 0; i < width * height; i++)
+		m_zbuffer[i] = MAX_Z;
 
 
-
-
-void Renderer::Rasterize_WireFrame(const vec3* vertecies, unsigned int len, vec4 color)
-{
-	/*	Each 3 indexes make up a face.
-		For example:
-		0, 1, 2  - face1
-		3, 4, 5  - face2
-		6, 7, 8  - face3
-		and so on...
-	*/
-
-	for (unsigned int i = 0; i < len; i+=3)
-	{
-		//A   B    C    is the triangle
-		//i, i+1, i+2 
-
-		/* Set A to range [0, 1]*/
-		vec2 A = vec2( (vertecies[i+0].x + 1) / 2, (vertecies[i+0].y + 1) / 2);
-		vec2 B = vec2( (vertecies[i+1].x + 1) / 2, (vertecies[i+1].y + 1) / 2);
-		vec2 C = vec2( (vertecies[i+2].x + 1) / 2, (vertecies[i+2].y + 1) / 2);
-
-		/*	Set A_Pxl to range [0, m_wdith - 1]  (X)
-							   [0, m_height - 1] (Y)
-			Also, keep it in-bound of the screen.
-		*/
-		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * (m_width - 1))) , 0), max(min(m_height - 1,  (A.y * (m_height - 1))), 0));
-		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * (m_width - 1))) , 0), max(min(m_height - 1,  (B.y * (m_height - 1))), 0));
-		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * (m_width - 1))) , 0), max(min(m_height - 1,  (C.y * (m_height - 1))), 0));
-
-		
-		/* At this point, we have 3 points, in screen space, in-bound */
-
-		/* Draw the 3 lines */
-		DrawLine(A_Pxl, B_Pxl, false, color);
-		DrawLine(A_Pxl, C_Pxl, false, color);
-		DrawLine(B_Pxl, C_Pxl, false, color);
-	}
 }
 
 void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
@@ -121,6 +68,96 @@ void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 		/* Draw the line */
 		DrawLine(A_Pxl, B_Pxl, false, color);
 	}
+}
+
+void Renderer::Rasterize_WireFrame(const Vertex* vertecies, unsigned int len, vec4 color)
+{
+	/*	Each 3 indexes make up a face.
+		For example:
+		0, 1, 2  - face1
+		3, 4, 5  - face2
+		6, 7, 8  - face3
+		and so on...
+	*/
+
+	for (unsigned int i = 0; i < len; i+=3)
+	{
+		//A   B    C    is the triangle
+		//i, i+1, i+2 
+
+		/* Set A to range [0, 1]*/
+		vec2 A = vec2( (vertecies[i+0].point.x + 1) / 2, (vertecies[i+0].point.y + 1) / 2);
+		vec2 B = vec2( (vertecies[i+1].point.x + 1) / 2, (vertecies[i+1].point.y + 1) / 2);
+		vec2 C = vec2( (vertecies[i+2].point.x + 1) / 2, (vertecies[i+2].point.y + 1) / 2);
+
+		/*	Set A_Pxl to range [0, m_wdith - 1]  (X)
+							   [0, m_height - 1] (Y)
+			Also, keep it in-bound of the screen.
+		*/
+		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * (m_width - 1))) , 0), max(min(m_height - 1,  (A.y * (m_height - 1))), 0));
+		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * (m_width - 1))) , 0), max(min(m_height - 1,  (B.y * (m_height - 1))), 0));
+		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * (m_width - 1))) , 0), max(min(m_height - 1,  (C.y * (m_height - 1))), 0));
+
+		
+		/* At this point, we have 3 points, in screen space, in-bound */
+
+		/* Draw the 3 lines */
+		DrawLine(A_Pxl, B_Pxl, false, color);
+		DrawLine(A_Pxl, C_Pxl, false, color);
+		DrawLine(B_Pxl, C_Pxl, false, color);
+	}
+}
+
+void Renderer::Rasterize_Flat(const MeshModel* model)
+{
+	if (!model) return;
+
+	//	1. Get vertices buffer from model
+	MeshModel* pModel = (MeshModel*)model;
+	Vertex* vertecies = pModel->GetBuffer();
+	UINT len = pModel->GetBuffer_len(MODEL);
+	if (!vertecies)
+		return;	
+	vector<vec3>* vnormals = pModel->getVertexNormals();
+	vector<vec3>* pFaceNormals = pModel->getFaceNormals();
+	vector<Poly> polygons;
+
+	for (UINT i = 0; i < len; i += 3)
+	{
+		// TODO: Clip wisely- Without disfiguring the triangle using the algorithm from clipping tutorial
+
+		/* Set range: [0, 1] */
+
+		vec3 A = vec3((vertecies[i + 0].point.x + 1) / 2, (vertecies[i + 0].point.y + 1) / 2, (vertecies[i + 0].point.z + 1) / 2);
+		vec3 B = vec3((vertecies[i + 1].point.x + 1) / 2, (vertecies[i + 1].point.y + 1) / 2, (vertecies[i + 1].point.z + 1) / 2);
+		vec3 C = vec3((vertecies[i + 2].point.x + 1) / 2, (vertecies[i + 2].point.y + 1) / 2, (vertecies[i + 2].point.z + 1) / 2);
+
+		/*	Set range:   [0, m_wdith - 1]  (X)
+						 [0, m_height - 1] (Y)
+						 [0, MAX_Z]		   (Z)
+			And (try to) convert to UINT for calculations
+			NOTICE: casting to UINT in vec3 class does not affect the number.
+			Resolution of Z values is 16 bits (2^16 - 1)	- MAXZ definition */
+		vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
+		vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
+		vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
+
+	
+		unsigned int faceId = i / 3;
+		Poly P = Poly(A_Pxl, B_Pxl, C_Pxl, (*vnormals)[vertecies[i].index], (*vnormals)[vertecies[i + 1].index], (*vnormals)[vertecies[i + 2].index], (*pFaceNormals)[faceId]);
+		polygons.push_back(P);
+	}
+	//	2. Calculate color/material per face?
+	//
+	//
+	//
+	//	3. Scanline - zBuffer algorithm
+	//  3. a. Sort polygons in increasing YMin
+	//  3. b. Set YMax from all polygons
+	//  3. c. Set YMin from all polygons
+	//  3. d. A:=Empty set
+	//  3. e. foreach Y=YMin till YMax:
+	//		a. A += Polygon if YMin
 }
 
 void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
@@ -374,15 +411,20 @@ void Renderer::update(int width, int height)
 
 void Renderer::updateBuffer()
 {
-	// reallocate buffer if needed
-
 	if (m_outBuffer)
 	{
 		delete[] m_outBuffer;
 		m_outBuffer = new float[3 * m_width * m_height];
 
-		clearBuffer();
 	}
+
+	if (m_zbuffer)
+	{
+		delete[] m_zbuffer;
+		m_zbuffer = new UINT[m_width * m_height];
+	}
+
+	clearBuffer();
 }
 
 void Renderer::clearBuffer()
@@ -391,6 +433,12 @@ void Renderer::clearBuffer()
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
 			m_outBuffer[i] = 1.0; //Set all pixels to pure white.
+	}
+
+	if (m_zbuffer)
+	{
+		for (UINT i = 0; i < m_width * m_height; i++)
+			m_zbuffer[i] = MAX_Z;
 	}
 }
 

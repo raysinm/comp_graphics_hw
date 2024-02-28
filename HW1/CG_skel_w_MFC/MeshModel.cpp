@@ -74,7 +74,7 @@ vec2* MeshModel::GetBuffer(MODEL_OBJECT obj)
 	}
 }
 
-vec3* MeshModel::GetBuffer()
+Vertex* MeshModel::GetBuffer()
 {
 	return buffer_vertrices;	
 }
@@ -110,7 +110,7 @@ MeshModel::MeshModel(string fileName)
 	
 	initBoundingBox();
 
-	buffer_vertrices = new vec3[num_vertices];
+	buffer_vertrices = new Vertex[num_vertices];
 
 }
 
@@ -365,8 +365,9 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 		{
 			for (unsigned int v = 0; v < 3; v++)
 			{
-				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
-				buffer_vertrices[(buffer_i * 3) + v] = vec3(point.x, point.y, point.z);
+				UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
+				vec3 point = t_vertex_positions_normalized[vertIndex];
+				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex);
 				num_vertices_to_draw++;
 			}
 			buffer_i++;

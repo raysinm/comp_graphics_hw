@@ -30,8 +30,6 @@ enum DrawAlgo {
 	COUNT
 };
 
-
-
 class Model
 {
 protected:
@@ -133,15 +131,13 @@ public:
 
 class Scene {
 
+private:
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
 	Renderer* m_renderer;
-	Grid* grid;
-	vec2* bufferGrid;
 	DrawAlgo draw_algo = WIRE_FRAME;
 
-private:
 	void AddCamera();
 	void UpdateModelSelection();
 
@@ -177,7 +173,6 @@ public:
 		AddCamera();							//Add the first default camera
 		activeCamera = 0;						//index = 0 because it is the first
 		cameras[activeCamera]->selected = true; //Select it because it is the default
-		grid = new Grid();
 	};
 	void loadOBJModel(string fileName);
 	void draw();

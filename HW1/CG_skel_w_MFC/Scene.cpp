@@ -312,8 +312,8 @@ void Scene::AddCamera()
 	cameras.push_back(cam);
 
 	string s = cam->getName();
-s += " " + std::to_string(cameras.size());
-cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
+	s += " " + std::to_string(cameras.size());
+	cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
 
 }
 
@@ -347,12 +347,6 @@ void Scene::ResetPopUpFlags()
 	memset(posBuffer, 0, sizeof(float) * 3);
 }
 
-/*
-	Main draw function.
-	This will draw:
-		1. GUI
-		2. scene models
-*/
 void Scene::draw()
 {
 	//1. GUI
@@ -378,27 +372,27 @@ void Scene::draw()
 			case WIRE_FRAME:
 			{
 				//values: [-1, 1]
-				vec3* vertecies = ((MeshModel*)model)->GetBuffer();
+				auto vertecies = ((MeshModel*)model)->GetBuffer();
 				len = ((MeshModel*)model)->GetBuffer_len(MODEL);
 				if (vertecies)
 					m_renderer->Rasterize_WireFrame(vertecies, len);
-			}
 				break;
+			}
 			case FLAT:
 			{
-
-			}
+				m_renderer->Rasterize_Flat((const MeshModel*)model);
 				break;
+			}
 			case GOURAUD:
 			{
 
-			}
 				break;
+			}
 			case PHONG:
 			{
 
-			}
 				break;
+			}
 		}
 
 
