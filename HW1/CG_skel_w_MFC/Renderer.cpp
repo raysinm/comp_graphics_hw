@@ -111,6 +111,7 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 {
 	if (!model) return; /* Sanity check*/
 
+	
 	//	Get vertices buffer from model
 	MeshModel* pModel = (MeshModel*)model;
 	Vertex* vertices = pModel->GetBuffer();
@@ -127,9 +128,9 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	
 	for (UINT i = 0; i < len; i += 3)
 	{
-		// TODO: Clip wisely- Without disfiguring the triangle using the algorithm from clipping tutorial
+		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
 
-		/* Set range: [0, 1]  (All dimensions)*/
+		/* Set range: [0, 1]  (All dimensions) */
 		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
 		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
 		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
@@ -306,18 +307,15 @@ void Renderer::SwapBuffers()
 void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 {
 	/* Psudo Code - Z Buffer Scan line algo */
-	//UINT YMIN = polygons[0], YMAX = -1;
-	//for (auto p : polygons) {
-	//	if()
-	//}
 
-//	Foreach scanline ( YMIN y <= y <= YMAX ):
+
+//	Foreach scanline ( YMIN <= y <= YMAX ):
 //		let A = { P in polygons if  P.MIN_Y <= y <= P.MAX_Y }
 //		Foreach polygon p in A:
 //			Foreach pixel (x, y) in p span on scanline (y):
 //				let z = Depth(P, x, y)		(Calculate the z value for the pixel. see Lecture 4 page 24)
 //				if z < m_zbuffer[x][y]:
-//					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)
+//					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)		// Col(p) Will get Polygon and Lighting sources
 //					m_zbuffer[x][y] = z
 
 }
