@@ -49,9 +49,7 @@ public:
 
 };
 
-class Light {
 
-};
 
 class Camera
 {

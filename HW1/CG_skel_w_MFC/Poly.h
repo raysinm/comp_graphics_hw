@@ -1,7 +1,7 @@
 #pragma once
 #include "mat.h"
 #include "Scene.h"
-
+#include "Material.h"
 
 using namespace std;
 
@@ -17,5 +17,6 @@ private:
 public:
 	Poly() {};
 	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal);
+	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
 };

@@ -3,6 +3,7 @@
 #include "vec.h"
 #include "mat.h"
 #include <string>
+#include "Material.h"
 
 using namespace std;
 
@@ -30,6 +31,7 @@ protected:
 	vector<vec3> face_normals;						// size: Num of faces
 	vector<vec3> b_box_vertices;
 
+	Material* material;
 
 	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
