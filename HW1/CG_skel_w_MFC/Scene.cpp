@@ -372,10 +372,10 @@ void Scene::draw()
 			case WIRE_FRAME:
 			{
 				//values: [-1, 1]
-				auto vertecies = ((MeshModel*)model)->GetBuffer();
+				auto vertices = ((MeshModel*)model)->GetBuffer();
 				len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-				if (vertecies)
-					m_renderer->Rasterize_WireFrame(vertecies, len);
+				if (vertices)
+					m_renderer->Rasterize_WireFrame(vertices, len);
 				break;
 			}
 			case FLAT:

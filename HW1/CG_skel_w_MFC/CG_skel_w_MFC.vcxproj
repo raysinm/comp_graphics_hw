@@ -130,6 +130,8 @@
     <ClInclude Include="..\imgui\imstb_textedit.h" />
     <ClInclude Include="..\imgui\imstb_truetype.h" />
     <ClInclude Include="CG_skel_w_glfw.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Poly.h" />
     <ClInclude Include="PrimMeshModel.h" />
     <ClInclude Include="InitShader.h" />

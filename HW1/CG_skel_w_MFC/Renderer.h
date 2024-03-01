@@ -54,7 +54,7 @@ public:
 	void SwapBuffers();
 
 
-	void Rasterize_WireFrame(const Vertex* vertecies, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
+	void Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 	void Rasterize_Flat(const MeshModel* model);
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 

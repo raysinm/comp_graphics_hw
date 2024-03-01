@@ -70,7 +70,7 @@ void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 	}
 }
 
-void Renderer::Rasterize_WireFrame(const Vertex* vertecies, unsigned int len, vec4 color)
+void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
 		For example:
@@ -86,9 +86,9 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertecies, unsigned int len, ve
 		//i, i+1, i+2 
 
 		/* Set A to range [0, 1]*/
-		vec2 A = vec2( (vertecies[i+0].point.x + 1) / 2, (vertecies[i+0].point.y + 1) / 2);
-		vec2 B = vec2( (vertecies[i+1].point.x + 1) / 2, (vertecies[i+1].point.y + 1) / 2);
-		vec2 C = vec2( (vertecies[i+2].point.x + 1) / 2, (vertecies[i+2].point.y + 1) / 2);
+		vec2 A = vec2( (vertices[i+0].point.x + 1) / 2, (vertices[i+0].point.y + 1) / 2);
+		vec2 B = vec2( (vertices[i+1].point.x + 1) / 2, (vertices[i+1].point.y + 1) / 2);
+		vec2 C = vec2( (vertices[i+2].point.x + 1) / 2, (vertices[i+2].point.y + 1) / 2);
 
 		/*	Set A_Pxl to range [0, m_wdith - 1]  (X)
 							   [0, m_height - 1] (Y)
@@ -114,9 +114,9 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 
 	//	Get vertices buffer from model
 	MeshModel* pModel = (MeshModel*)model;
-	Vertex* vertecies = pModel->GetBuffer();
+	Vertex* vertices = pModel->GetBuffer();
 	UINT len = pModel->GetBuffer_len(MODEL);
-	if (!vertecies || len == 0)
+	if (!vertices || len == 0)
 		return;	
 
 
@@ -131,9 +131,9 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		// TODO: Clip wisely- Without disfiguring the triangle using the algorithm from clipping tutorial
 
 		/* Set range: [0, 1]  (All dimensions)*/
-		vec3 A = vec3((vertecies[i + 0].point.x + 1) / 2, (vertecies[i + 0].point.y + 1) / 2, (vertecies[i + 0].point.z + 1) / 2);
-		vec3 B = vec3((vertecies[i + 1].point.x + 1) / 2, (vertecies[i + 1].point.y + 1) / 2, (vertecies[i + 1].point.z + 1) / 2);
-		vec3 C = vec3((vertecies[i + 2].point.x + 1) / 2, (vertecies[i + 2].point.y + 1) / 2, (vertecies[i + 2].point.z + 1) / 2);
+		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
+		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
+		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
 
 		/*	Set range:   [0, m_width - 1]  (X)
 						 [0, m_height - 1] (Y)
@@ -143,8 +143,8 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
 
 	
-		if (vertecies[i].face_index != vertecies[i + 1].face_index || vertecies[i].face_index != vertecies[i + 2].face_index ||
-			vertecies[i + 1].face_index != vertecies[i + 2].face_index)
+		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
+			vertices[i + 1].face_index != vertices[i + 2].face_index)
 		{
 			/* Should never get here....*/
 			/* Keep this just to make sure you and Maya agree on this...*/
@@ -154,10 +154,10 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		Poly P = Poly( A_Pxl,                                      \
 					   B_Pxl,                                      \
 					   C_Pxl,                                      \
-					   (*vnormals)[vertecies[i + 0].vertex_index], \
-					   (*vnormals)[vertecies[i + 1].vertex_index], \
-					   (*vnormals)[vertecies[i + 2].vertex_index], \
-					   (*pFaceNormals)[vertecies[i].face_index]);
+					   (*vnormals)[vertices[i + 0].vertex_index], \
+					   (*vnormals)[vertices[i + 1].vertex_index], \
+					   (*vnormals)[vertices[i + 2].vertex_index], \
+					   (*pFaceNormals)[vertices[i].face_index]);
 		
 		polygons.push_back(P);
 	}

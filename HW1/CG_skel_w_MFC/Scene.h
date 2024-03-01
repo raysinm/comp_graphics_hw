@@ -5,6 +5,7 @@
 #include <string>
 #include "Renderer.h"
 #include "Grid.h"
+#include "Light.h"
 
 using namespace std;
 
