@@ -22,6 +22,14 @@ using namespace std;
 #define DEF_ASPECT 1
 
 
+enum DrawAlgo {
+	WIRE_FRAME,
+	FLAT,
+	GOURAUD,
+	PHONG,
+	COUNT
+};
+
 class Model
 {
 protected:
@@ -123,14 +131,13 @@ public:
 
 class Scene {
 
+private:
 	vector<Model*> models;
 	vector<Light*> lights;
 	vector<Camera*> cameras;
 	Renderer* m_renderer;
-	Grid* grid;
-	vec2* bufferGrid;
+	DrawAlgo draw_algo = WIRE_FRAME;
 
-private:
 	void AddCamera();
 	void UpdateModelSelection();
 
@@ -143,6 +150,22 @@ private:
 	int viewportY;
 	int viewportWidth;
 	int viewportHeight;
+	char* drawAlgoToString(DrawAlgo x)
+	{
+		switch (x)
+		{
+		case WIRE_FRAME:
+			return "WIRE FRAME";
+		case FLAT:
+			return "FLAT";
+		case GOURAUD:
+			return "GOURAUD";
+		case PHONG:
+			return "PHONG";
+		default:
+			return ("error");
+		}
+	}
 
 public:
 	Scene(Renderer* renderer) : m_renderer(renderer)
@@ -150,14 +173,13 @@ public:
 		AddCamera();							//Add the first default camera
 		activeCamera = 0;						//index = 0 because it is the first
 		cameras[activeCamera]->selected = true; //Select it because it is the default
-		grid = new Grid();
 	};
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawGUI();
 	void resize_callback_handle(int width, int height);
 	void setViewPort(vec4& vp);
-	void zoom(double s_offset) { cameras[activeCamera]->zoom(s_offset); };
+	void zoom(double s_offset) { cameras[activeCamera]->zoom(s_offset); }
 	friend bool showInputDialog();
 
 	Camera* GetActiveCamera();

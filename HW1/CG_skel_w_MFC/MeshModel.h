@@ -1,12 +1,10 @@
 #pragma once
-#include "scene.h"
+#include "Scene.h"
 #include "vec.h"
 #include "mat.h"
 #include <string>
 
-
 using namespace std;
-
 
 enum MODEL_OBJECT{
 	MODEL,
@@ -14,10 +12,6 @@ enum MODEL_OBJECT{
 	V_NORMAL,
 	F_NORMAL
 };
-using namespace std;
-
-
-
 
 class MeshModel : public Model
 {
@@ -40,16 +34,15 @@ protected:
 	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
 	unsigned int num_faces;
-	unsigned int num_faces_to_draw;
 	unsigned int num_vertices_to_draw;
-	const unsigned int num_bbox_vertices = 36;
+	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
 	
-	vec2* buffer2d = nullptr;			
-	vec2* buffer2d_bbox = nullptr;		
-	vec2* buffer2d_v_normals = nullptr;	
-	vec2* buffer2d_f_normals = nullptr;	
+	Vertex* buffer_vertrices   = nullptr;			
+	vec2*   buffer2d_bbox      = nullptr;		
+	vec2*   buffer2d_v_normals = nullptr;	
+	vec2*   buffer2d_f_normals = nullptr;	
 
 	mat4 _world_transform;
 	mat4 _model_transform;
@@ -72,8 +65,11 @@ public:
 	MeshModel(string fileName);
 	~MeshModel(void);
 
-	vec2* Get2dBuffer(MODEL_OBJECT obj);
-	unsigned int Get2dBuffer_len(MODEL_OBJECT obj);
+	vector<vec3>* getVertexNormals() { return &vertex_normals; }
+	vector<vec3>* getFaceNormals() { return   &face_normals; }
+	Vertex* GetBuffer();
+	vec2* GetBuffer(MODEL_OBJECT obj);
+	unsigned int GetBuffer_len(MODEL_OBJECT obj);
 
 	void loadFile(string fileName);
 	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);

@@ -20,7 +20,7 @@ protected:
 		vertex_faces_neighbors			= vector<vector<int>>(num_vertices_raw);
 		faces_v_indices					= vector<int> (num_faces * 3);
 		vertex_normals					= vector<vec3>(num_vertices_raw);
-		buffer2d						= new vec2[num_vertices];
+		buffer_vertrices				= new Vertex[num_vertices];
 		buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
 		buffer2d_f_normals				= new vec2[num_faces * 2];
 	}
