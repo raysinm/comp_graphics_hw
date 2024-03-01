@@ -1,6 +1,5 @@
 #pragma once
 #include "mat.h"
-#include "Scene.h"
 #include "Material.h"
 
 using namespace std;
