@@ -3,7 +3,6 @@
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
 #include "GL\freeglut.h"
-#include "Poly.h"
 #include "MeshModel.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
@@ -165,20 +164,7 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	/* -------------- 'polygons' vector is initialized-------------- */
 
 
-
-
-	/* Psudo Code - Z Buffer Scan line algo */
-	//	2. Calculate color/material per face?
-	//
-	//
-	//
-	//	3. Scanline - zBuffer algorithm
-	//  3. a. Sort polygons in increasing YMin
-	//  3. b. Set YMax from all polygons
-	//  3. c. Set YMin from all polygons
-	//  3. d. A:=Empty set
-	//  3. e. foreach Y=YMin till YMax:
-	//		a. A += Polygon if YMin
+	ScanLineZ_Buffer(polygons);
 }
 
 void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
@@ -296,65 +282,6 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 	return;
 }
 
-/////////////////////////////////////////////////////
-//OpenGL stuff. Don't touch.
-
-void Renderer::InitOpenGLRendering()
-{
-	GLenum a = glGetError();
-
-	a = glGetError();
-	glGenTextures(1, &gScreenTex);
-	a = glGetError();
-
-	glGenVertexArrays(1, &gScreenVtc);
-	GLuint buffer;
-	glBindVertexArray(gScreenVtc);
-	glGenBuffers(1, &buffer);
-	const GLfloat vtc[]={
-		-1, -1,
-		1, -1,
-		-1, 1,
-		-1, 1,
-		1, -1,
-		1, 1
-	};
-	const GLfloat tex[]={
-		0,0,
-		1,0,
-		0,1,
-		0,1,
-		1,0,
-		1,1};
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vtc)+sizeof(tex), NULL, GL_STATIC_DRAW);
-	glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(vtc), vtc);
-	glBufferSubData( GL_ARRAY_BUFFER, sizeof(vtc), sizeof(tex), tex);
-
-	GLuint program = InitShader( "vshader.glsl", "fshader.glsl" );
-	glUseProgram( program );
-	GLint  vPosition = glGetAttribLocation( program, "vPosition" );
-
-	glEnableVertexAttribArray( vPosition );
-	glVertexAttribPointer( vPosition, 2, GL_FLOAT, GL_FALSE, 0,
-		0 );
-
-	GLint  vTexCoord = glGetAttribLocation( program, "vTexCoord" );
-	glEnableVertexAttribArray( vTexCoord );
-	glVertexAttribPointer( vTexCoord, 2, GL_FLOAT, GL_FALSE, 0,
-		(GLvoid *) sizeof(vtc) );
-	glProgramUniform1i( program, glGetUniformLocation(program, "texture"), 0 );
-	a = glGetError();
-}
-
-void Renderer::CreateOpenGLBuffer()
-{
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, gScreenTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
-	//glViewport(0, 0, m_width, m_height);
-}
-
 void Renderer::SwapBuffers()
 {
 
@@ -374,6 +301,25 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glfwSwapBuffers(m_window);
 	a = glGetError();
+}
+
+void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
+{
+	/* Psudo Code - Z Buffer Scan line algo */
+	//UINT YMIN = polygons[0], YMAX = -1;
+	//for (auto p : polygons) {
+	//	if()
+	//}
+
+//	Foreach scanline ( YMIN y <= y <= YMAX ):
+//		let A = { P in polygons if  P.MIN_Y <= y <= P.MAX_Y }
+//		Foreach polygon p in A:
+//			Foreach pixel (x, y) in p span on scanline (y):
+//				let z = Depth(P, x, y)		(Calculate the z value for the pixel. see Lecture 4 page 24)
+//				if z < m_zbuffer[x][y]:
+//					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)
+//					m_zbuffer[x][y] = z
+
 }
 
 void Renderer::CreateTexture()
@@ -464,3 +410,62 @@ void Renderer::clearBuffer()
 }
 
 
+/////////////////////////////////////////////////////
+//         OpenGL stuff. Don't touch.			   //
+/////////////////////////////////////////////////////
+
+void Renderer::InitOpenGLRendering()
+{
+	GLenum a = glGetError();
+
+	a = glGetError();
+	glGenTextures(1, &gScreenTex);
+	a = glGetError();
+
+	glGenVertexArrays(1, &gScreenVtc);
+	GLuint buffer;
+	glBindVertexArray(gScreenVtc);
+	glGenBuffers(1, &buffer);
+	const GLfloat vtc[] = {
+		-1, -1,
+		1, -1,
+		-1, 1,
+		-1, 1,
+		1, -1,
+		1, 1
+	};
+	const GLfloat tex[] = {
+		0,0,
+		1,0,
+		0,1,
+		0,1,
+		1,0,
+		1,1 };
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vtc) + sizeof(tex), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vtc), vtc);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vtc), sizeof(tex), tex);
+
+	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
+	glUseProgram(program);
+	GLint  vPosition = glGetAttribLocation(program, "vPosition");
+
+	glEnableVertexAttribArray(vPosition);
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0,
+		0);
+
+	GLint  vTexCoord = glGetAttribLocation(program, "vTexCoord");
+	glEnableVertexAttribArray(vTexCoord);
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0,
+		(GLvoid*)sizeof(vtc));
+	glProgramUniform1i(program, glGetUniformLocation(program, "texture"), 0);
+	a = glGetError();
+}
+
+void Renderer::CreateOpenGLBuffer()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gScreenTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
+	//glViewport(0, 0, m_width, m_height);
+}

@@ -5,6 +5,7 @@
 #include "CG_skel_w_glfw.h"
 #include "vec.h"
 #include "mat.h"
+#include "Poly.h"
 #include "GL/glew.h"
 
 
@@ -35,6 +36,9 @@ private:
 	GLFWwindow* m_window;	// For glfw swap buffers
 
 	void CreateBuffers(int width, int height);
+	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec4(0, 0, 0, 1));
+	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color= vec4(0, 0, 0, 1));
+	void ScanLineZ_Buffer(vector<Poly>& polygons);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -45,8 +49,6 @@ private:
 	void InitOpenGLRendering();
 	//////////////////////////////
 	
-	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec4(0, 0, 0, 1));
-	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color= vec4(0, 0, 0, 1));
 
 public:
 	Renderer(int width, int height, GLFWwindow* window);
