@@ -107,6 +107,59 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 	}
 }
 
+std::pair<UINT, UINT> Renderer::CalcScanline(Poly& p, int y)
+{
+	Line scanline = Line(0, y);
+	vector<UINT> intersections_x;
+	auto pLines = p.GetLines();
+
+	for (auto line : pLines)
+	{
+		try
+		{
+			intersections_x.push_back((scanline.intersect(line)).x);
+		}
+		catch (ParallelLinesException& e)
+		{
+			continue;
+		}
+	}
+	sort(intersections_x.begin(), intersections_x.end());	//From smallest to biggest
+	
+	//*** Find scanline polygon intersection coords (left, right)
+	
+	UINT x_left = 0, x_right = (m_width - 1);
+
+	bool left_found = false;
+	for (UINT x : intersections_x)	
+	{
+		if (x < p.GetMinX())
+			continue; // Continue until you find a relevant x inside the polygon
+		if (x > p.GetMaxX())
+		{	//problem
+			cout << "ERROR: CalcScanline: got to X too big and out of range";
+			break;
+		}
+		if (!left_found)
+		{
+			x_left = x > 0 ? x : 0;		// If out of range, take 0
+			left_found = true;
+		}
+		else {
+			x_right = x < (m_width - 1) ? x : (m_width - 1);	// If out of range, take width of screen
+			break;
+		}
+	}
+	// Sanity check:
+	if (x_right <= x_left)
+	{
+		cout << "ERROR: CalcScanline: calculation error in x intersections";
+	}
+
+	return std::make_pair(x_left, x_right);
+
+}
+
 vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 {
 
@@ -173,6 +226,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 
 	return polygons;
 }
+
 
 
 void Renderer::Rasterize_Flat(const MeshModel* model)

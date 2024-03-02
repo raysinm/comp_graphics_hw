@@ -2,6 +2,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <vector>
+#include <algorithm>
 #include "CG_skel_w_glfw.h"
 //#include "vec.h"
 //#include "mat.h"
@@ -31,6 +32,7 @@ private:
 
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 
+	std::pair<UINT, UINT> CalcScanline(Poly& p, UINT y);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.

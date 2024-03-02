@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mat.h"
-
+#include <stdexcept>
 
 typedef unsigned int UINT;
 
@@ -13,6 +13,26 @@ enum DrawAlgo {
 	COUNT
 };
 
+class LineException : public std::runtime_error {
+public:
+	LineException(const std::string& message)
+		: std::runtime_error(message) {}
+};
+
+class ParallelLinesException : public LineException {
+public:
+	ParallelLinesException(const std::string& message)
+		: LineException(message) {}
+};
+
+class SlopeZeroException : public LineException {
+public:
+	SlopeZeroException(const std::string& message)
+		: LineException(message) {}
+};
+
+
+
 typedef struct Vertex {
 	vec3 point;
 	UINT vertex_index;
@@ -23,13 +43,40 @@ typedef struct Vertex {
 	~Vertex() {}
 } Vertex;
 
-typedef struct Line {
-	double slope;
-	double y_intercept;
-	Line() = delete;
+typedef class Line {
+private:
+	double _slope;
+	double _b;
+
+public:
+	Line() : _slope(1), _b(0){}
+	Line(double slope, double b) : _slope(slope), _b(b){}
 	Line(vec2 a, vec2 b)
 	{
-		slope = (b.y - a.y) / (b.x - a.x);
-		y_intercept = (a.y - slope * a.x);
+		_slope = (b.y - a.y) / (b.x - a.x);
+		_b = (a.y - _slope * a.x);
 	}
-};
+	vec2 intersect(Line& other)
+	{
+		if ((this->_slope - other._slope) == 0)
+		{
+			// Lines are parallel
+			throw ParallelLinesException("Parallel Lines");
+		}
+		double x, y;
+
+		x = (other._b - this->_b) / (this->_slope - other._slope);
+		y = this->y(x);
+
+		return vec2(x, y);
+	}
+	double y(double x) { 
+		return _slope * x + _b; 
+	}
+	double x(double y) { 
+		if (_slope == 0)
+			throw SlopeZeroException("No x solution, slope is zero");
+		return (y - _b) / _slope; 
+	}
+
+}Line;

@@ -1,10 +1,12 @@
 #pragma once
 //#include "mat.h"
 #include "Material.h"
+#include "Utils.h"
+#include <vector>
 
 using namespace std;
 
-class Poly
+typedef class Poly
 {
 
 	// Should contain screen coordinates only (pixel positions):
@@ -23,20 +25,28 @@ private:
 	vec3 a, b, c;
 	//vector<vec3> screen_coords;
 
-	vec2 l_AB, l_BC, l_AC;
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
 
 	UINT min_y;
 	UINT max_y;
+	UINT min_x;
+	UINT max_x;
+
+	std::vector<Line> lines;
 
 public:
-	Poly() {};
+
+	Poly() :lines(3){};
 	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal);
 
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
 
-	UINT GetMin() { return min_y; }
-	UINT GetMax() { return max_y; }
-};
+	UINT GetMinY() { return min_y; }
+	UINT GetMaxY() { return max_y; }
+
+	UINT GetMinX() { return min_x; }
+	UINT GetMaxX() { return max_x; }
+	std::vector<Line>& GetLines() { return lines; }
+} Poly;
