@@ -32,7 +32,7 @@ private:
 
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 
-	std::pair<UINT, UINT> CalcScanline(Poly& p, UINT y);
+	std::pair<UINT, UINT> CalcScanline(Poly& p, int y);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.

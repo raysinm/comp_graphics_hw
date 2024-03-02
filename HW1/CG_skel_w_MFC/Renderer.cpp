@@ -422,6 +422,11 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 //					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)		// Col(p) Will get Polygon and Lighting sources
 //					m_zbuffer[x][y] = z
 
+
+	// Example for getting scanline range (represented by std::pair)
+	//pair scanline = CalcScanLine(p, y);
+	//for(UINT i = scanline.first; i <= scanline.second; i++) {
+	//......
 }
 
 void Renderer::CreateTexture()
