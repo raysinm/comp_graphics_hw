@@ -107,17 +107,15 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 	}
 }
 
-void Renderer::Rasterize_Flat(const MeshModel* model)
+vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 {
-	if (!model) return; /* Sanity check*/
 
-	
 	//	Get vertices buffer from model
 	MeshModel* pModel = (MeshModel*)model;
 	Vertex* vertices = pModel->GetBuffer();
 	UINT len = pModel->GetBuffer_len(MODEL);
 	if (!vertices || len == 0)
-		return;	
+		return vector<Poly>();
 
 
 	vector<vec3>* vnormals = pModel->getVertexNormals();
@@ -125,7 +123,7 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	vector<Poly> polygons;
 
 	/* Add all polygons to polygons vector */
-	
+
 	for (UINT i = 0; i < len; i += 3)
 	{
 		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
@@ -142,28 +140,40 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
 		vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
 
-	
+
 		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
 			vertices[i + 1].face_index != vertices[i + 2].face_index)
 		{
 			/* Should never get here....*/
 			/* Keep this just to make sure you and Maya agree on this...*/
 			cout << "ERRORRRR!!" << endl;
-			return;
+			return vector<Poly>();
 		}
-		Poly P = Poly( A_Pxl,                                      \
-					   B_Pxl,                                      \
-					   C_Pxl,                                      \
-					   (*vnormals)[vertices[i + 0].vertex_index], \
-					   (*vnormals)[vertices[i + 1].vertex_index], \
-					   (*vnormals)[vertices[i + 2].vertex_index], \
-					   (*pFaceNormals)[vertices[i].face_index]);
-		
+		Poly P = Poly(A_Pxl, \
+			B_Pxl, \
+			C_Pxl, \
+			(*vnormals)[vertices[i + 0].vertex_index], \
+			(*vnormals)[vertices[i + 1].vertex_index], \
+			(*vnormals)[vertices[i + 2].vertex_index], \
+			(*pFaceNormals)[vertices[i].face_index]);
+
 		polygons.push_back(P);
 	}
-	
-	/* -------------- 'polygons' vector is initialized-------------- */
 
+	return polygons;
+}
+
+
+void Renderer::Rasterize_Flat(const MeshModel* model)
+{
+	if (!model) return; /* Sanity check*/
+
+	/* -------------- 'polygons' vector initialization-------------- */
+	vector<Poly> polygons = CreatePolygonsVector(model);
+	if (polygons.empty())
+		return;	// Something failed in creation
+
+	/* -------------- Shading calculation -------------- */
 
 	ScanLineZ_Buffer(polygons);
 }

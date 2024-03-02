@@ -39,7 +39,7 @@ private:
 	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec4(0, 0, 0, 1));
 	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color= vec4(0, 0, 0, 1));
 	void ScanLineZ_Buffer(vector<Poly>& polygons);
-
+	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 	//////////////////////////////
 	// openGL stuff. Don't touch.
 
