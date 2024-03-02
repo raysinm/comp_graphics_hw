@@ -166,8 +166,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 			(*vnormals)[vertices[i + 0].vertex_index], \
 			(*vnormals)[vertices[i + 1].vertex_index], \
 			(*vnormals)[vertices[i + 2].vertex_index], \
-			(*pFaceNormals)[vertices[i].face_index],   \
-			m_width, m_height);
+			(*pFaceNormals)[vertices[i].face_index]);
 
 		polygons.push_back(P);
 	}

@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "Grid.h"
 #include "Light.h"
+#include "Utils.h"
 
 using namespace std;
 
@@ -23,13 +24,6 @@ using namespace std;
 #define DEF_ASPECT 1
 
 
-enum DrawAlgo {
-	WIRE_FRAME,
-	FLAT,
-	GOURAUD,
-	PHONG,
-	COUNT
-};
 
 class Model
 {

@@ -5,6 +5,14 @@
 
 typedef unsigned int UINT;
 
+enum DrawAlgo {
+	WIRE_FRAME,
+	FLAT,
+	GOURAUD,
+	PHONG,
+	COUNT
+};
+
 typedef struct Vertex {
 	vec3 point;
 	UINT vertex_index;

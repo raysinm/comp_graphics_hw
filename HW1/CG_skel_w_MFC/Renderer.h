@@ -3,8 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include "CG_skel_w_glfw.h"
-#include "vec.h"
-#include "mat.h"
+//#include "vec.h"
+//#include "mat.h"
 #include "Poly.h"
 #include "Utils.h"
 #include "GL/glew.h"
@@ -31,7 +31,6 @@ private:
 
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 
-	vector<vec3> FindScreenVertices()
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.

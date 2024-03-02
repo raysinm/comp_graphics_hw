@@ -1,12 +1,11 @@
 #pragma once
-#include "mat.h"
+//#include "mat.h"
 #include "Material.h"
 
 using namespace std;
 
 class Poly
 {
-private:
 
 	// Should contain screen coordinates only (pixel positions):
 	// 
@@ -20,9 +19,11 @@ private:
 	//	  This will be used for scanline calculations only- can be seen as "the part of the triangle that is inside
 	//	  the screen and is not necesseraly a triangle anymore"
 
+private:
 	vec3 a, b, c;
-	vec2 lAB, lBC, lAC;
-	vector<vec3> screen_coords;
+	//vector<vec3> screen_coords;
+
+	vec2 l_AB, l_BC, l_AC;
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
 
@@ -31,7 +32,7 @@ private:
 
 public:
 	Poly() {};
-	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, int s_width, int s_height);
+	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal);
 
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
