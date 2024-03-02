@@ -6,20 +6,9 @@
 #include "vec.h"
 #include "mat.h"
 #include "Poly.h"
+#include "Utils.h"
 #include "GL/glew.h"
 
-
-typedef unsigned int UINT;
-
-typedef struct Vertex {
-	vec3 point;
-	UINT vertex_index;
-	UINT face_index;
-
-	Vertex() : point(0, 0, 0), vertex_index(0), face_index(0) {}
-	Vertex(vec3 a, UINT v_indx, UINT f_indx) { point = a; vertex_index = v_indx; face_index = f_indx; }
-	~Vertex() {}
-} Vertex;
 
 
 using namespace std;
@@ -39,7 +28,11 @@ private:
 	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec4(0, 0, 0, 1));
 	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color= vec4(0, 0, 0, 1));
 	void ScanLineZ_Buffer(vector<Poly>& polygons);
+
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
+
+	vector<vec3> FindScreenVertices()
+
 	//////////////////////////////
 	// openGL stuff. Don't touch.
 
@@ -58,6 +51,9 @@ public:
 
 	void Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 	void Rasterize_Flat(const MeshModel* model);
+	void Rasterize_Gouraud(const MeshModel* model);
+	void Rasterize_Phong(const MeshModel* model);
+
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color = vec4(0, 0, 0, 1));
 
 	// New funcs

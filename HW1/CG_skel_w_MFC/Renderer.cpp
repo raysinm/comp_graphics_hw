@@ -128,17 +128,27 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 	{
 		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
 
-		/* Set range: [0, 1]  (All dimensions) */
-		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
-		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
-		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
+		///* Set range: [0, 1]  (All dimensions) */
+		//vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
+		//vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
+		//vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
 
-		/*	Set range:   [0, m_width - 1]  (X)
-						 [0, m_height - 1] (Y)
-						 [0, MAX_Z]		   (Z)  */
-		vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
-		vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
-		vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
+		///*	Set range:   [0, m_width - 1]  (X)
+		//				 [0, m_height - 1] (Y)
+		//				 [0, MAX_Z]		   (Z)  */
+		//vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
+		//vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
+		//vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
+		// 
+		
+		// !!!****CHANGE: Poly will contain the pixel positions as is, even if outside the screen. Scanline-algo will calculate for each scanline the ACTUAL relevant screen coordinates
+		vec3 A = vec3(vertices[i + 0].point.x, vertices[i + 0].point.y, vertices[i + 0].point.z);
+		vec3 B = vec3(vertices[i + 1].point.x, vertices[i + 1].point.y, vertices[i + 1].point.z);
+		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);
+
+		vec3 A_Pxl = vec3((UINT)(A.x * (m_width - 1)), (A.y * (m_height - 1), (UINT)(A.z * MAX_Z)));
+		vec3 B_Pxl = vec3((UINT)(B.x * (m_width - 1)), (B.y * (m_height - 1), (UINT)(B.z * MAX_Z)));
+		vec3 C_Pxl = vec3((UINT)(C.x * (m_width - 1)), (C.y * (m_height - 1), (UINT)(C.z * MAX_Z)));
 
 
 		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
@@ -149,13 +159,15 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 			cout << "ERRORRRR!!" << endl;
 			return vector<Poly>();
 		}
+
 		Poly P = Poly(A_Pxl, \
 			B_Pxl, \
 			C_Pxl, \
 			(*vnormals)[vertices[i + 0].vertex_index], \
 			(*vnormals)[vertices[i + 1].vertex_index], \
 			(*vnormals)[vertices[i + 2].vertex_index], \
-			(*pFaceNormals)[vertices[i].face_index]);
+			(*pFaceNormals)[vertices[i].face_index],   \
+			m_width, m_height);
 
 		polygons.push_back(P);
 	}
@@ -165,6 +177,35 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 
 
 void Renderer::Rasterize_Flat(const MeshModel* model)
+{
+	if (!model) return; /* Sanity check*/
+
+	/* -------------- 'polygons' vector initialization-------------- */
+	vector<Poly> polygons = CreatePolygonsVector(model);
+	if (polygons.empty())
+		return;	// Something failed in creation
+
+	/* -------------- Shading calculation -------------- */
+
+	ScanLineZ_Buffer(polygons);
+}
+
+
+void Renderer::Rasterize_Gouraud(const MeshModel* model)
+{
+	if (!model) return; /* Sanity check*/
+
+	/* -------------- 'polygons' vector initialization-------------- */
+	vector<Poly> polygons = CreatePolygonsVector(model);
+	if (polygons.empty())
+		return;	// Something failed in creation
+
+	/* -------------- Shading calculation -------------- */
+
+	ScanLineZ_Buffer(polygons);
+}
+
+void Renderer::Rasterize_Phong(const MeshModel* model)
 {
 	if (!model) return; /* Sanity check*/
 
