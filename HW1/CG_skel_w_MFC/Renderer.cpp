@@ -107,10 +107,10 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 	}
 }
 
-std::pair<UINT, UINT> Renderer::CalcScanlineSpan(Poly& p, int y)
+std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 {
 	Line scanline = Line(0, y);
-	vector<UINT> intersections_x;
+	vector<int> intersections_x;
 	auto pLines = p.GetLines();
 
 	for (auto line : pLines)
@@ -128,16 +128,16 @@ std::pair<UINT, UINT> Renderer::CalcScanlineSpan(Poly& p, int y)
 	
 	//*** Find scanline polygon intersection coords (left, right)
 	
-	UINT x_left = 0, x_right = (m_width - 1);
+	int x_left = 0, x_right = (m_width - 1);
 
 	bool left_found = false;
-	for (UINT x : intersections_x)	
+	for (int x : intersections_x)	
 	{
 		if (x < p.GetMinX())
 			continue; // Continue until you find a relevant x inside the polygon
 		if (x > p.GetMaxX())
 		{	//problem
-			cout << "ERROR: CalcScanlineSpan: got to X too big and out of range";
+			//cout << "ERROR: CalcScanlineSpan: x: " << x << " out of range" << endl;
 			break;
 		}
 		if (!left_found)
@@ -151,7 +151,7 @@ std::pair<UINT, UINT> Renderer::CalcScanlineSpan(Poly& p, int y)
 		}
 	}
 	// Sanity check:
-	if (x_right <= x_left)
+	if (x_right < x_left)
 	{
 		cout << "ERROR: CalcScanlineSpan: calculation error in x intersections";
 	}
@@ -182,9 +182,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
 
 		///* Set range: [0, 1]  (All dimensions) */
-		//vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
-		//vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
-		//vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
+		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
+		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
+		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
 
 		///*	Set range:   [0, m_width - 1]  (X)
 		//				 [0, m_height - 1] (Y)
@@ -195,13 +195,13 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		// 
 		
 		// !!!****CHANGE: Poly will contain the pixel positions as is, even if outside the screen. Scanline-algo will calculate for each scanline the ACTUAL relevant screen coordinates
-		vec3 A = vec3(vertices[i + 0].point.x, vertices[i + 0].point.y, vertices[i + 0].point.z);
+		/*vec3 A = vec3(vertices[i + 0].point.x, vertices[i + 0].point.y, vertices[i + 0].point.z);
 		vec3 B = vec3(vertices[i + 1].point.x, vertices[i + 1].point.y, vertices[i + 1].point.z);
-		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);
+		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);*/
 
-		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (A.y * (m_height - 1), (int)(A.z * MAX_Z)));
-		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (B.y * (m_height - 1), (int)(B.z * MAX_Z)));
-		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (C.y * (m_height - 1), (int)(C.z * MAX_Z)));
+		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (int)(A.y * (m_height - 1), (int)(A.z * MAX_Z)));
+		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (int)(B.y * (m_height - 1), (int)(B.z * MAX_Z)));
+		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1), (int)(C.z * MAX_Z)));
 
 
 		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
@@ -235,8 +235,11 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 
 	/* -------------- 'polygons' vector initialization-------------- */
 	vector<Poly> polygons = CreatePolygonsVector(model);
-	if (polygons.empty())
+	if (polygons.size() == 0)
+	{
+		cout << "ERROR: Rasterize: Polygon vector empty" << endl;
 		return;	// Something failed in creation
+	}
 
 #ifdef _DEBUG
 	// --- CalcScanlineSpan test --- //
@@ -245,7 +248,8 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	if (vertices)
 		Rasterize_WireFrame(vertices, len);
 	
-	auto range = CalcScanlineSpan(polygons[0], 1);
+	int y_test = m_height/2;
+	auto range = CalcScanlineSpan(polygons[0], y_test);
 	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
 #endif // _DEBUG
 

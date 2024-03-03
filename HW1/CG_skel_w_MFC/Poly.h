@@ -28,10 +28,10 @@ private:
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
 
-	UINT min_y;
-	UINT max_y;
-	UINT min_x;
-	UINT max_x;
+	int min_y;
+	int max_y;
+	int min_x;
+	int max_x;
 
 	std::vector<Line> lines;
 
@@ -43,10 +43,10 @@ public:
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
 
-	UINT GetMinY() { return min_y; }
-	UINT GetMaxY() { return max_y; }
-
-	UINT GetMinX() { return min_x; }
-	UINT GetMaxX() { return max_x; }
+	int GetMinY() { return min_y; }
+	int GetMaxY() { return max_y; }
+	
+	int GetMinX() { return min_x; }
+	int GetMaxX() { return max_x; }
 	std::vector<Line>& GetLines() { return lines; }
 } Poly;
