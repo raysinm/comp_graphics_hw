@@ -107,7 +107,7 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 	}
 }
 
-std::pair<UINT, UINT> Renderer::CalcScanline(Poly& p, int y)
+std::pair<UINT, UINT> Renderer::CalcScanlineSpan(Poly& p, int y)
 {
 	Line scanline = Line(0, y);
 	vector<UINT> intersections_x;
@@ -137,7 +137,7 @@ std::pair<UINT, UINT> Renderer::CalcScanline(Poly& p, int y)
 			continue; // Continue until you find a relevant x inside the polygon
 		if (x > p.GetMaxX())
 		{	//problem
-			cout << "ERROR: CalcScanline: got to X too big and out of range";
+			cout << "ERROR: CalcScanlineSpan: got to X too big and out of range";
 			break;
 		}
 		if (!left_found)
@@ -153,7 +153,7 @@ std::pair<UINT, UINT> Renderer::CalcScanline(Poly& p, int y)
 	// Sanity check:
 	if (x_right <= x_left)
 	{
-		cout << "ERROR: CalcScanline: calculation error in x intersections";
+		cout << "ERROR: CalcScanlineSpan: calculation error in x intersections";
 	}
 
 	return std::make_pair(x_left, x_right);
@@ -199,9 +199,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		vec3 B = vec3(vertices[i + 1].point.x, vertices[i + 1].point.y, vertices[i + 1].point.z);
 		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);
 
-		vec3 A_Pxl = vec3((UINT)(A.x * (m_width - 1)), (A.y * (m_height - 1), (UINT)(A.z * MAX_Z)));
-		vec3 B_Pxl = vec3((UINT)(B.x * (m_width - 1)), (B.y * (m_height - 1), (UINT)(B.z * MAX_Z)));
-		vec3 C_Pxl = vec3((UINT)(C.x * (m_width - 1)), (C.y * (m_height - 1), (UINT)(C.z * MAX_Z)));
+		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (A.y * (m_height - 1), (int)(A.z * MAX_Z)));
+		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (B.y * (m_height - 1), (int)(B.z * MAX_Z)));
+		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (C.y * (m_height - 1), (int)(C.z * MAX_Z)));
 
 
 		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
@@ -237,6 +237,18 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	vector<Poly> polygons = CreatePolygonsVector(model);
 	if (polygons.empty())
 		return;	// Something failed in creation
+
+#ifdef _DEBUG
+	// --- CalcScanlineSpan test --- //
+	auto vertices = ((MeshModel*)model)->GetBuffer();
+	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+	if (vertices)
+		Rasterize_WireFrame(vertices, len);
+	
+	auto range = CalcScanlineSpan(polygons[0], 1);
+	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
+#endif // _DEBUG
+
 
 	/* -------------- Shading calculation -------------- */
 
@@ -424,7 +436,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 
 
 	// Example for getting scanline range (represented by std::pair)
-	//pair scanline = CalcScanLine(p, y);
+	//pair scanline = CalcScanlineSpan(p, y);
 	//for(UINT i = scanline.first; i <= scanline.second; i++) {
 	//......
 }

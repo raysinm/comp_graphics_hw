@@ -37,7 +37,7 @@ private:
 
 public:
 
-	Poly() :lines(3){};
+	Poly(){};
 	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal);
 
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
