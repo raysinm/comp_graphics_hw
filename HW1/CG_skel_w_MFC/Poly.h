@@ -34,7 +34,6 @@ private:
 	int max_x;
 
 	std::vector<Line> lines;
-	friend UINT Depth(Poly& P, int x, int y);
 public:
 
 	Poly(){};
@@ -49,6 +48,6 @@ public:
 	int GetMinX() { return min_x; };
 	int GetMaxX() { return max_x; };
 	std::vector<Line>& GetLines() { return lines; }
-} Poly;
+	UINT Depth(int x, int y);
 
-UINT Depth(Poly& P, int x, int y);
+} Poly;

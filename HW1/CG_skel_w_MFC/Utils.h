@@ -103,3 +103,4 @@ public:
 	bool getIsVertical() { return isVertical; }
 	double getVerticalX() { return verticalX; }
 };
+

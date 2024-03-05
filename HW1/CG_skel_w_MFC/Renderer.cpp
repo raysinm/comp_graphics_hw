@@ -465,7 +465,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			std::pair<UINT, UINT> scan_span = CalcScanlineSpan(P, y);
 			for (auto x = scan_span.first; x <= scan_span.second; x++)
 			{
-				UINT z = Depth(P, x, y);	// TODO: implement Depth
+				UINT z = P.Depth(x, y);	// TODO: implement Depth
 				if (z < m_zbuffer[x + y])
 				{
 					PutColor(x, y, (0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!

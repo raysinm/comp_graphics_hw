@@ -24,7 +24,7 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 
 }
 
-//UINT Depth(Poly& P, int x, int y)
-//{
-//
-//}
+UINT Poly::Depth(int x, int y)
+{
+	return 1;
+}
