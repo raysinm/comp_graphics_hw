@@ -58,18 +58,22 @@ UINT Poly::Depth(int x, int y)
 	}
 	
 	vec2 Pi;
-	try
-	{
-		Pi = mainLine.intersect(baseLine);
-	}
-	catch (const std::exception&)
-	{
-		//There is some edge cases where the 2 line could be parallel...
-		// Even there is some edge cases that the lines are the same lines !
-		// This is the case where the polygon plane, is excactly 90 degress to the camera.
-		// So the camera only sees a line instead of a triangle...
-		return this->GetMinZ();
-	}
+	bool is_par = false;
+	Pi = mainLine.intersect(baseLine, &is_par);
+	if (is_par)
+		return min_z;
+	//try
+	//{
+	//	Pi = mainLine.intersect(baseLine);
+	//}
+	//catch (const std::exception&)
+	//{
+	//	//There is some edge cases where the 2 line could be parallel...
+	//	// Even there is some edge cases that the lines are the same lines !
+	//	// This is the case where the polygon plane, is excactly 90 degress to the camera.
+	//	// So the camera only sees a line instead of a triangle...
+	//	return this->GetMinZ();
+	//}
 	
 	Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
 	Zi = (UINT)((Ti * z2) + (1 - Ti) * z1);

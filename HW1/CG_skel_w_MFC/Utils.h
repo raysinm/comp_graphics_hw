@@ -19,30 +19,30 @@ enum DrawAlgo {
 	COUNT
 };
 
-class LineException : public std::exception {
-	std::string _message;
-public:
-	LineException(const std::string& message) 
-		: std::exception(), _message(message) {}
-};
-
-class ParallelLinesException : public LineException {
-public:
-	ParallelLinesException(const std::string& message)
-		: LineException(message) {}
-};
-
-class SlopeZeroException : public LineException {
-public:
-	SlopeZeroException(const std::string& message)
-		: LineException(message) {}
-};
-
-class VerticalLineException : public LineException {
-public:
-	VerticalLineException(const std::string& message)
-		: LineException(message) {}
-};
+//class LineException : public std::exception {
+//	std::string _message;
+//public:
+//	LineException(const std::string& message) 
+//		: std::exception(), _message(message) {}
+//};
+//
+//class ParallelLinesException : public LineException {
+//public:
+//	ParallelLinesException(const std::string& message)
+//		: LineException(message) {}
+//};
+//
+//class SlopeZeroException : public LineException {
+//public:
+//	SlopeZeroException(const std::string& message)
+//		: LineException(message) {}
+//};
+//
+//class VerticalLineException : public LineException {
+//public:
+//	VerticalLineException(const std::string& message)
+//		: LineException(message) {}
+//};
 
 
 
@@ -80,7 +80,7 @@ public:
 			verticalX = a.x;
 		}
 	}
-	vec2 intersect(Line& other)
+	vec2 intersect(Line& other, bool* isParallel)
 	{
 		/* We assume that *this line is a scanline (slope = 0) */
 		/* Handle Vertical line */
@@ -89,8 +89,13 @@ public:
 
 		/* Handle Parallel lines */
 		if ((this->_slope - other._slope) == 0)
-			throw ParallelLinesException("Parallel Lines");
-
+		{
+			//throw ParallelLinesException("Parallel Lines");
+			*isParallel = true;
+			return vec2(0);
+		}
+		else
+			*isParallel = false;
 		/* Handle all other lines */
 		double x = (other._b - this->_b) / (this->_slope - other._slope);
 		double y = this->y(x);
@@ -99,11 +104,6 @@ public:
 	}
 	double y(double x) { 
 		return _slope * x + _b; 
-	}
-	double x(double y) { 
-		if (_slope == 0)
-			throw SlopeZeroException("No x solution, slope is zero");
-		return (y - _b) / _slope; 
 	}
 
 	bool getIsVertical() { return isVertical; }

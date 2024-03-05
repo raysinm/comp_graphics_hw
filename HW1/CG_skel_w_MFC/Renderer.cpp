@@ -112,45 +112,43 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 
 	for (auto line : pLines)
 	{
-		try
-		{
-			intersections_x.push_back((scanline.intersect(line)).x);
-		}
-		catch (ParallelLinesException& e)
-		{
+		bool is_par = false;
+		vec2 interPoint = scanline.intersect(line, &is_par);
+		if (is_par)
 			continue;
-		}
+
+		intersections_x.push_back(interPoint.x);
+		//try
+		//{
+		//	intersections_x.push_back((scanline.intersect(line)).x);
+		//}
+		//catch (ParallelLinesException& e)
+		//{
+		//	continue;
+		//}
 	}
 	sort(intersections_x.begin(), intersections_x.end());	//From smallest to biggest
 	
 	//*** Find scanline polygon intersection coords (left, right)
 	
-	int x_left = 0, x_right = (m_width - 1);
+	int x_left=0, x_right=m_width-1;
 
 	bool left_found = false;
 	for (int x : intersections_x)	
 	{
 		if (x < p.GetMinX())
 			continue; // Continue until you find a relevant x inside the polygon
-		if (x > p.GetMaxX())
-		{	//problem
-			//cout << "ERROR: CalcScanlineSpan: x: " << x << " out of range" << endl;
-			break;
-		}
+
 		if (!left_found)
 		{
-			x_left = x > 0 ? x : 0;		// If out of range, take 0
+			x_left = max(x, 0);		// If out of range, take 0
 			left_found = true;
 		}
-		else {
-			x_right = x < (m_width - 1) ? x : (m_width - 1);	// If out of range, take width of screen
+		else
+		{
+			x_right = min(x, m_width - 1);
 			break;
 		}
-	}
-	// Sanity check:
-	if (x_right < x_left)
-	{
-		cout << "ERROR: CalcScanlineSpan: calculation error in x intersections";
 	}
 
 	return std::make_pair(x_left, x_right);
@@ -183,9 +181,10 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
 		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
 
-		///*	Set range:   [0, m_width - 1]  (X)
+		//	Set range:   [0, m_width - 1]  (X)
 		//				 [0, m_height - 1] (Y)
-		//				 [0, MAX_Z]		   (Z)  */
+		//				 [0, MAX_Z]		   (Z)
+		
 		//vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
 		//vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
 		//vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
@@ -201,33 +200,21 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1)), (UINT)(C.z * MAX_Z));
 
 
-		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
-			vertices[i + 1].face_index != vertices[i + 2].face_index)
-		{
-			/* Should never get here....*/
-			/* Keep this just to make sure you and Maya agree on this...*/
-			cout << "ERRORRRR!!" << endl;
-			return vector<Poly>();
-		}
-
 		Poly P = Poly(A_Pxl, \
-			B_Pxl, \
-			C_Pxl, \
-			(*vnormals)[vertices[i + 0].vertex_index], \
-			(*vnormals)[vertices[i + 1].vertex_index], \
-			(*vnormals)[vertices[i + 2].vertex_index], \
-			(*pFaceNormals)[vertices[i].face_index]);
+					  B_Pxl, \
+					  C_Pxl, \
+					  (*vnormals)[vertices[i + 0].vertex_index], \
+					  (*vnormals)[vertices[i + 1].vertex_index], \
+					  (*vnormals)[vertices[i + 2].vertex_index], \
+					  (*pFaceNormals)[vertices[i].face_index]);
 
 		// Update renderer's min and max Ys
 		UpdateMinMaxY(P);
-
 		polygons.push_back(P);
 	}
 
 	return polygons;
 }
-
-
 
 void Renderer::Rasterize_Flat(const MeshModel* model)
 {
@@ -263,7 +250,6 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	/* -------------- Scanline-Zbuffer-------------- */
 	ScanLineZ_Buffer(polygons);
 }
-
 
 void Renderer::Rasterize_Gouraud(const MeshModel* model)
 {
@@ -455,7 +441,8 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				UINT z = P.Depth(x, y);
 				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-					PutColor(x, y, vec4(0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
+					PutColor(x, y, vec4(P.GetFaceNormal(), 1));	//TODO: Calculate ACTUAL COLOR!
+					//PutColor(x, y, vec4(0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
@@ -463,7 +450,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 	}
 }
 
-void Renderer::PutColor(UINT x, UINT y, vec4 color)
+void Renderer::PutColor(UINT x, UINT y, vec4& color)
 {
 	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)]   = color.x * color.w;
 	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y * color.w;
@@ -555,13 +542,14 @@ void Renderer::clearBuffer()
 	{
 		for (UINT i = 0; i < m_width * m_height; i++)
 			m_zbuffer[i] = MAX_Z;
+		ResetMinMaxY();
 	}
 }
 
 void Renderer::UpdateMinMaxY(Poly& P)
 {
 	m_min_obj_y = min(m_height-1, max(0, min(m_min_obj_y, P.GetMinY())));
-	m_max_obj_y = max(0, min(m_height - 1, max(m_max_obj_y, P.GetMaxY())));
+	m_max_obj_y = min(m_height-1, max(0, max(m_max_obj_y, P.GetMaxY())));
 }
 
 void Renderer::ResetMinMaxY()

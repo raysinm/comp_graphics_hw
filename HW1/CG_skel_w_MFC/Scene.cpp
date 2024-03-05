@@ -354,7 +354,6 @@ void Scene::draw()
 
 	//2. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
 	m_renderer->clearBuffer();
-	m_renderer->ResetMinMaxY();
 
 	//4. draw each MeshModel
 	for (auto model : models)
