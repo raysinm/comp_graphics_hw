@@ -201,9 +201,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		vec3 B = vec3(vertices[i + 1].point.x, vertices[i + 1].point.y, vertices[i + 1].point.z);
 		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);*/
 
-		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (int)(A.y * (m_height - 1)), (int)(A.z * MAX_Z));
-		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (int)(B.y * (m_height - 1)), (int)(B.z * MAX_Z));
-		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1)), (int)(C.z * MAX_Z));
+		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (int)(A.y * (m_height - 1)), (UINT)(A.z * MAX_Z));
+		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (int)(B.y * (m_height - 1)), (UINT)(B.z * MAX_Z));
+		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1)), (UINT)(C.z * MAX_Z));
 
 
 		if (vertices[i].face_index != vertices[i + 1].face_index || vertices[i].face_index != vertices[i + 2].face_index ||
@@ -242,7 +242,7 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	vector<Poly> polygons = CreatePolygonsVector(model);
 	if (polygons.size() == 0)
 	{
-		cout << "ERROR: Rasterize: Polygon vector empty" << endl;
+		cout << "NOTICE: Rasterize: Polygon vector empty" << endl;
 		return;	// Something failed in creation
 	}
 
@@ -264,6 +264,8 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 
 	/* -------------- Shading calculation -------------- */
 
+
+	/* -------------- Scanline-Zbuffer-------------- */
 	ScanLineZ_Buffer(polygons);
 }
 
@@ -544,8 +546,8 @@ void Renderer::clearBuffer()
 
 void Renderer::UpdateMinMaxY(Poly& P)
 {
-	m_min_obj_y = min(m_height-1, max(0, max(m_min_obj_y, P.GetMinY())));
-	m_max_obj_y = max(0, min(m_height - 1, min(m_max_obj_y, P.GetMaxY())));
+	m_min_obj_y = min(m_height-1, max(0, min(m_min_obj_y, P.GetMinY())));
+	m_max_obj_y = max(0, min(m_height - 1, max(m_max_obj_y, P.GetMaxY())));
 }
 
 void Renderer::ResetMinMaxY()

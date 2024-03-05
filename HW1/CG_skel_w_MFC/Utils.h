@@ -32,6 +32,12 @@ public:
 		: LineException(message) {}
 };
 
+class VerticalLineException : public LineException {
+public:
+	VerticalLineException(const std::string& message)
+		: LineException(message) {}
+};
+
 
 
 typedef struct Vertex {
@@ -44,7 +50,7 @@ typedef struct Vertex {
 	~Vertex() {}
 } Vertex;
 
-typedef class Line {
+class Line {
 private:
 	double _slope;
 	double _b;
@@ -54,6 +60,9 @@ public:
 	Line(double slope, double b) : _slope(slope), _b(b){}
 	Line(vec2 a, vec2 b)
 	{
+		if (a.x == b.x) {
+			throw VerticalLineException("");
+		}
 		_slope = (b.y - a.y) / (b.x - a.x);
 		_b = (a.y - _slope * a.x);
 	}
@@ -80,4 +89,4 @@ public:
 		return (y - _b) / _slope; 
 	}
 
-}Line;
+};

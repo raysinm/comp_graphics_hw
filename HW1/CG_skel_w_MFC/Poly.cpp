@@ -23,3 +23,8 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	lines.push_back(Line(vec2(a.x, a.y), vec2(c.x, c.y)));
 
 }
+
+//UINT Depth(Poly& P, int x, int y)
+//{
+//
+//}
