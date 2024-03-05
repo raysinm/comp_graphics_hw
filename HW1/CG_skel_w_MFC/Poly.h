@@ -6,6 +6,10 @@
 
 using namespace std;
 
+#define LINE_AB 0
+#define LINE_AC 1
+#define LINE_BC 2
+
 class Poly
 {
 	// Should contain screen coordinates only (pixel positions):
@@ -21,6 +25,7 @@ private:
 	int max_y;
 	int min_x;
 	int max_x;
+	UINT min_z;
 
 	std::vector<Line> lines;
 public:
@@ -35,6 +40,7 @@ public:
 	int GetMaxY() { return max_y; }
 	int GetMinX() { return min_x; }
 	int GetMaxX() { return max_x; }
+	int GetMinZ() { return min_z; }
 
 	std::vector<Line>& GetLines() { return lines; }
 	UINT Depth(int x, int y);

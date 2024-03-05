@@ -5,16 +5,10 @@
 #include "GL\freeglut.h"
 #include "MeshModel.h"
 
-#define INDEX(width,x,y,c) (x+y*width)*3 + c
-#define Z_INDEX(width,x,y) (x+(y*width))
-#define RED   0
-#define GREEN 1
-#define BLUE  2
-#define MAX_Z 65535
+
 
 Renderer::Renderer(int width, int height, GLFWwindow* window) :
-	m_width(width), m_height(height),
-	m_max_obj_y(m_height-1), m_min_obj_y(0)
+	m_width(width), m_height(height)
 {
 	m_window = window;
 	//InitOpenGLRendering();	// Probably needed for later
@@ -247,20 +241,20 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		return;	// Something failed in creation
 	}
 
-#ifdef _DEBUG
-	// --- CalcScanlineSpan test --- //
-	auto vertices = ((MeshModel*)model)->GetBuffer();
-	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-	if (vertices)
-		Rasterize_WireFrame(vertices, len);
-	
-	int y_test = m_height/2;
-	auto range = CalcScanlineSpan(polygons[0], y_test);
-	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
-	
-	// --- CalcScanlineSpan test --- //
-	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
-#endif // _DEBUG
+//#ifdef _DEBUG
+//	// --- CalcScanlineSpan test --- //
+//	auto vertices = ((MeshModel*)model)->GetBuffer();
+//	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+//	if (vertices)
+//		Rasterize_WireFrame(vertices, len);
+//	
+//	int y_test = m_height/2;
+//	auto range = CalcScanlineSpan(polygons[0], y_test);
+//	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
+//	
+//	// --- CalcScanlineSpan test --- //
+//	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
+//#endif // _DEBUG
 
 
 	/* -------------- Shading calculation -------------- */
@@ -458,10 +452,10 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			std::pair<UINT, UINT> scan_span = CalcScanlineSpan(P, y);
 			for (UINT x = scan_span.first; x <= scan_span.second; x++)
 			{
-				UINT z = P.Depth(x, y);	// TODO: implement Depth
+				UINT z = P.Depth(x, y);
 				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-					PutColor(x, y, (0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
+					PutColor(x, y, vec4(0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
@@ -572,8 +566,8 @@ void Renderer::UpdateMinMaxY(Poly& P)
 
 void Renderer::ResetMinMaxY()
 {
-	m_min_obj_y = 0;
-	m_max_obj_y = m_height - 1;
+	m_min_obj_y = m_height - 1;
+	m_max_obj_y = 0;
 }
 
 

@@ -4,6 +4,12 @@
 #include <stdexcept>
 
 typedef unsigned int UINT;
+#define INDEX(width,x,y,c) (x+y*width)*3 + c
+#define Z_INDEX(width,x,y) (x+(y*width))
+#define RED   0
+#define GREEN 1
+#define BLUE  2
+#define MAX_Z 65535
 
 enum DrawAlgo {
 	WIRE_FRAME,
@@ -102,5 +108,14 @@ public:
 
 	bool getIsVertical() { return isVertical; }
 	double getVerticalX() { return verticalX; }
+	double getSlope() { return _slope; }
+
+	bool isParallel(Line& other)
+	{
+		if (isVertical)
+			return other.getIsVertical();
+
+		return _slope == other.getSlope();
+	}
 };
 
