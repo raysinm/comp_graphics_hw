@@ -13,10 +13,11 @@ enum DrawAlgo {
 	COUNT
 };
 
-class LineException : public std::runtime_error {
+class LineException : public std::exception {
+	std::string _message;
 public:
-	LineException(const std::string& message)
-		: std::runtime_error(message) {}
+	LineException(const std::string& message) 
+		: std::exception(), _message(message) {}
 };
 
 class ParallelLinesException : public LineException {

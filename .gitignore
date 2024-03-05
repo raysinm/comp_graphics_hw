@@ -40,3 +40,4 @@
 *.idb
 *.glsl
 /HW1/UpgradeLog.htm
+/backup_grid

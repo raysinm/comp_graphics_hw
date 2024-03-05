@@ -23,14 +23,17 @@ private:
 	float* m_outBuffer; // 3*width*height
 	UINT* m_zbuffer;   // width*height
 	int m_width, m_height;
+	int m_max_obj_y, m_min_obj_y;
 	GLFWwindow* m_window;	// For glfw swap buffers
 
 	void CreateBuffers(int width, int height);
 	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color = vec4(0, 0, 0, 1));
 	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color= vec4(0, 0, 0, 1));
 	void ScanLineZ_Buffer(vector<Poly>& polygons);
-
+	
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
+	void UpdateMinMaxY(Poly& P);
+
 
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
 
@@ -65,6 +68,7 @@ public:
 	void updateTexture();
 	void updateBuffer();
 	void clearBuffer();
+	void ResetMinMaxY();
 
 	GLuint m_textureID;
 
