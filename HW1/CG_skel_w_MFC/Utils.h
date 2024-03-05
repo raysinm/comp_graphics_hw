@@ -55,28 +55,39 @@ private:
 	double _slope;
 	double _b;
 
+	bool isVertical;
+	double verticalX;
+
 public:
 	Line() : _slope(1), _b(0){}
 	Line(double slope, double b) : _slope(slope), _b(b){}
 	Line(vec2 a, vec2 b)
 	{
-		if (a.x == b.x) {
-			throw VerticalLineException("");
+		isVertical = (a.x == b.x);
+
+		if (!isVertical) {
+			_slope = (b.y - a.y) / (b.x - a.x);
+			_b = (a.y - _slope * a.x);
 		}
-		_slope = (b.y - a.y) / (b.x - a.x);
-		_b = (a.y - _slope * a.x);
+		else
+		{
+			verticalX = a.x;
+		}
 	}
 	vec2 intersect(Line& other)
 	{
-		if ((this->_slope - other._slope) == 0)
-		{
-			// Lines are parallel
-			throw ParallelLinesException("Parallel Lines");
-		}
-		double x, y;
+		/* We assume that *this line is a scanline (slope = 0) */
+		/* Handle Vertical line */
+		if (other.getIsVertical())
+			return vec2(other.getVerticalX(), _b);
 
-		x = (other._b - this->_b) / (this->_slope - other._slope);
-		y = this->y(x);
+		/* Handle Parallel lines */
+		if ((this->_slope - other._slope) == 0)
+			throw ParallelLinesException("Parallel Lines");
+
+		/* Handle all other lines */
+		double x = (other._b - this->_b) / (this->_slope - other._slope);
+		double y = this->y(x);
 
 		return vec2(x, y);
 	}
@@ -89,4 +100,6 @@ public:
 		return (y - _b) / _slope; 
 	}
 
+	bool getIsVertical() { return isVertical; }
+	double getVerticalX() { return verticalX; }
 };
