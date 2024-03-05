@@ -454,7 +454,34 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 	//for(UINT i = scanline.first; i <= scanline.second; i++) {
 	//......
 
-	//y_range = 
+	std::pair<UINT, UINT> y_range = std::make_pair(m_min_obj_y, m_max_obj_y);
+	for (auto y = y_range.first; y <= y_range.second; y++)
+	{
+		for (auto P : polygons)
+		{
+			if (P.GetMinY() > y || P.GetMaxY() < y)
+				continue;
+			
+			std::pair<UINT, UINT> scan_span = CalcScanlineSpan(P, y);
+			for (auto x = scan_span.first; x <= scan_span.second; x++)
+			{
+				UINT z = Depth(P, x, y);	// TODO: implement Depth
+				if (z < m_zbuffer[x + y])
+				{
+					PutColor(x, y, (0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
+					m_zbuffer[x + y] = z;
+				}
+			}
+		}
+	}
+}
+
+void Renderer::PutColor(UINT x, UINT y, vec4 color)
+{
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)] = color.x * color.z;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y * color.z;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)] = color.z * color.z;
+
 }
 
 void Renderer::CreateTexture()

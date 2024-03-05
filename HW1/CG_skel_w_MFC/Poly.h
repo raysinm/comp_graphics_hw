@@ -43,11 +43,11 @@ public:
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
 
-	int GetMinY() { return min_y; }
-	int GetMaxY() { return max_y; }
+	int GetMinY() { return min_y; };
+	int GetMaxY() { return max_y; };
 	
-	int GetMinX() { return min_x; }
-	int GetMaxX() { return max_x; }
+	int GetMinX() { return min_x; };
+	int GetMaxX() { return max_x; };
 	std::vector<Line>& GetLines() { return lines; }
 } Poly;
 
