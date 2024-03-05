@@ -6,6 +6,7 @@
 #include "MeshModel.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3 + c
+#define Z_INDEX(width,x,y) (x+(y*width))
 #define RED   0
 #define GREEN 1
 #define BLUE  2
@@ -438,7 +439,6 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 {
 	/* Psudo Code - Z Buffer Scan line algo */
 
-
 //	Foreach scanline ( YMIN <= y <= YMAX ):
 //		let A = { P in polygons if  P.MIN_Y <= y <= P.MAX_Y }
 //		Foreach polygon p in A:
@@ -448,14 +448,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 //					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)		// Col(p) Will get Polygon and Lighting sources
 //					m_zbuffer[x][y] = z
 
-
-	// Example for getting scanline range (represented by std::pair)
-	//pair scanline = CalcScanlineSpan(p, y);
-	//for(UINT i = scanline.first; i <= scanline.second; i++) {
-	//......
-
-	std::pair<UINT, UINT> y_range = std::make_pair(m_min_obj_y, m_max_obj_y);
-	for (auto y = y_range.first; y <= y_range.second; y++)
+	for (auto y = m_min_obj_y; y <= m_max_obj_y; y++)
 	{
 		for (auto P : polygons)
 		{
@@ -463,13 +456,13 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				continue;
 			
 			std::pair<UINT, UINT> scan_span = CalcScanlineSpan(P, y);
-			for (auto x = scan_span.first; x <= scan_span.second; x++)
+			for (UINT x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);	// TODO: implement Depth
-				if (z < m_zbuffer[x + y])
+				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
 					PutColor(x, y, (0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
-					m_zbuffer[x + y] = z;
+					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
 		}
@@ -478,9 +471,9 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 
 void Renderer::PutColor(UINT x, UINT y, vec4 color)
 {
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)] = color.x * color.z;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y * color.z;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)] = color.z * color.z;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)]   = color.x * color.w;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y * color.w;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)]  = color.z * color.w;
 
 }
 
