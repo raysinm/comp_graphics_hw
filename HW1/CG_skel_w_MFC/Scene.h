@@ -132,6 +132,7 @@ private:
 	DrawAlgo draw_algo = WIRE_FRAME;
 
 	void AddCamera();
+	void AddLight();
 	void UpdateModelSelection();
 
 	void ResetPopUpFlags();
@@ -163,9 +164,12 @@ private:
 public:
 	Scene(Renderer* renderer) : m_renderer(renderer)
 	{
-		AddCamera();							//Add the first default camera
-		activeCamera = 0;						//index = 0 because it is the first
-		cameras[activeCamera]->selected = true; //Select it because it is the default
+		AddCamera();							 //Add the first default camera
+		AddLight ();							 //Add the first default ambient light
+		activeCamera = 0;						 //index = 0 because it is the first
+		activeLight  = 0;						 //index = 0 because it is the first
+		cameras[activeCamera]->selected = true;  //Select it because it is the default
+		lights[activeLight]->selected   = true;  //Select it because it is the default
 	};
 	void loadOBJModel(string fileName);
 	void draw();
@@ -177,6 +181,7 @@ public:
 
 	Camera* GetActiveCamera();
 	Model* GetActiveModel();
+	Light* GetActiveLight();
 
 	int activeModel  = NOT_SELECTED;
 	int activeLight  = NOT_SELECTED;

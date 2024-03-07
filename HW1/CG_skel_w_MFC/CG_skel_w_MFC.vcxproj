@@ -110,6 +110,7 @@
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="InitShader.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="MeshModel.cpp" />
     <ClCompile Include="Poly.cpp" />
     <ClCompile Include="Renderer.cpp" />
