@@ -15,7 +15,7 @@ using namespace std;
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
 static int g_ortho = 1;
-bool add_showModelDlg = false, add_showCamDlg = false;
+bool add_showModelDlg = false, add_showCamDlg = false, add_showLightDlg = false;
 bool showTransWindow = false;
 bool constScaleRatio = false;
 bool constScaleRatio_w = false;
@@ -314,7 +314,16 @@ void Scene::AddCamera()
 	string s = cam->getName();
 	s += " " + std::to_string(cameras.size());
 	cam->setName(s); //Camera 1, Camera 2, Camera 3 ...
+}
 
+void Scene::AddLight()
+{
+	Light* lightSource = new Light();
+	lights.push_back(lightSource);
+
+	string s = lightSource->getName();
+	s += " " + std::to_string(lights.size());
+	lightSource->setName(s); //Light 1, Light 2, Light 3 ...
 }
 
 void Scene::loadOBJModel(string fileName)
@@ -343,6 +352,7 @@ void Scene::ResetPopUpFlags()
 	GUI_popup_pressedCANCEL = false;	// Reset flag
 	add_showCamDlg = false;				// Reset flag
 	add_showModelDlg = false;			// Reset flag
+	add_showLightDlg = false;			// Reset flag
 	memset(nameBuffer, 0, IM_ARRAYSIZE(nameBuffer));
 	memset(posBuffer, 0, sizeof(float) * 3);
 }
@@ -774,8 +784,9 @@ void Scene::drawGUI()
 	style.SeparatorTextPadding = ImVec2(20, 10);
 
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-	if (!showTransWindow && activeModel != NOT_SELECTED) //UnSelect the object if it's transformation windows closed
+	
+	//UnSelect the object if it's transformation windows closed
+	if (!showTransWindow && activeModel != NOT_SELECTED) 
 	{
 		models[activeModel]->selected = false;
 		activeModel = NOT_SELECTED;
@@ -845,6 +856,19 @@ void Scene::drawGUI()
 				add_showCamDlg = true;
 				showTransWindow = true;
 			}
+
+			if (ImGui::MenuItem("Light Source"))
+			{
+				AddLight();
+				strcpy(nameBuffer, lights.back()->getName().c_str());
+				vec3 c_trnsl = lights.back()->getPosition();
+				posBuffer[0] = c_trnsl.x;
+				posBuffer[1] = c_trnsl.y;
+				posBuffer[2] = c_trnsl.z;
+
+				add_showLightDlg = true;
+				showTransWindow  = true;
+			}
 			
 			ImGui::EndMenu();
 		}
@@ -852,7 +876,7 @@ void Scene::drawGUI()
 		{
 			if (models.size() > 0)
 			{
-				if (ImGui::BeginMenu("Model"))
+				if (ImGui::BeginMenu("Models"))
 				{
 					int len = models.size();
 					for (int c = 0; c < len; c++)
@@ -868,7 +892,7 @@ void Scene::drawGUI()
 					ImGui::EndMenu();
 				}
 			}
-			if (ImGui::BeginMenu("Camera"))
+			if (ImGui::BeginMenu("Cameras"))
 			{
 				int len = cameras.size();
 				for (int c = 0; c < len; c++)
@@ -887,18 +911,37 @@ void Scene::drawGUI()
 				}
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Lights"))
+			{
+				int len = lights.size();
+				for (int c = 0; c < len; c++)
+				{
+					if (ImGui::MenuItem(lights[c]->getName().c_str(), NULL, &lights[c]->selected))
+					{
+						/* Deselect all others */
+						for (int t = 0; t < len; t++)
+							lights[t]->selected = false;
+
+						/* Select current light */
+						activeLight			= c;
+						lights[c]->selected = true;
+						showTransWindow		= true;
+					}
+				}
+				ImGui::EndMenu();
+			}
 
 			ImGui::EndMenu(); //End select
 		}
 		
-		// Delete Model/Camera
-		if (models.size() > 0 || cameras.size() > 1)
+		// Delete Model/Camera/Lights
+		if (models.size() > 0 || cameras.size() > 1 || lights.size() > 1)
 		{
 			if (ImGui::BeginMenu("Delete..."))
 			{
-				if (models.size() > 0)
+				if (models.size()  > 0)
 				{
-					if (ImGui::BeginMenu("Model"))
+					if (ImGui::BeginMenu("Models"))
 					{
 						for (int c = 0; c < models.size(); c++)
 						{
@@ -920,7 +963,7 @@ void Scene::drawGUI()
 				}
 				if (cameras.size() > 1)	// Delete only if there is more than one camera
 				{
-					if (ImGui::BeginMenu("Camera"))
+					if (ImGui::BeginMenu("Cameras"))
 					{
 						for (int c = 0; c < cameras.size(); c++)
 						{
@@ -938,6 +981,33 @@ void Scene::drawGUI()
 									--activeCamera;	// index changed
 								}
 								cameras[activeCamera]->selected = true;
+
+							}
+						}
+						ImGui::EndMenu();
+					}
+
+				}				
+				if (lights.size()  > 1)	// Delete only if there is more than one light
+				{
+					if (ImGui::BeginMenu("Lights"))
+					{
+						for (int c = 0; c < lights.size(); c++)
+						{
+							if (ImGui::MenuItem(lights[c]->getName().c_str(), NULL))
+							{
+								/* Delete current camera */
+								lights.erase(lights.begin() + c);
+
+								if (c == activeLight)
+								{
+									activeLight = max(0, activeLight - 1);
+								}
+								else if (activeLight > c)
+								{
+									--activeLight;	// index changed
+								}
+								lights[activeLight]->selected = true;
 
 							}
 						}
@@ -1048,7 +1118,7 @@ void Scene::drawGUI()
 	//---------------------------------------------------------
 	//-------- Check if the popup should be shown -------------
 	//---------------------------------------------------------
-	if (add_showModelDlg || add_showCamDlg)
+	if (add_showModelDlg || add_showCamDlg || add_showLightDlg)
 	{
 		ImGui::OpenPopup(ADD_INPUT_POPUP_TITLE);
 	}
@@ -1155,7 +1225,7 @@ void Scene::drawGUI()
 			ResetPopUpFlags();
 		}
 	}
-	if (add_showCamDlg)
+	else if (add_showCamDlg)
 	{
 		if (GUI_popup_pressedOK)
 		{
@@ -1171,6 +1241,23 @@ void Scene::drawGUI()
 		{
 			delete cameras[cameras.size() - 1];
 			cameras.pop_back();
+
+			ResetPopUpFlags();
+		}
+	}
+	else if (add_showLightDlg)
+	{
+		if (GUI_popup_pressedOK)
+		{
+			auto currLight = lights.back();
+			currLight->setName(nameBuffer);			
+			currLight->setPosition(vec3(posBuffer[0], posBuffer[1], posBuffer[2]));
+			ResetPopUpFlags();
+		}
+		else if (GUI_popup_pressedCANCEL)
+		{
+			delete lights[lights.size() - 1];
+			lights.pop_back();
 
 			ResetPopUpFlags();
 		}
@@ -1204,6 +1291,11 @@ Camera* Scene::GetActiveCamera()
 Model* Scene::GetActiveModel()
 {
 	return (activeModel == NOT_SELECTED ? nullptr : models[activeModel]);
+}
+
+Light* Scene::GetActiveLight()
+{
+	return (activeLight == NOT_SELECTED ? nullptr : lights[activeLight]);
 }
 
 void Scene::UpdateModelSelection()
