@@ -10,6 +10,7 @@ typedef unsigned int UINT;
 #define GREEN 1
 #define BLUE  2
 #define MAX_Z 65535
+#define LIGHT_DEFAULT_NAME "Light"
 
 enum DrawAlgo {
 	WIRE_FRAME,
@@ -18,33 +19,6 @@ enum DrawAlgo {
 	PHONG,
 	COUNT
 };
-
-//class LineException : public std::exception {
-//	std::string _message;
-//public:
-//	LineException(const std::string& message) 
-//		: std::exception(), _message(message) {}
-//};
-//
-//class ParallelLinesException : public LineException {
-//public:
-//	ParallelLinesException(const std::string& message)
-//		: LineException(message) {}
-//};
-//
-//class SlopeZeroException : public LineException {
-//public:
-//	SlopeZeroException(const std::string& message)
-//		: LineException(message) {}
-//};
-//
-//class VerticalLineException : public LineException {
-//public:
-//	VerticalLineException(const std::string& message)
-//		: LineException(message) {}
-//};
-
-
 
 typedef struct Vertex {
 	vec3 point;
@@ -119,3 +93,10 @@ public:
 	}
 };
 
+
+typedef enum LIGHT_TYPE
+{
+	POINT = 0,
+	PARALLEL,
+	AMBIENT
+}LIGHT_TYPE;
