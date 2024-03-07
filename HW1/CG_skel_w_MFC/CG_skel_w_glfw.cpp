@@ -213,7 +213,7 @@ int my_main(int argc, char** argv)
 		scene->draw();
 
 		/* Debug window (demo window with all the ImGui controls */
-		//ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 
 
 		/* Render the scene */

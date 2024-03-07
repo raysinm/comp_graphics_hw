@@ -102,5 +102,6 @@ public:
 	void ResetUserTransform_translate_world();
 	void ResetUserTransform_rotate_world();
 	void ResetUserTransform_scale_world();
+	Material* getMaterial() { return material; }
 
 };

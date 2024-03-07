@@ -100,6 +100,7 @@ unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 MeshModel::MeshModel()
 {
 	ResetAllUserTransforms();
+	material = new Material();
 }
 
 MeshModel::MeshModel(string fileName) 
@@ -124,6 +125,8 @@ MeshModel::~MeshModel(void)
 		delete[] buffer2d_v_normals;
 	if (buffer2d_f_normals)
 		delete[] buffer2d_f_normals;
+	if (material)
+		delete material;
 }
 
 void MeshModel::loadFile(string fileName)
