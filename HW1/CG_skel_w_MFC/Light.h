@@ -15,7 +15,7 @@ private:
 	string _name;
 
 public:
-	Light(vec3 pos = vec3(0), vec3 dir = vec3(0, -1, 0), LIGHT_TYPE ltype = AMBIENT);
+	Light(vec3 pos = vec3(0), vec3 dir = vec3(0, -1, 0), LIGHT_TYPE ltype = AMBIENT_LIGHT);
 	~Light() {}
 
 	void setPosition(vec3& trnsl) { _position = trnsl; }
