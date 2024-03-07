@@ -103,7 +103,7 @@ MeshModel::MeshModel()
 	material = new Material();
 }
 
-MeshModel::MeshModel(string fileName) 
+MeshModel::MeshModel(string fileName) : MeshModel()
 {
 	ResetAllUserTransforms();
 	
