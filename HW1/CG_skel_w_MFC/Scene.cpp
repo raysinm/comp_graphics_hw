@@ -372,6 +372,8 @@ void Scene::draw()
 	//2. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
 	m_renderer->clearBuffer();
 
+	//3. Update all light sources position in camera space (Multiply with the cTransform matrix...)
+
 	//4. draw each MeshModel
 	for (auto model : models)
 	{
@@ -444,7 +446,7 @@ void Scene::draw()
 
 	}
 
-	// Render cameras as 3D plus signs
+	//5. Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
 		if (camera->renderCamera && camera != cameras[activeCamera])
@@ -462,14 +464,14 @@ void Scene::draw()
 		}
 	}
 
-	//5. Update the texture. (OpenGL stuff)
+	//6. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
   
 }
 
-void colorPicker(ImVec4& color, std::string button_label, std::string id)
+void colorPicker(ImVec4* color, std::string button_label, std::string id)
 {
-	ImGuiColorEditFlags flags = (ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_HDR);
+	ImGuiColorEditFlags flags = (ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_InputRGB);
 
 	if (saved_palette_init)
 	{
@@ -482,7 +484,7 @@ void colorPicker(ImVec4& color, std::string button_label, std::string id)
 		saved_palette_init = false;
 	}
 
-	bool open_popup = ImGui::ColorButton((button_label+id).c_str(), color, flags);
+	bool open_popup = ImGui::ColorButton((button_label+id).c_str(), *color, flags);
 	ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 	ImGui::Text(button_label.c_str());
 	if (open_popup)
@@ -490,7 +492,7 @@ void colorPicker(ImVec4& color, std::string button_label, std::string id)
 
 	if (ImGui::BeginPopup(("Color Palette" + id).c_str()))
 	{
-		ImGui::ColorPicker4(id.c_str(), (float*)&color, flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoAlpha);
+		ImGui::ColorPicker4(id.c_str(), (float*)color, flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoAlpha);
 
 		ImGui::EndPopup();
 	}
@@ -714,28 +716,25 @@ void Scene::drawModelTab()
 		vec3& diff_real = meshMaterial->getDiffuse();
 		vec3& spec_real = meshMaterial->getSpecular();
 
-		ImVec4 emis_local = ImVec4(emis_real.x * 255, emis_real.y * 255, emis_real.z * 255, 255);
-		ImVec4 diff_local = ImVec4(diff_real.x * 255, diff_real.y * 255, diff_real.z * 255, 255);
-		ImVec4 spec_local = ImVec4(spec_real.x * 255, spec_real.y * 255, spec_real.z * 255, 255);
+		ImVec4 emis_local = ImVec4(emis_real.x, emis_real.y, emis_real.z, 1);
+		ImVec4 diff_local = ImVec4(diff_real.x, diff_real.y, diff_real.z, 1);
+		ImVec4 spec_local = ImVec4(spec_real.x, spec_real.y, spec_real.z, 1);
 
-		colorPicker(emis_local, "Emissive Color", "##pickerEmis");
-		colorPicker(diff_local, "Diffuse Color", "##pickerDiff");
-		colorPicker(spec_local, "Specular Color", "##pickerSpec");
+		colorPicker(&emis_local, "Emissive Color", "##pickerEmis");
+		colorPicker(&diff_local, "Diffuse Color", "##pickerDiff");
+		colorPicker(&spec_local, "Specular Color", "##pickerSpec");
 
-		//cout << "emis_local x: " << emis_local.x << endl;
-		//cout << "emis_real x: " << emis_real.x << endl;
-
-		emis_real.x = emis_local.x / 255;
-		emis_real.y = emis_local.y / 255;
-		emis_real.z = emis_local.z / 255;
-
-		diff_real.x = diff_local.x / 255;
-		diff_real.y = diff_local.y / 255;
-		diff_real.z = diff_local.z / 255;
-
-		spec_real.x = spec_local.x / 255;
-		spec_real.y = spec_local.y / 255;
-		spec_real.z = spec_local.z / 255;
+		emis_real.x = emis_local.x;
+		emis_real.y = emis_local.y;
+		emis_real.z = emis_local.z;
+									 
+		diff_real.x = diff_local.x;
+		diff_real.y = diff_local.y;
+		diff_real.z = diff_local.z;
+									 
+		spec_real.x = spec_local.x;
+		spec_real.y = spec_local.y;
+		spec_real.z = spec_local.z;
 	}
 
 
@@ -866,13 +865,13 @@ void Scene::drawLightTab()
 
 	vec3& color = currentLight->getColor();
 
+	ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
 
-	ImVec4 color_local = ImVec4(color.x * 255, color.y * 255, color.z * 255, 255);
-	colorPicker(color_local, "Color", "##LightColor");
-	color.x = color_local.x / 255;
-	color.y = color_local.y / 255;
-	color.z = color_local.z / 255;	
+	colorPicker(&color_local, "Color", "##LightColor");
 
+	color.x = color_local.x;
+	color.y = color_local.y;
+	color.z = color_local.z;
 
 	bool toShowPos = currentLight->getLightType() == POINT_LIGHT;
 	bool toShowDir = currentLight->getLightType() == PARALLEL_LIGHT;

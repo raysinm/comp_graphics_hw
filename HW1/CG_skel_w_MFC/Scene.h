@@ -24,7 +24,6 @@ using namespace std;
 #define DEF_ASPECT 1
 
 
-
 class Model
 {
 protected:
@@ -43,8 +42,6 @@ public:
 	bool selected = false;
 
 };
-
-
 
 class Camera
 {
@@ -126,10 +123,9 @@ class Scene {
 
 private:
 	vector<Model*> models;
-	vector<Light*> lights;
 	vector<Camera*> cameras;
 	Renderer* m_renderer;
-	DrawAlgo draw_algo = WIRE_FRAME;
+	
 
 	void AddCamera();
 	void AddLight();
@@ -184,8 +180,10 @@ public:
 	Camera* GetActiveCamera();
 	Model* GetActiveModel();
 	Light* GetActiveLight();
+	vector<Light*> lights;
 
 	int activeModel  = NOT_SELECTED;
 	int activeLight  = NOT_SELECTED;
 	int activeCamera = 0;	// Always at least one camera
+	DrawAlgo draw_algo = WIRE_FRAME;
 };

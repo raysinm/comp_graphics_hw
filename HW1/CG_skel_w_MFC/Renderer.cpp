@@ -5,7 +5,7 @@
 #include "GL\freeglut.h"
 #include "MeshModel.h"
 
-
+extern Scene* scene;
 
 Renderer::Renderer(int width, int height, GLFWwindow* window) :
 	m_width(width), m_height(height)
@@ -118,14 +118,6 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 			continue;
 
 		intersections_x.push_back(interPoint.x);
-		//try
-		//{
-		//	intersections_x.push_back((scanline.intersect(line)).x);
-		//}
-		//catch (ParallelLinesException& e)
-		//{
-		//	continue;
-		//}
 	}
 	sort(intersections_x.begin(), intersections_x.end());	//From smallest to biggest
 	
@@ -206,7 +198,8 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 					  (*vnormals)[vertices[i + 0].vertex_index], \
 					  (*vnormals)[vertices[i + 1].vertex_index], \
 					  (*vnormals)[vertices[i + 2].vertex_index], \
-					  (*pFaceNormals)[vertices[i].face_index]);
+					  (*pFaceNormals)[vertices[i].face_index],   \
+					  pModel->getMaterial());
 
 		// Update renderer's min and max Ys
 		UpdateMinMaxY(P);
@@ -242,9 +235,6 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 //	// --- CalcScanlineSpan test --- //
 //	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
 //#endif // _DEBUG
-
-
-	/* -------------- Shading calculation -------------- */
 
 
 	/* -------------- Scanline-Zbuffer-------------- */
@@ -441,8 +431,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				UINT z = P.Depth(x, y);
 				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-					PutColor(x, y, vec4(P.GetFaceNormal(), 1));	//TODO: Calculate ACTUAL COLOR!
-					//PutColor(x, y, vec4(0.5, 0.5, 0.5, 1));	//TODO: Calculate ACTUAL COLOR!
+					PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
@@ -450,11 +439,11 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 	}
 }
 
-void Renderer::PutColor(UINT x, UINT y, vec4& color)
+void Renderer::PutColor(UINT x, UINT y, vec3& color)
 {
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)]   = color.x * color.w;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y * color.w;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)]  = color.z * color.w;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)]   = color.x;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y;
+	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)]  = color.z;
 
 }
 
@@ -558,7 +547,51 @@ void Renderer::ResetMinMaxY()
 	m_max_obj_y = 0;
 }
 
+vec3 Renderer::GetColor(vec3& pixl, Poly& p)
+{
+	vec3 Ia_total;
+	vec3 Id_total;
+	vec3 Is_total;
+	switch (scene->draw_algo)
+	{
+	case FLAT:
+		if (p.FLAT_calculatedColor)
+			return p.FLAT_calculatedColorValue;
 
+		// ambient_color = (1, 0.7, 0) 
+		// 
+		//  Foreach lightsource:
+		//    Ia_total += Calculate Ia (Ia = Ka * La)					 (Ambient  Reflection)
+		//    Id_total += Calculate Id (Id = Kd * (I dot N) * Ld)        (Diffuse  Reflection)
+		//    Is_total += Calculate Is (Is = Ks * (r dot v)^alpha * Ls)  (Specular Reflection)
+		//  return
+
+		for (auto lightSource : scene->lights)
+		{
+			if (lightSource->getLightType() == AMBIENT_LIGHT)
+			{
+				Ia_total += innerMult(lightSource->getColor(), p.material->getEmissive());
+			}
+		}
+
+		p.FLAT_calculatedColor = true;
+		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
+		
+		p.FLAT_calculatedColorValue.x = min(1, p.FLAT_calculatedColorValue.x);
+		p.FLAT_calculatedColorValue.y = min(1, p.FLAT_calculatedColorValue.y);
+		p.FLAT_calculatedColorValue.z = min(1, p.FLAT_calculatedColorValue.z);
+		
+		return p.FLAT_calculatedColorValue;
+
+	case GOURAUD:
+		return vec3(0);
+
+	case PHONG:
+		return vec3(0);
+	}
+
+	return vec3(0);
+}
 
 
 /////////////////////////////////////////////////////

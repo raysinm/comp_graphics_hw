@@ -354,6 +354,11 @@ vec3 cross(const vec3& a, const vec3& b)
                 a.x * b.y - a.y * b.x);
 } /*BUG - fixed*/
 
+inline
+vec3 innerMult(const vec3& a, const vec3& b)
+{
+    return vec3(a.x * b.x, a.y * b.y, a.z * b.z);
+}
 
 
 //////////////////////////////////////////////////////////////////////////////

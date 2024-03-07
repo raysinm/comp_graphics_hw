@@ -68,6 +68,8 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <AdditionalOptions>-Ofast %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3.lib;../freeglut/lib/freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>

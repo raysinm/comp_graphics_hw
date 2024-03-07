@@ -1,6 +1,6 @@
 #include "Poly.h"
 
-Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal)
+Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate)
 {
 	this->a   = a;
 	this->b   = b;
@@ -9,6 +9,7 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	this->vnB = vb;
 	this->vnC = vc;
 	this->fn  = faceNormal;
+	this->material = mate;
 
 	// Calculate y min, y max of polygon NOTICE: could be outside of screen
 	min_y = (int) min(min(a.y, b.y), c.y);
