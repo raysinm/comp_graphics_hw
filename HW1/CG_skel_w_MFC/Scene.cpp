@@ -10,11 +10,17 @@
 
 #define MODEL_TAB_INDEX  0
 #define CAMERA_TAB_INDEX 1
+#define LIGHT_TAB_INDEX  2
 
 using namespace std;
+
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
 static int g_ortho = 1;
+static int light_type_radio_button;
+static bool saved_palette_init = true;
+static ImVec4 saved_palette[32] = {};
+
 bool add_showModelDlg = false, add_showCamDlg = false, add_showLightDlg = false;
 bool showTransWindow = false;
 bool constScaleRatio = false;
@@ -22,9 +28,6 @@ bool constScaleRatio_w = false;
 int transformationWindowWidth = 0;
 bool closedTransfWindowFlag = false;
 
-//Palette
-static bool saved_palette_init = true;
-static ImVec4 saved_palette[32] = {};
 
 const float FOV_RANGE_MIN = -179, FOV_RANGE_MAX = 179;
 const float ASPECT_RANGE_MIN = -10, ASPECT_RANGE_MAX = 10;
@@ -464,6 +467,35 @@ void Scene::draw()
   
 }
 
+void colorPicker(ImVec4& color, std::string button_label, std::string id)
+{
+	ImGuiColorEditFlags flags = (ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_HDR);
+
+	if (saved_palette_init)
+	{
+		for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+		{
+			ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
+				saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
+			saved_palette[n].w = 1.0f; // Alpha
+		}
+		saved_palette_init = false;
+	}
+
+	bool open_popup = ImGui::ColorButton((button_label+id).c_str(), color, flags);
+	ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+	ImGui::Text(button_label.c_str());
+	if (open_popup)
+		ImGui::OpenPopup(("Color Palette"  + id).c_str());
+
+	if (ImGui::BeginPopup(("Color Palette" + id).c_str()))
+	{
+		ImGui::ColorPicker4(id.c_str(), (float*)&color, flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoAlpha);
+
+		ImGui::EndPopup();
+	}
+}
+
 void Scene::drawCameraTab()
 {
 	string name("Name: ");
@@ -640,46 +672,6 @@ void Scene::drawCameraTab()
 	}
 }
 
-
-void colorPicker(ImVec4& color, std::string button_label, std::string id)
-{
-	static ImVec4 backup_color;
-	ImGuiColorEditFlags flags = (ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_HDR);
-
-
-	// Generate a default palette. The palette will persist and can be edited.
-
-	if (saved_palette_init)
-	{
-		for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
-		{
-			ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
-				saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
-			saved_palette[n].w = 1.0f; // Alpha
-		}
-		saved_palette_init = false;
-	}
-
-
-	bool open_popup = ImGui::ColorButton((button_label+id).c_str(), color, flags);
-	ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::Text(button_label.c_str());
-	//open_popup |= ImGui::Button(("").c_str());
-	if (open_popup)
-	{
-		cout << "opened: "<< button_label << endl;
-		ImGui::OpenPopup(("Color Palette"  + id).c_str());
-		backup_color = color;
-	}
-	if (ImGui::BeginPopup(("Color Palette" + id).c_str()))
-	{
-		ImGui::ColorPicker4(id.c_str(), (float*)&color, flags | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview | ImGuiColorEditFlags_NoAlpha);
-
-		ImGui::EndPopup();
-	}
-}
-
-
 void Scene::drawModelTab()
 {
 	MeshModel* activeMesh = (MeshModel*)models[activeModel];
@@ -748,7 +740,7 @@ void Scene::drawModelTab()
 
 
 	// Model position
-	if (ImGui::CollapsingHeader("Model Position", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Model Position"))
 	{
 
 		ImGui::SeparatorText("Model space");
@@ -854,6 +846,70 @@ void Scene::drawModelTab()
 	}
 }
 
+void Scene::drawLightTab()
+{
+	Light* currentLight = (Light*)lights[activeLight];
+	string name("Name: ");
+	name += currentLight->getName();
+	ImGui::Text(name.c_str());
+
+	vec3* light_pos = currentLight->getPositionPtr();
+	vec3* light_dir = currentLight->getDirectionPtr();
+	light_type_radio_button = (int)currentLight->getLightType();
+
+	ImGui::RadioButton("Ambient",  &light_type_radio_button, AMBIENT_LIGHT); //ImGui::SameLine();
+	ImGui::RadioButton("Point",    &light_type_radio_button, POINT_LIGHT);   //ImGui::SameLine();
+	ImGui::RadioButton("Parallel", &light_type_radio_button, PARALLEL_LIGHT);
+
+	currentLight->setLightType(light_type_radio_button);
+
+
+	vec3& color = currentLight->getColor();
+
+
+	ImVec4 color_local = ImVec4(color.x * 255, color.y * 255, color.z * 255, 255);
+	colorPicker(color_local, "Color", "##LightColor");
+	color.x = color_local.x / 255;
+	color.y = color_local.y / 255;
+	color.z = color_local.z / 255;	
+
+
+	bool toShowPos = currentLight->getLightType() == POINT_LIGHT;
+	bool toShowDir = currentLight->getLightType() == PARALLEL_LIGHT;
+	
+	if (toShowPos)
+	{
+		ImGui::SeparatorText("Position");
+
+		vec3* pos = currentLight->getPositionPtr();
+
+		ImGui::Text("Position (X Y Z)");
+		ImGui::DragFloat("##X_WPL", &(pos->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+		ImGui::DragFloat("##Y_WPL", &(pos->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+		ImGui::DragFloat("##Z_WPL", &(pos->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+		if (ImGui::Button("reset##LP"))
+		{
+			currentLight->resetPosition();
+		}
+	}
+
+	if (toShowDir)
+	{
+		ImGui::SeparatorText("Direction");
+
+		vec3* dir = currentLight->getDirectionPtr();
+
+		ImGui::Text("Direction (X Y Z)");
+		ImGui::DragFloat("##X_WDL", &(dir->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+		ImGui::DragFloat("##Y_WDL", &(dir->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+		ImGui::DragFloat("##Z_WDL", &(dir->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+		if (ImGui::Button("reset##LD"))
+		{
+			currentLight->resetDirection();
+		}
+	}
+}
+
 void Scene::drawGUI()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -871,8 +927,8 @@ void Scene::drawGUI()
 	{
 		models[activeModel]->selected = false;
 		activeModel = NOT_SELECTED;
-
 	}
+
 	if (!showTransWindow)
 	{
 		if (!closedTransfWindowFlag)
@@ -1144,7 +1200,7 @@ void Scene::drawGUI()
 	//---------------------------------------------------------
 	//------------ Transformations Window ---------------------
 	//---------------------------------------------------------
-	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && showTransWindow)
+	if (activeCamera != NOT_SELECTED && !add_showModelDlg && !add_showCamDlg && !add_showLightDlg && showTransWindow)
 	{
 		closedTransfWindowFlag = false;
 		float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
@@ -1160,9 +1216,10 @@ void Scene::drawGUI()
 				resize_callback_handle(m_renderer->GetWindowSize().x, m_renderer->GetWindowSize().y);
 			}
 
-			const char* names[2] = { 0 };
+			const char* names[3] = { 0 };
 			names[MODEL_TAB_INDEX]  = "Model";
 			names[CAMERA_TAB_INDEX] = "Camera";
+			names[LIGHT_TAB_INDEX]  = "Light";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
@@ -1175,13 +1232,17 @@ void Scene::drawGUI()
 
 					if (ImGui::BeginTabItem(names[n], 0, tab_bar_flags))
 					{
-						if (n == CAMERA_TAB_INDEX)
+						if (n == MODEL_TAB_INDEX)
+						{
+							drawModelTab();
+						}
+						else if (n == CAMERA_TAB_INDEX)
 						{
 							drawCameraTab();
 						}
-						else if (n == MODEL_TAB_INDEX)
+						else if (n == LIGHT_TAB_INDEX)
 						{
-							drawModelTab();
+							drawLightTab();
 						}
 						
 						ImGui::EndTabItem();

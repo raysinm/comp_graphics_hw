@@ -21,11 +21,18 @@ public:
 	bool selected = false;
 
 	void setPosition(vec3& trnsl) { _position = trnsl; }
+	void setDirection(vec3& dir) { _direction = dir; }
 	void setName(string name) { _name = name; }
 	void setColor(vec3& col) { _color = col; }
+	void setLightType(int t) { _type = (LIGHT_TYPE) t; }
+	void resetPosition() { this->setPosition(vec3(0, 0, 0)); }
+	void resetDirection() { this->setDirection(vec3(0, -1, 0)); }
 
 	vec3 getPosition() { return _position; }
 	vec3 getDirection() { return normalize(_direction); }
 	vec3* getDirectionPtr() { return &_direction; }
+	vec3* getPositionPtr() { return &_position; }
+	vec3& getColor() { return _color; }
 	string getName() { return _name; }
+	LIGHT_TYPE getLightType() { return _type; }
 };

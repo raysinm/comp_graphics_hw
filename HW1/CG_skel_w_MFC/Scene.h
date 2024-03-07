@@ -138,6 +138,7 @@ private:
 	void ResetPopUpFlags();
 	void drawCameraTab();
 	void drawModelTab();
+	void drawLightTab();
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;
 	int viewportX;
@@ -166,6 +167,7 @@ public:
 	{
 		AddCamera();							 //Add the first default camera
 		AddLight ();							 //Add the first default ambient light
+		
 		activeCamera = 0;						 //index = 0 because it is the first
 		activeLight  = 0;						 //index = 0 because it is the first
 		cameras[activeCamera]->selected = true;  //Select it because it is the default
