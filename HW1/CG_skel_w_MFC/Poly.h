@@ -43,7 +43,7 @@ public:
 	int GetMaxX() { return max_x; }
 	int GetMinZ() { return min_z; }
 
-	vec3 GetFaceNormal() { return fn; }
+	vec3 GetFaceNormal() { return vec3(fn.x, fn.y, fn.z); }
 
 	std::vector<Line>& GetLines() { return lines; }
 	UINT Depth(int x, int y);

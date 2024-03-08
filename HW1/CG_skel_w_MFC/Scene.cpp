@@ -500,9 +500,8 @@ void colorPicker(ImVec4* color, std::string button_label, std::string id)
 
 void Scene::drawCameraTab()
 {
-	string name("Name: ");
-	name += cameras[activeCamera]->getName();
-	ImGui::Text(name.c_str());
+	string name(cameras[activeCamera]->getName());
+	ImGui::SeparatorText(name.c_str());
 
 	ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera); ImGui::SameLine();
 	bool* g_allowClipping = &(cameras[activeCamera]->allowClipping);
@@ -677,9 +676,8 @@ void Scene::drawCameraTab()
 void Scene::drawModelTab()
 {
 	MeshModel* activeMesh = (MeshModel*)models[activeModel];
-	string name("Name: ");
-	name += models[activeModel]->getName();
-	ImGui::Text(name.c_str());
+	string name(models[activeModel]->getName());
+	ImGui::SeparatorText(name.c_str());
 
 	vec4* g_trnsl = &(activeMesh->_trnsl);
 	vec4* g_rot = &(activeMesh->_rot);
@@ -727,16 +725,36 @@ void Scene::drawModelTab()
 		emis_real.x = emis_local.x;
 		emis_real.y = emis_local.y;
 		emis_real.z = emis_local.z;
-									 
+
 		diff_real.x = diff_local.x;
 		diff_real.y = diff_local.y;
 		diff_real.z = diff_local.z;
-									 
+
 		spec_real.x = spec_local.x;
 		spec_real.y = spec_local.y;
 		spec_real.z = spec_local.z;
-	}
 
+		float* ka = &(meshMaterial->Ka);
+		float* kd = &(meshMaterial->Kd);
+		float* ks = &(meshMaterial->Ks);
+
+		ImGui::SeparatorText("Intensity");
+
+		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
+		ImGui::DragFloat("##K_amb", ka, 0.01f, 0, 10, "%.3f");
+
+		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
+		ImGui::DragFloat("##K_dif", kd, 0.01f, 0, 10, "%.3f");
+
+		ImGui::Text("Specular Intensity"); ImGui::SameLine();
+		ImGui::DragFloat("##K_spc", ks, 0.01f, 0, 10, "%.3f");
+		if (ImGui::Button("Reset all intensity##RK"))
+		{
+			*ka = 1.0f;
+			*kd = 1.0f;
+			*ks = 1.0f;
+		}
+	}
 
 	// Model position
 	if (ImGui::CollapsingHeader("Model Position"))
@@ -848,9 +866,8 @@ void Scene::drawModelTab()
 void Scene::drawLightTab()
 {
 	Light* currentLight = (Light*)lights[activeLight];
-	string name("Name: ");
-	name += currentLight->getName();
-	ImGui::Text(name.c_str());
+	string name(currentLight->getName());
+	ImGui::SeparatorText(name.c_str());
 
 	vec3* light_pos = currentLight->getPositionPtr();
 	vec3* light_dir = currentLight->getDirectionPtr();
@@ -872,11 +889,8 @@ void Scene::drawLightTab()
 	color.x = color_local.x;
 	color.y = color_local.y;
 	color.z = color_local.z;
-
-	bool toShowPos = currentLight->getLightType() == POINT_LIGHT;
-	bool toShowDir = currentLight->getLightType() == PARALLEL_LIGHT;
 	
-	if (toShowPos)
+	if (currentLight->getLightType() == POINT_LIGHT)
 	{
 		ImGui::SeparatorText("Position");
 
@@ -892,7 +906,7 @@ void Scene::drawLightTab()
 		}
 	}
 
-	if (toShowDir)
+	if (currentLight->getLightType() == PARALLEL_LIGHT)
 	{
 		ImGui::SeparatorText("Direction");
 
@@ -906,6 +920,35 @@ void Scene::drawLightTab()
 		{
 			currentLight->resetDirection();
 		}
+	}
+
+	ImGui::SeparatorText("Light Intensity");
+
+	float* la = &(currentLight->La);
+	float* ld = &(currentLight->Ld);
+	float* ls = &(currentLight->Ls);
+
+	if (currentLight->getLightType() == AMBIENT_LIGHT)
+	{
+		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
+		ImGui::DragFloat("##I_amb", la, 0.01f, 0, 10, "%.3f");
+	}
+
+	else
+	{
+		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
+		ImGui::DragFloat("##I_dif", ld, 0.01f, 0, 10, "%.3f");
+	
+		ImGui::Text("Specular Intensity"); ImGui::SameLine();
+		ImGui::DragFloat("##I_spc", ls, 0.01f, 0, 10, "%.3f");
+	}
+
+
+	if (ImGui::Button("Reset all intensity##RI"))
+	{
+		*la = 1.0f;
+		*ld = 1.0f;
+		*ls = 1.0f;
 	}
 }
 

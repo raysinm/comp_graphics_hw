@@ -159,7 +159,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 
 
 	vector<vec3>* vnormals = pModel->getVertexNormals();
-	vector<vec3>* pFaceNormals = pModel->getFaceNormals();
+	vector<vec3>* pFaceNormals = pModel->getFaceNormalsViewSpace();
 	vector<Poly> polygons;
 
 	/* Add all polygons to polygons vector */
@@ -431,7 +431,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				UINT z = P.Depth(x, y);
 				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-					PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
+					PutColor(x, y, GetColor(vec3(x, y, z), P));
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
@@ -570,16 +570,27 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 		{
 			if (lightSource->getLightType() == AMBIENT_LIGHT)
 			{
-				Ia_total += innerMult(lightSource->getColor(), p.material->getEmissive());
+				//														(1,0,0)				(0,1,0)
+				Ia_total += (lightSource->La * p.material->Ka) * (lightSource->getColor() * p.material->getEmissive());
+			}
+			else if (lightSource->getLightType() == PARALLEL_LIGHT)
+			{
+				float dotProduct = max(0, dot( lightSource->getDirection(), p.GetFaceNormal() ));
+
+				Id_total += (lightSource->Ld * dotProduct) * (lightSource->getColor() * p.material->getDiffuse());
+			}
+			else /* light source is Point Light */
+			{
+
 			}
 		}
 
 		p.FLAT_calculatedColor = true;
 		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
 		
-		p.FLAT_calculatedColorValue.x = min(1, p.FLAT_calculatedColorValue.x);
-		p.FLAT_calculatedColorValue.y = min(1, p.FLAT_calculatedColorValue.y);
-		p.FLAT_calculatedColorValue.z = min(1, p.FLAT_calculatedColorValue.z);
+		p.FLAT_calculatedColorValue.x = max(0, min(1, p.FLAT_calculatedColorValue.x));
+		p.FLAT_calculatedColorValue.y = max(0, min(1, p.FLAT_calculatedColorValue.y));
+		p.FLAT_calculatedColorValue.z = max(0, min(1, p.FLAT_calculatedColorValue.z));
 		
 		return p.FLAT_calculatedColorValue;
 
