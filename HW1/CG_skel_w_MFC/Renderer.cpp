@@ -110,16 +110,16 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 	vector<int> intersections_x;
 	auto pLines = p.GetLines();
 
-	bool same_line_as_y = false;
+	bool same_line_as_y = true;
 	for (auto line : pLines)
 	{
-		same_line_as_y |= (line == scanline);
+		same_line_as_y &= (line == scanline);
 		bool is_par = false;
 		vec2 interPoint = scanline.intersect(line, &is_par);
 		if (is_par)
 			continue;
 
-		intersections_x.push_back(interPoint.x);
+		intersections_x.push_back(round(interPoint.x));		// round is needed for handling intersection points falling within the same pixel
 	}
 	if (same_line_as_y)
 	{
@@ -148,12 +148,18 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 		}
 		else
 		{
-			x_right = min(x, m_width - 1);
+			x_right = max(0, min(x, m_width - 1));
 			break;
 		}
 	}
+	if (x_right < x_left)
+		cout << "Error: CalcScanlineSpan: right x " << x_right << " smaller than left x "<< x_left << endl;
+
 	if (x_right > m_width - 1)
 		cout << "Error: CalcScanlineSpan: right x " << x_right << " out of bounds" << endl;
+
+	if(x_right == m_width-1)
+		cout << "WARNING: right x " << x_right << " reached boundary" << endl;
 
 	return std::make_pair(x_left, x_right);
 
@@ -442,15 +448,11 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);
-				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
+				if (z <= m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-<<<<<<< HEAD
 					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
 					auto fn = P.GetFaceNormal();
 					PutColor(x, y, vec3(abs(fn.x), abs(fn.y), abs(fn.z)));
-=======
-					PutColor(x, y, GetColor(vec3(x, y, z), P));
->>>>>>> 8faa442e24de9da2ae177047bd7f4d2c7fee331f
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
