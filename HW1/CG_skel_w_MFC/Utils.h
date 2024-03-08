@@ -54,6 +54,8 @@ public:
 			verticalX = a.x;
 		}
 	}
+	bool operator==(Line& other) { return (this->_slope == other._slope && this->_b == other._b); }
+
 	vec2 intersect(Line& other, bool* isParallel)
 	{
 		/* We assume that *this line is a scanline (slope = 0) */

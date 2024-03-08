@@ -19,6 +19,8 @@ private:
 	vec3 a, b, c;
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
+	
+	int id;
 
 	int min_y;
 	int max_y;
@@ -32,7 +34,7 @@ public:
 	vec3 FLAT_calculatedColorValue;
 
 	Poly(){};
-	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate);
+	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate, int id=-1);
 
 	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
@@ -48,5 +50,6 @@ public:
 	std::vector<Line>& GetLines() { return lines; }
 	UINT Depth(int x, int y);
 	Material* material;
+	vec3& getPoint(int index);
 
 };

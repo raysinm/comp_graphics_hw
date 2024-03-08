@@ -110,8 +110,10 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 	vector<int> intersections_x;
 	auto pLines = p.GetLines();
 
+	bool same_line_as_y = false;
 	for (auto line : pLines)
 	{
+		same_line_as_y |= (line == scanline);
 		bool is_par = false;
 		vec2 interPoint = scanline.intersect(line, &is_par);
 		if (is_par)
@@ -119,6 +121,14 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 
 		intersections_x.push_back(interPoint.x);
 	}
+	if (same_line_as_y)
+	{
+		// The polygon looks line a line, take min and max x as scanline span
+		intersections_x.clear();
+		intersections_x.insert(intersections_x.end(), { (int)((p.getPoint(0)).x), (int)((p.getPoint(1)).x), (int)(p.getPoint(2).x) });
+	}
+	if (intersections_x.empty())
+		cout << "WARNING: CalcScanlineSpan: no intersections found" << endl;
 	sort(intersections_x.begin(), intersections_x.end());	//From smallest to biggest
 	
 	//*** Find scanline polygon intersection coords (left, right)
@@ -142,6 +152,8 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 			break;
 		}
 	}
+	if (x_right > m_width - 1)
+		cout << "Error: CalcScanlineSpan: right x " << x_right << " out of bounds" << endl;
 
 	return std::make_pair(x_left, x_right);
 
@@ -199,7 +211,8 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 					  (*vnormals)[vertices[i + 1].vertex_index], \
 					  (*vnormals)[vertices[i + 2].vertex_index], \
 					  (*pFaceNormals)[vertices[i].face_index],   \
-					  pModel->getMaterial());
+					  pModel->getMaterial(),
+					  i);
 
 		// Update renderer's min and max Ys
 		UpdateMinMaxY(P);
@@ -221,20 +234,20 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		return;	// Something failed in creation
 	}
 
-#ifdef _DEBUG
-	// --- CalcScanlineSpan test --- //
-	auto vertices = ((MeshModel*)model)->GetBuffer();
-	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-	if (vertices)
-		Rasterize_WireFrame(vertices, len);
-	
-	int y_test = m_height/2;
-	auto range = CalcScanlineSpan(polygons[0], y_test);
-	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
-	
-	// --- CalcScanlineSpan test --- //
-	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
-#endif // _DEBUG
+//#ifdef _DEBUG
+//	// --- CalcScanlineSpan test --- //
+//	auto vertices = ((MeshModel*)model)->GetBuffer();
+//	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+//	if (vertices)
+//		Rasterize_WireFrame(vertices, len);
+//	
+//	int y_test = m_height/2;
+//	auto range = CalcScanlineSpan(polygons[0], y_test);
+//	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
+//	
+//	// --- CalcScanlineSpan test --- //
+//	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
+//#endif // _DEBUG
 
 
 	/* -------------- Scanline-Zbuffer-------------- */
@@ -425,13 +438,15 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			if (P.GetMinY() > y || P.GetMaxY() < y)
 				continue;
 			
-			std::pair<UINT, UINT> scan_span = CalcScanlineSpan(P, y);
-			for (UINT x = scan_span.first; x <= scan_span.second; x++)
+			std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
+			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);
 				if (z < m_zbuffer[Z_INDEX(m_width, x, y)])
 				{
-					PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
+					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
+					auto fn = P.GetFaceNormal();
+					PutColor(x, y, vec3(abs(fn.x), abs(fn.y), abs(fn.z)));
 					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
 				}
 			}
