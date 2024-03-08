@@ -314,8 +314,11 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
 		return;
 
+	face_normals_viewspace.clear();
+
 	updateTransform();	
 	updateTransformWorld();
+
 
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
@@ -415,7 +418,6 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	}
 	
 	// Face normals buffer
-	if (showFaceNormals)
 	{
 		unsigned int buffer_i = 0;
 		for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
@@ -424,25 +426,33 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 
 			//Transform the normal vector:
 			v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
-			
-			//Project the vector:
-			v_n = projection * v_n;
 
-			//Make sure it is still normalized:
-			v_n = normalize(v_n);
+			//Add it to vector before projection
+			vec4 v_n_N = normalize(v_n);
+			face_normals_viewspace.push_back(vec3(v_n_N.x, v_n_N.y, v_n_N.z));
 
-			// Cacluate center of face as the start point:
-			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
-			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
-			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
+			// Face normals buffer
+			if (showFaceNormals)
+			{
+				//Project the vector:
+				v_n = projection * v_n;
 
-			vec3 start_point = vec3(v0 + v1 + v2) / 3;
-			vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
+				//Make sure it is still normalized:
+				v_n = normalize(v_n);
 
 
-			buffer2d_f_normals[ (buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
-			buffer2d_f_normals[ (buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
-			++buffer_i;
+				// Cacluate center of face as the start point:
+				vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
+				vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
+				vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
+
+				vec3 start_point = vec3(v0 + v1 + v2) / 3;
+				vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
+
+				buffer2d_f_normals[(buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
+				buffer2d_f_normals[(buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
+				++buffer_i;
+			}
 		}
 	}
 }

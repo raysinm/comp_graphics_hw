@@ -29,6 +29,7 @@ protected:
 
 	vector<vec3> vertex_normals;					// size: Num of vertices ("raw")
 	vector<vec3> face_normals;						// size: Num of faces
+	vector<vec3> face_normals_viewspace;			// size: Num of faces
 	vector<vec3> b_box_vertices;
 
 	Material* material;
@@ -69,6 +70,7 @@ public:
 
 	vector<vec3>* getVertexNormals() { return &vertex_normals; }
 	vector<vec3>* getFaceNormals() { return   &face_normals; }
+	vector<vec3>* getFaceNormalsViewSpace() { return   &face_normals_viewspace; }
 	Vertex* GetBuffer();
 	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);

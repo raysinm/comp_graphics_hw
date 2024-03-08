@@ -15,6 +15,7 @@ private:
 	string _name;
 
 public:
+	float La, Ld, Ls;
 	Light(vec3 pos = vec3(0), vec3 dir = vec3(0, -1, 0), LIGHT_TYPE ltype = AMBIENT_LIGHT);
 	~Light() {}
 
@@ -29,10 +30,11 @@ public:
 	void resetDirection() { this->setDirection(vec3(0, -1, 0)); }
 
 	vec3 getPosition() { return _position; }
-	vec3 getDirection() { return normalize(_direction); }
+	vec3 getDirection() { return normalize(- _direction); }
 	vec3* getDirectionPtr() { return &_direction; }
 	vec3* getPositionPtr() { return &_position; }
 	vec3& getColor() { return _color; }
+
 	string getName() { return _name; }
 	LIGHT_TYPE getLightType() { return _type; }
 };
