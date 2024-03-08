@@ -96,22 +96,38 @@ public:
 
 		vertex_positions_raw =
 		{
-			vec3(0, 0.5, 0),
-			vec3(-0.5, -0.5, 0.5),
-			vec3(0.5,  -0.5, 0.5),
-			vec3(0.5,  -0.5, -0.5),
-			vec3(-0.5, -0.5,  -0.5)
+			vec3(-0.5, -0.5, -0.5), // base 0
+			vec3(0.5, -0.5, -0.5),  // base 1
+			vec3(0.5,  -0.5, 0.5),	// base 2
+			vec3(-0.5,  -0.5, 0.5),	// base 3
+			vec3(0, 0.5,  0)		// apex
 		};
+
+		/*# Vertices
+			v 0.0 0.0 0.0   # Vertex 1 (base)
+			v 1.0 0.0 0.0   # Vertex 2 (base)
+			v 1.0 0.0 1.0   # Vertex 3 (base)
+			v 0.0 0.0 1.0   # Vertex 4 (base)
+			v 0.5 1.0 0.5   # Vertex 5 (apex)*/
+
+		/*v 0.0 0.0 0.0   # Vertex 1 (base)
+			v 1.0 0.0 0.0   # Vertex 2 (base)
+			v 1.0 1.0 0.0   # Vertex 3 (base)
+			v 0.0 1.0 0.0   # Vertex 4 (base)
+			v 0.5 0.5 1.0   # Vertex 5 (apex)*/
 
 		faces_v_indices =
 		{
-			0,1,2,	// Base
-
-			0,2,3,	// 1
+			0,4,1,	// 1
 			
-			0,3,4,	// 2
+			0,4,3,	// 2
 
-			0,4,1	// 3
+			1,4,2,	// 3
+
+			2,4,3,	// 4
+
+			0,1,2,	// Base
+			0,3,2
 		};
 
 
