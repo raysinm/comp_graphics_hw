@@ -968,6 +968,17 @@ void Scene::drawGUI()
 					add_showModelDlg = true;
 					showTransWindow = true;
 				}
+
+				if (ImGui::MenuItem("Pyramid (square)"))
+				{
+					Pyramid* pyr = new Pyramid();
+					models.push_back(pyr);
+
+					strcpy(nameBuffer, pyr->getName().c_str());
+					add_showModelDlg = true;
+					showTransWindow = true;
+				}
+
 				if (ImGui::MenuItem("Pyramid (triangular)"))
 				{
 					TriPyramid* tri_pyr = new TriPyramid();

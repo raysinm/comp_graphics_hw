@@ -221,20 +221,20 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 		return;	// Something failed in creation
 	}
 
-//#ifdef _DEBUG
-//	// --- CalcScanlineSpan test --- //
-//	auto vertices = ((MeshModel*)model)->GetBuffer();
-//	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-//	if (vertices)
-//		Rasterize_WireFrame(vertices, len);
-//	
-//	int y_test = m_height/2;
-//	auto range = CalcScanlineSpan(polygons[0], y_test);
-//	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
-//	
-//	// --- CalcScanlineSpan test --- //
-//	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
-//#endif // _DEBUG
+#ifdef _DEBUG
+	// --- CalcScanlineSpan test --- //
+	auto vertices = ((MeshModel*)model)->GetBuffer();
+	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+	if (vertices)
+		Rasterize_WireFrame(vertices, len);
+	
+	int y_test = m_height/2;
+	auto range = CalcScanlineSpan(polygons[0], y_test);
+	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
+	
+	// --- CalcScanlineSpan test --- //
+	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
+#endif // _DEBUG
 
 
 	/* -------------- Scanline-Zbuffer-------------- */

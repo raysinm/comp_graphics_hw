@@ -86,10 +86,10 @@ public:
 	}
 };
 
-class TriPyramid : public PrimMeshModel
+class Pyramid : public PrimMeshModel
 {
 public:
-	TriPyramid() : PrimMeshModel(5, 4)
+	Pyramid() : PrimMeshModel(5, 4)
 	{
 		name = "Pyramid";
 
@@ -122,4 +122,42 @@ public:
 		estimateVertexNormals();
 	}
 };
+
+class TriPyramid : public PrimMeshModel
+{
+public:
+	TriPyramid() : PrimMeshModel(4, 3)
+	{
+		name = "Triangular Pyramid";
+
+
+		vertex_positions_raw =
+		{
+			vec3(-0.5, -0.5, -0.5),	// base 1
+			vec3(0.5, -0.5, -0.5),  // base 2
+			vec3(0, 0.5, -0.5),     // base 3 
+			vec3(0, 0, 0.5)			// apex
+
+		};
+
+		faces_v_indices =
+		{
+			0,1,2,	// Base
+
+			0,1,3,	// 1
+
+			0,2,3,	// 2
+
+			1,2,3	// 3
+		};
+
+
+		/* Call these functions after setting the vertex & faces data */
+		initNeighbors();
+		initBoundingBox();
+		calculateFaceNormals();
+		estimateVertexNormals();
+	}
+};
+
 
