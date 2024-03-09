@@ -1,7 +1,11 @@
 #include "Poly.h"
 
+<<<<<<< HEAD
+Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate, int id)
+=======
 Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate,\
 		   vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
+>>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 {
 	this->a   = a;
 	this->b   = b;
@@ -11,10 +15,14 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	this->vnC = vc;
 	this->fn  = faceNormal;
 	this->material = mate;
+<<<<<<< HEAD
+	this->id = id;
+=======
 	this->a_cameraspace = a_cameraspace;
 	this->b_cameraspace = b_cameraspace;
 	this->c_cameraspace = c_cameraspace;
 	this->centerOfPoly = (a_cameraspace + b_cameraspace + c_cameraspace) / 3.0f;
+>>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 
 	// Calculate y min, y max of polygon NOTICE: could be outside of screen
 	min_y = (int) min(min(a.y, b.y), c.y);
@@ -69,11 +77,43 @@ UINT Poly::Depth(int x, int y)
 	if (is_par)
 		return min_z;
 	
-	Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
+	//Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
+	// 
+	//float dotProduct = glm::dot(pMinusP0, p1MinusP0);
+	//float lengthSquared = glm::dot(p1MinusP0, p1MinusP0);
+
+	//float t = dotProduct / lengthSquared;
+
+	vec2 piMINUSp1 = Pi - p1;
+	vec2 p2MINUSp1 = p2 - p1;
+
+	Ti = dot(piMINUSp1, p2MINUSp1) / dot(p2MINUSp1, p2MINUSp1);
 	Zi = (UINT)((Ti * z2) + (1 - Ti) * z1);
  
+
+	vec2 psMINUSp3 = Ps - p3;
+	vec2 piMINUSp3 = Pi - p3;
+
+	Ti = dot(psMINUSp3, piMINUSp3) / dot(piMINUSp3, piMINUSp3);
 	t = abs(length(Ps - p3)) / abs(length(Pi - p3));
 	Zp = (UINT)(t * Zi + (1 - t) * z3);
 
 	return Zp;
+}
+
+vec3& Poly::getPoint(int index)
+{
+	switch (index)
+	{
+	case 0:
+		return a;
+		break;
+	case 1:
+		return b;
+		break;
+	case 2:
+		return c;
+		break;
+	}
+
 }

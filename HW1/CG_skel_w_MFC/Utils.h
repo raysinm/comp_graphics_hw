@@ -4,13 +4,16 @@
 #include <stdexcept>
 
 typedef unsigned int UINT;
-#define INDEX(width,x,y,c) (x+y*width)*3 + c
-#define Z_INDEX(width,x,y) (x+(y*width))
+//#define INDEX(width,x,y,c) (x+y*width)*3 + c
+//#define Z_INDEX(width,x,y) (x+(y*width))
 #define RED   0
 #define GREEN 1
 #define BLUE  2
 #define MAX_Z 65535
 #define LIGHT_DEFAULT_NAME "Light"
+
+inline int Index(int width, int x, int y, int c) { return (x + y * width) * 3 + c; }
+inline int Z_Index(int width, int x, int y) { return x + (y * width); }
 
 enum DrawAlgo {
 	WIRE_FRAME,
@@ -55,6 +58,8 @@ public:
 			verticalX = a.x;
 		}
 	}
+	bool operator==(Line& other) { return (this->_slope == other._slope && this->_b == other._b); }
+
 	vec2 intersect(Line& other, bool* isParallel)
 	{
 		/* We assume that *this line is a scanline (slope = 0) */

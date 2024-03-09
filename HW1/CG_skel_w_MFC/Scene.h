@@ -116,7 +116,7 @@ public:
 	bool selected = false;
 	bool isOrtho = true;
 	bool renderCamera = false;
-	bool allowClipping = true;
+	bool allowClipping = false;
 };
 
 class Scene {

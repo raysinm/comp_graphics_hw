@@ -1024,6 +1024,17 @@ void Scene::drawGUI()
 					add_showModelDlg = true;
 					showTransWindow = true;
 				}
+
+				if (ImGui::MenuItem("Pyramid (square)"))
+				{
+					Pyramid* pyr = new Pyramid();
+					models.push_back(pyr);
+
+					strcpy(nameBuffer, pyr->getName().c_str());
+					add_showModelDlg = true;
+					showTransWindow = true;
+				}
+
 				if (ImGui::MenuItem("Pyramid (triangular)"))
 				{
 					TriPyramid* tri_pyr = new TriPyramid();
@@ -1234,7 +1245,7 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->renderCamera = false;
 			}
-			if (ImGui::MenuItem("Allow clippping"))
+			if (ImGui::MenuItem("Allow clipping"))
 			{
 				for (auto camera : cameras)
 					camera->allowClipping = true;
