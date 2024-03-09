@@ -4,6 +4,7 @@
 #include "InitShader.h"
 #include "GL\freeglut.h"
 #include "MeshModel.h"
+#include <set>
 
 extern Scene* scene;
 
@@ -107,7 +108,7 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 {
 	Line scanline = Line(0, y);
-	vector<int> intersections_x;
+	set<int> intersections_x;
 	auto pLines = p.GetLines();
 
 	bool same_line_as_y = true;
@@ -119,24 +120,39 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 		if (is_par)
 			continue;
 
-		intersections_x.push_back(round(interPoint.x));		// round is needed for handling intersection points falling within the same pixel
+		float upperY = max(line.getA().y, line.getB().y);
+		float lowerY = min(line.getA().y, line.getB().y);
+
+		if(lowerY <= interPoint.y && interPoint.y <= upperY)
+			intersections_x.insert(round(interPoint.x));		// round is needed for handling intersection points falling within the same pixel
 	}
 	if (same_line_as_y)
 	{
 		// The polygon looks line a line, take min and max x as scanline span
 		intersections_x.clear();
-		intersections_x.insert(intersections_x.end(), { (int)((p.getPoint(0)).x), (int)((p.getPoint(1)).x), (int)(p.getPoint(2).x) });
+		intersections_x.insert(p.GetMinX());
+		intersections_x.insert(p.GetMaxX());
 	}
-	if (intersections_x.empty())
+
+
+	std::vector<int> intersectionsSorted (intersections_x.begin(), intersections_x.end());
+
+	sort(intersectionsSorted.begin(), intersectionsSorted.end());	//From smallest to biggest
+
+	if (intersectionsSorted.size() == 0)
 		cout << "WARNING: CalcScanlineSpan: no intersections found" << endl;
-	sort(intersections_x.begin(), intersections_x.end());	//From smallest to biggest
+	if (intersectionsSorted.size() == 1)
+	{
+
+		intersectionsSorted.push_back(intersectionsSorted[0]); //duplicate the same x coord to make it a pair of itself.
+	}
 	
 	//*** Find scanline polygon intersection coords (left, right)
 	
 	int x_left=0, x_right=m_width-1;
 
 	bool left_found = false;
-	for (int x : intersections_x)	
+	for (int x : intersectionsSorted)
 	{
 		if (x < p.GetMinX())
 			continue; // Continue until you find a relevant x inside the polygon
@@ -561,13 +577,12 @@ void Renderer::clearBuffer()
 	if (m_outBuffer)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer[i] = 1.0; //Set all pixels to pure white.
+			m_outBuffer[i] = 0; //Set all pixels to pure black.
 	}
 
 	if (m_zbuffer)
 	{
 		for (UINT i = 0; i < m_width * m_height; i++)
-			//m_zbuffer[i] = MAX_Z;
 			m_zbuffer[i] = 0;
 		ResetMinMaxY();
 	}

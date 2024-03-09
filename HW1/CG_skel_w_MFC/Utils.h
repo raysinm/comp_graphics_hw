@@ -42,11 +42,16 @@ private:
 	bool isVertical=false;
 	double verticalX =0;
 
+
+	vec2 a, b;
 public:
 	Line() : _slope(1), _b(0){}
 	Line(double slope, double b) : _slope(slope), _b(b){}
-	Line(vec2 a, vec2 b)
+	Line(vec2& a, vec2& b)
 	{
+		this->a = a;
+		this->b = b;
+
 		isVertical = (a.x == b.x);
 
 		if (!isVertical) {
@@ -106,7 +111,8 @@ public:
 	bool getIsVertical() { return isVertical; }
 	double getVerticalX() { return verticalX; }
 	double getSlope() { return _slope; }
-
+	vec2& getA() { return a; }
+	vec2& getB() { return b; }
 	bool isParallel(Line& other)
 	{
 		if (isVertical)
