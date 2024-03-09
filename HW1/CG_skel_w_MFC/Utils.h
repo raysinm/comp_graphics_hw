@@ -39,8 +39,8 @@ private:
 	double _slope;
 	double _b;
 
-	bool isVertical;
-	double verticalX;
+	bool isVertical=false;
+	double verticalX =0;
 
 public:
 	Line() : _slope(1), _b(0){}
@@ -65,7 +65,24 @@ public:
 		/* We assume that *this line is a scanline (slope = 0) */
 		/* Handle Vertical line */
 		if (other.getIsVertical())
-			return vec2(other.getVerticalX(), _b);
+		{
+			if (this->isVertical)
+			{
+				//special case - both vertical
+				*isParallel = true;
+				if (this->verticalX == other.verticalX)
+					return vec2(verticalX, 0);
+				else
+				{
+					return vec2(0, 0);
+				}
+			}
+			else
+			{
+				return vec2(other.getVerticalX(), this->y(other.getVerticalX()));
+
+			}
+		}
 
 		/* Handle Parallel lines */
 		if ((this->_slope - other._slope) == 0)

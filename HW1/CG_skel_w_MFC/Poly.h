@@ -28,6 +28,7 @@ private:
 	int min_x;
 	int max_x;
 	UINT min_z;
+	UINT max_z;
 
 	std::vector<Line> lines;
 public:

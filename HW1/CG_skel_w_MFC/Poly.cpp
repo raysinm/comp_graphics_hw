@@ -25,7 +25,7 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	max_x = (int)max(max(a.x, b.x), c.x);
 
 	min_z = (int)min(min(a.z, b.z), c.z);
-
+	max_z = (int)max(max(a.z, b.z), c.z);
 	// Set triangle lines
 	lines.push_back(Line(vec2(a.x, a.y), vec2(b.x, b.y)));
 	lines.push_back(Line(vec2(a.x, a.y), vec2(c.x, c.y)));
@@ -68,7 +68,7 @@ UINT Poly::Depth(int x, int y)
 	bool is_par = false;
 	Pi = mainLine.intersect(baseLine, &is_par);
 	if (is_par)
-		return min_z;
+		return max_z;
 	
 	//Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
 	// 
@@ -80,15 +80,15 @@ UINT Poly::Depth(int x, int y)
 	vec2 piMINUSp1 = Pi - p1;
 	vec2 p2MINUSp1 = p2 - p1;
 
-	Ti = dot(piMINUSp1, p2MINUSp1) / dot(p2MINUSp1, p2MINUSp1);
+	Ti = length(piMINUSp1) / length(p2MINUSp1);
 	Zi = (UINT)((Ti * z2) + (1 - Ti) * z1);
  
 
 	vec2 psMINUSp3 = Ps - p3;
 	vec2 piMINUSp3 = Pi - p3;
 
-	Ti = dot(psMINUSp3, piMINUSp3) / dot(piMINUSp3, piMINUSp3);
-	t = abs(length(Ps - p3)) / abs(length(Pi - p3));
+	t = length(psMINUSp3)/ length(piMINUSp3);
+	//t = abs(length(Ps - p3)) / abs(length(Pi - p3));
 	Zp = (UINT)(t * Zi + (1 - t) * z3);
 
 	return Zp;

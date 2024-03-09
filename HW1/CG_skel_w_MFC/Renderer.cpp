@@ -458,7 +458,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);
-				if (z <= m_zbuffer[Z_Index(m_width, x, y)])
+				if (z >= m_zbuffer[Z_Index(m_width, x, y)])
 				{
 					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
 					//auto fn = P.GetFaceNormal();
@@ -567,7 +567,8 @@ void Renderer::clearBuffer()
 	if (m_zbuffer)
 	{
 		for (UINT i = 0; i < m_width * m_height; i++)
-			m_zbuffer[i] = MAX_Z;
+			//m_zbuffer[i] = MAX_Z;
+			m_zbuffer[i] = 0;
 		ResetMinMaxY();
 	}
 }
@@ -580,8 +581,8 @@ void Renderer::UpdateMinMaxY(Poly& P)
 
 void Renderer::ResetMinMaxY()
 {
-	m_max_obj_y = m_height - 1;
-	m_min_obj_y = 0;
+	m_max_obj_y = 0;
+	m_min_obj_y = m_height-1;
 }
 
 vec3 Renderer::GetColor(vec3& pixl, Poly& p)
