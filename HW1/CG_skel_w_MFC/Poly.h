@@ -55,4 +55,8 @@ public:
 	Material* material;
 	vec3& getPoint(int index);
 
+	vec3& getA() { return a; }
+	vec3& getB() { return b; }
+	vec3& getC() { return c; }
+
 };

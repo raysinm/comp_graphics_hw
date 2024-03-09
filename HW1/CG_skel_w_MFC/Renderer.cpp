@@ -473,8 +473,14 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
+				if (x == P.getA().x || x == P.getB().x || x == P.getC().x )
+				{
+					if(P.id == 2)
+						int t = 9;
+				}
 				UINT z = P.Depth(x, y);
-				if (z >= m_zbuffer[Z_Index(m_width, x, y)])
+				UINT prevValue = m_zbuffer[Z_Index(m_width, x, y)];
+				if (z >= prevValue)
 				{
 					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
 					//auto fn = P.GetFaceNormal();
