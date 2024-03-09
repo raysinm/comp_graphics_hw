@@ -10,6 +10,8 @@ class Light
 private:
 	vec3 _position, _direction;	// World space
 	vec3 _color;
+
+	vec4 _positionCameraSpace;
 	
 	LIGHT_TYPE _type;
 	string _name;
@@ -28,8 +30,11 @@ public:
 	void setLightType(int t) { _type = (LIGHT_TYPE) t; }
 	void resetPosition() { this->setPosition(vec3(0, 0, 0)); }
 	void resetDirection() { this->setDirection(vec3(0, -1, 0)); }
+	void updatePositionCameraSpace(mat4 cTransform) {
+		_positionCameraSpace = cTransform * vec4(_position);
+	}
 
-	vec3 getPosition() { return _position; }
+	vec3 getPosition() { return vec3(_positionCameraSpace.x, _positionCameraSpace.y, _positionCameraSpace.z); }
 	vec3 getDirection() { return normalize(- _direction); }
 	vec3* getDirectionPtr() { return &_direction; }
 	vec3* getPositionPtr() { return &_position; }

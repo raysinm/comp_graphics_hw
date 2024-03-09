@@ -21,9 +21,11 @@ private:
 public:
 
 	float Ka, Kd, Ks;
-	Material() : c_emissive(0.5,0.5,0.5), c_diffuse(0.5, 0.5, 0.5), c_specular(0.5, 0.5, 0.5)
+	float EmissiveFactor;
+	UINT COS_ALPHA = 1;
+	Material() : c_emissive(1,1,1), c_diffuse(1, 1, 1), c_specular(1, 1, 1)
 	{
-		Ka = Kd = Ks = 1;
+		Ka = Kd = Ks = EmissiveFactor = 0.5f;
 	}
 	Material(vec3 emis, vec3 diff, vec3 spec) : c_emissive(emis), c_diffuse(diff), c_specular(spec){}
 	vec3& getEmissive() { return c_emissive; }

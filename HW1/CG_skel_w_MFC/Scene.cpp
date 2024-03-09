@@ -373,6 +373,10 @@ void Scene::draw()
 	m_renderer->clearBuffer();
 
 	//3. Update all light sources position in camera space (Multiply with the cTransform matrix...)
+	for (auto light : lights)
+	{
+		light->updatePositionCameraSpace(cameras[activeCamera]->cTransform);
+	}
 
 	//4. draw each MeshModel
 	for (auto model : models)
@@ -737,22 +741,27 @@ void Scene::drawModelTab()
 		float* ka = &(meshMaterial->Ka);
 		float* kd = &(meshMaterial->Kd);
 		float* ks = &(meshMaterial->Ks);
+		float* emissivefactor = &(meshMaterial->EmissiveFactor);
 
 		ImGui::SeparatorText("Intensity");
 
 		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
-		ImGui::DragFloat("##K_amb", ka, 0.01f, 0, 10, "%.3f");
+		ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
 
 		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
-		ImGui::DragFloat("##K_dif", kd, 0.01f, 0, 10, "%.3f");
+		ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
 
 		ImGui::Text("Specular Intensity"); ImGui::SameLine();
-		ImGui::DragFloat("##K_spc", ks, 0.01f, 0, 10, "%.3f");
-		if (ImGui::Button("Reset all intensity##RK"))
+		ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
+
+		ImGui::Text("Emissive factor      "); ImGui::SameLine();
+		ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
+		if (ImGui::Button("Reset all##RK"))
 		{
-			*ka = 1.0f;
-			*kd = 1.0f;
-			*ks = 1.0f;
+			*ka = 0.5f;
+			*kd = 0.5f;
+			*ks = 0.5f;
+			*emissivefactor = 0.5f;
 		}
 	}
 
@@ -931,24 +940,24 @@ void Scene::drawLightTab()
 	if (currentLight->getLightType() == AMBIENT_LIGHT)
 	{
 		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
-		ImGui::DragFloat("##I_amb", la, 0.01f, 0, 10, "%.3f");
+		ImGui::DragFloat("##I_amb", la, 0.001f, 0, 1, "%.3f");
 	}
 
 	else
 	{
 		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
-		ImGui::DragFloat("##I_dif", ld, 0.01f, 0, 10, "%.3f");
+		ImGui::DragFloat("##I_dif", ld, 0.001f, 0, 1, "%.3f");
 	
 		ImGui::Text("Specular Intensity"); ImGui::SameLine();
-		ImGui::DragFloat("##I_spc", ls, 0.01f, 0, 10, "%.3f");
+		ImGui::DragFloat("##I_spc", ls, 0.001f, 0, 1, "%.3f");
 	}
 
 
 	if (ImGui::Button("Reset all intensity##RI"))
 	{
-		*la = 1.0f;
-		*ld = 1.0f;
-		*ls = 1.0f;
+		*la = 0.5f;
+		*ld = 0.5f;
+		*ls = 0.5f;
 	}
 }
 

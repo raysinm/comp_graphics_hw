@@ -1,6 +1,11 @@
 #include "Poly.h"
 
+<<<<<<< HEAD
 Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate, int id)
+=======
+Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate,\
+		   vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
+>>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 {
 	this->a   = a;
 	this->b   = b;
@@ -10,7 +15,14 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	this->vnC = vc;
 	this->fn  = faceNormal;
 	this->material = mate;
+<<<<<<< HEAD
 	this->id = id;
+=======
+	this->a_cameraspace = a_cameraspace;
+	this->b_cameraspace = b_cameraspace;
+	this->c_cameraspace = c_cameraspace;
+	this->centerOfPoly = (a_cameraspace + b_cameraspace + c_cameraspace) / 3.0f;
+>>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 
 	// Calculate y min, y max of polygon NOTICE: could be outside of screen
 	min_y = (int) min(min(a.y, b.y), c.y);
@@ -64,18 +76,6 @@ UINT Poly::Depth(int x, int y)
 	Pi = mainLine.intersect(baseLine, &is_par);
 	if (is_par)
 		return min_z;
-	//try
-	//{
-	//	Pi = mainLine.intersect(baseLine);
-	//}
-	//catch (const std::exception&)
-	//{
-	//	//There is some edge cases where the 2 line could be parallel...
-	//	// Even there is some edge cases that the lines are the same lines !
-	//	// This is the case where the polygon plane, is excactly 90 degress to the camera.
-	//	// So the camera only sees a line instead of a triangle...
-	//	return this->GetMinZ();
-	//}
 	
 	//Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
 	// 

@@ -188,7 +188,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 	{
 		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
 
-		///* Set range: [0, 1]  (All dimensions) */
+		/* Set range: [0, 1]  (All dimensions) */
 		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
 		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
 		vec3 C = vec3((vertices[i + 2].point.x + 1) / 2, (vertices[i + 2].point.y + 1) / 2, (vertices[i + 2].point.z + 1) / 2);
@@ -196,22 +196,23 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		//	Set range:   [0, m_width - 1]  (X)
 		//				 [0, m_height - 1] (Y)
 		//				 [0, MAX_Z]		   (Z)
-		
-		//vec3 A_Pxl = vec3((UINT)max(min(m_width - 1, (A.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (A.y * (m_height - 1))), 0), (UINT)(A.z * MAX_Z));
-		//vec3 B_Pxl = vec3((UINT)max(min(m_width - 1, (B.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (B.y * (m_height - 1))), 0), (UINT)(B.z * MAX_Z));
-		//vec3 C_Pxl = vec3((UINT)max(min(m_width - 1, (C.x * (m_width - 1))), 0), (UINT)max(min(m_height - 1, (C.y * (m_height - 1))), 0), (UINT)(C.z * MAX_Z));
-		// 
-		
-		// !!!****CHANGE: Poly will contain the pixel positions as is, even if outside the screen. Scanline-algo will calculate for each scanline the ACTUAL relevant screen coordinates
-		/*vec3 A = vec3(vertices[i + 0].point.x, vertices[i + 0].point.y, vertices[i + 0].point.z);
-		vec3 B = vec3(vertices[i + 1].point.x, vertices[i + 1].point.y, vertices[i + 1].point.z);
-		vec3 C = vec3(vertices[i + 2].point.x, vertices[i + 2].point.y, vertices[i + 2].point.z);*/
-
 		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (int)(A.y * (m_height - 1)), (UINT)(A.z * MAX_Z));
 		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (int)(B.y * (m_height - 1)), (UINT)(B.z * MAX_Z));
 		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1)), (UINT)(C.z * MAX_Z));
 
+		Poly P = Poly(	A_Pxl,										\
+						B_Pxl,										\
+						C_Pxl,										\
+						(*vnormals)[vertices[i + 0].vertex_index],	\
+						(*vnormals)[vertices[i + 1].vertex_index],	\
+						(*vnormals)[vertices[i + 2].vertex_index],	\
+						(*pFaceNormals)[vertices[i].face_index],	\
+						pModel->getMaterial(),						\
+						vertices[i + 0].point_cameraspace,			\
+						vertices[i + 1].point_cameraspace,			\
+						vertices[i + 2].point_cameraspace			);
 
+<<<<<<< HEAD
 		Poly P = Poly(A_Pxl, \
 					  B_Pxl, \
 					  C_Pxl, \
@@ -223,6 +224,8 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 					  i/3);
 
 		// Update renderer's min and max Ys
+=======
+>>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
 	}
@@ -615,23 +618,38 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		for (auto lightSource : scene->lights)
 		{
+			vec3 P = p.GetCenter();							// Point in camera space
+			vec3 N = p.GetFaceNormal();						// Normal of the polygon
+			vec3 V = -normalize(P);							// Direction to COP (center of projection === camera)
+			vec3 I = lightSource->getDirection();			// Light source direction to P (Assume Parallel light source)
+			vec3 R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+
 			if (lightSource->getLightType() == AMBIENT_LIGHT)
 			{
-				//														(1,0,0)				(0,1,0)
-				Ia_total += (lightSource->La * p.material->Ka) * (lightSource->getColor() * p.material->getEmissive());
+				Ia_total += lightSource->La * p.material->Ka * lightSource->getColor();
 			}
-			else if (lightSource->getLightType() == PARALLEL_LIGHT)
+			else /* Parallel or Point light source*/
 			{
-				float dotProduct = max(0, dot( lightSource->getDirection(), p.GetFaceNormal() ));
+				/* Recalculate the I and R because it was calculated for parallel light source */
+				if (lightSource->getLightType() == POINT_LIGHT)
+				{
+					I = normalize(lightSource->getPosition() - P);
+					R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+				}
 
-				Id_total += (lightSource->Ld * dotProduct) * (lightSource->getColor() * p.material->getDiffuse());
-			}
-			else /* light source is Point Light */
-			{
-
+				/* Calcualte diffuse */
+				float dotProduct_IN = max(0, dot(I, N));
+				Id_total += (lightSource->Ld * p.material->Kd * dotProduct_IN) * (lightSource->getColor() * p.material->getDiffuse());
+				
+				/* Calcualte specular */
+				float dotProduct_RV = max(0, dot(R, V));
+				pow(dotProduct_RV, p.material->COS_ALPHA);
+				Is_total += (lightSource->Ls * p.material->Ks * dotProduct_RV) * (lightSource->getColor() * p.material->getSpecular());
 			}
 		}
 
+		/* Add emissive light INDEPENDENT to any light source*/
+		Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
 		p.FLAT_calculatedColor = true;
 		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
 		
