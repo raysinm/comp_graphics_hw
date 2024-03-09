@@ -17,8 +17,10 @@ class Poly
 
 private:
 	vec3 a, b, c;
+	vec3 a_cameraspace, b_cameraspace, c_cameraspace;
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
+	vec3 centerOfPoly;
 
 	int min_y;
 	int max_y;
@@ -31,11 +33,11 @@ public:
 	bool FLAT_calculatedColor = false;
 	vec3 FLAT_calculatedColorValue;
 
-	Poly(){};
-	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate);
-
-	//GetColor(Material& material, DrawAlgo& draw_algo);	//Will be used to calculate color?
 	~Poly(void) {};
+	Poly(){};
+	Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate,\
+		 vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace);
+
 
 	int GetMinY() { return min_y; }
 	int GetMaxY() { return max_y; }
@@ -44,7 +46,7 @@ public:
 	int GetMinZ() { return min_z; }
 
 	vec3 GetFaceNormal() { return vec3(fn.x, fn.y, fn.z); }
-
+	vec3& GetCenter() { return centerOfPoly; }
 	std::vector<Line>& GetLines() { return lines; }
 	UINT Depth(int x, int y);
 	Material* material;
