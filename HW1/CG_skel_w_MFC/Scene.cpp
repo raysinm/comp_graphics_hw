@@ -389,6 +389,8 @@ void Scene::draw()
 					cameras[activeCamera]->projection,
 					cameras[activeCamera]->allowClipping,
 					cameras[activeCamera]->rotationMat_normals);
+
+		m_renderer->ResetMinMaxY();
 		unsigned int len = 0;
 		switch (draw_algo)	// Light calculation, material calculation
 		{
