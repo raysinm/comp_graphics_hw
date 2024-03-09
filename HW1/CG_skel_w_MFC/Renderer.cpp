@@ -208,24 +208,12 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 						(*vnormals)[vertices[i + 2].vertex_index],	\
 						(*pFaceNormals)[vertices[i].face_index],	\
 						pModel->getMaterial(),						\
+						i / 3,										\
 						vertices[i + 0].point_cameraspace,			\
 						vertices[i + 1].point_cameraspace,			\
 						vertices[i + 2].point_cameraspace			);
 
-<<<<<<< HEAD
-		Poly P = Poly(A_Pxl, \
-					  B_Pxl, \
-					  C_Pxl, \
-					  (*vnormals)[vertices[i + 0].vertex_index], \
-					  (*vnormals)[vertices[i + 1].vertex_index], \
-					  (*vnormals)[vertices[i + 2].vertex_index], \
-					  (*pFaceNormals)[vertices[i].face_index],   \
-					  pModel->getMaterial(),
-					  i/3);
-
 		// Update renderer's min and max Ys
-=======
->>>>>>> c29c9efb10df417a829da7e5b0a782977b294715
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
 	}
