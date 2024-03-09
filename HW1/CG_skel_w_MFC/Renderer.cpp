@@ -139,13 +139,9 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 
 	sort(intersectionsSorted.begin(), intersectionsSorted.end());	//From smallest to biggest
 
-	if (intersectionsSorted.size() == 0)
-		cout << "WARNING: CalcScanlineSpan: no intersections found" << endl;
-	if (intersectionsSorted.size() == 1)
-	{
 
+	if (intersectionsSorted.size() == 1)
 		intersectionsSorted.push_back(intersectionsSorted[0]); //duplicate the same x coord to make it a pair of itself.
-	}
 	
 	//*** Find scanline polygon intersection coords (left, right)
 	
@@ -168,17 +164,7 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 			break;
 		}
 	}
-	if (x_right < x_left)
-		cout << "Error: CalcScanlineSpan: right x " << x_right << " smaller than left x "<< x_left << endl;
 
-	if (x_right > m_width - 1)
-		cout << "Error: CalcScanlineSpan: right x " << x_right << " out of bounds" << endl;
-
-	//DEBUG: (delete when all bugs fixed)
-	if(x_right == m_width-1)
-		cout << "WARNING: right x " << x_right << " reached boundary" << endl;
-	if (y == 0)
-		cout << "y=0"<<endl;
 	return std::make_pair(x_left, x_right);
 
 }
@@ -449,47 +435,36 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 	{
 		for (auto P : polygons)
 		{
-			//========= FOR DEBUG
-			vec3 color;	
-			switch (P.id)
-			{
-			case(0):
-				color = vec3(0.25, 0.25, 0.25);	// grey
-				break;
-			case(1):
-				color = vec3(1, 0, 0);
-				break;
-			case(2):
-				color = vec3(0, 1, 0);
-				break;
-			case(3):
-				color = vec3(0, 0, 1);
-				break;
-			}
-			//=====================
+			////========= FOR DEBUG
+			//vec3 color;	
+			//switch (P.id)
+			//{
+			//case(0):
+			//	color = vec3(0.25, 0.25, 0.25);	// grey
+			//	break;
+			//case(1):
+			//	color = vec3(1, 0, 0);
+			//	break;
+			//case(2):
+			//	color = vec3(0, 1, 0);
+			//	break;
+			//case(3):
+			//	color = vec3(0, 0, 1);
+			//	break;
+			//}
+			////=====================
 			if (P.GetMinY() > y || P.GetMaxY() < y)
 				continue;
 			
 			std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
-				if (x == P.getA().x || x == P.getB().x || x == P.getC().x )
-				{
-					if(P.id == 2)
-						int t = 9;
-				}
 				UINT z = P.Depth(x, y);
 				UINT prevValue = m_zbuffer[Z_Index(m_width, x, y)];
 				if (z >= prevValue)
 				{
-					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
-					//auto fn = P.GetFaceNormal();
-					//PutColor(x, y, vec3(abs(fn.x), abs(fn.y), abs(fn.z)));
-					//// DEBUG
-					//vec3 color = vec3(0, 0, 0.25);
-					//color *= P.id;
-
-					PutColor(x, y, color);
+					PutColor(x, y, GetColor(vec3(x, y, z), P));
+					//PutColor(x, y, color);
 
 					m_zbuffer[Z_Index(m_width, x, y)] = z;
 				}

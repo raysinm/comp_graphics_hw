@@ -11,6 +11,7 @@ typedef unsigned int UINT;
 #define BLUE  2
 #define MAX_Z 65535
 #define LIGHT_DEFAULT_NAME "Light"
+#define EPSILON 0.00001
 
 inline int Index(int width, int x, int y, int c) { return (x + y * width) * 3 + c; }
 inline int Z_Index(int width, int x, int y) { return x + (y * width); }
@@ -52,7 +53,7 @@ public:
 		this->a = a;
 		this->b = b;
 
-		isVertical = (a.x == b.x);
+		isVertical = (abs(a.x - b.x) < EPSILON);
 
 		if (!isVertical) {
 			_slope = (b.y - a.y) / (b.x - a.x);
@@ -63,7 +64,11 @@ public:
 			verticalX = a.x;
 		}
 	}
-	bool operator==(Line& other) { return (this->_slope == other._slope && this->_b == other._b); }
+	bool operator==(Line& other)
+	{
+		return ( abs(this->_slope - other._slope) < EPSILON &&\
+				 abs(this->_b - other._b) < EPSILON);
+	}
 
 	vec2 intersect(Line& other, bool* isParallel)
 	{
@@ -73,24 +78,32 @@ public:
 		{
 			if (this->isVertical)
 			{
-				//special case - both vertical
 				*isParallel = true;
-				if (this->verticalX == other.verticalX)
+				if (abs(this->verticalX - other.verticalX) < EPSILON)
 					return vec2(verticalX, 0);
 				else
-				{
 					return vec2(0, 0);
-				}
 			}
 			else
-			{
 				return vec2(other.getVerticalX(), this->y(other.getVerticalX()));
-
+		}
+		if (this->isVertical)
+		{
+			if (other.getIsVertical())
+			{
+				*isParallel = true;
+				if (abs(this->verticalX - other.verticalX) < EPSILON)
+					return vec2(verticalX, 0);
+				else
+					return vec2(0, 0);
 			}
+			else
+				return vec2(this->verticalX, other.y(this->verticalX));
 		}
 
+
 		/* Handle Parallel lines */
-		if ((this->_slope - other._slope) == 0)
+		if (abs(this->_slope - other._slope) < EPSILON)
 		{
 			//throw ParallelLinesException("Parallel Lines");
 			*isParallel = true;
@@ -105,7 +118,7 @@ public:
 		return vec2(x, y);
 	}
 	double y(double x) { 
-		return _slope * x + _b; 
+		return (_slope * x + _b);
 	}
 
 	bool getIsVertical() { return isVertical; }
@@ -118,7 +131,7 @@ public:
 		if (isVertical)
 			return other.getIsVertical();
 
-		return _slope == other.getSlope();
+		return abs(_slope - other.getSlope()) < EPSILON;
 	}
 };
 

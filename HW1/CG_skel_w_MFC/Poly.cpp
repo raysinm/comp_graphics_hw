@@ -81,7 +81,7 @@ UINT Poly::Depth(int x, int y)
 	vec2 p2MINUSp1 = p2 - p1;
 
 	Ti = length(piMINUSp1) / length(p2MINUSp1);
-	Zi = (UINT)((Ti * z2) + (1 - Ti) * z1);
+	Zi = (UINT) (round((Ti * z2) + (1 - Ti) * z1));
  
 
 	vec2 psMINUSp3 = Ps - p3;
@@ -89,7 +89,7 @@ UINT Poly::Depth(int x, int y)
 
 	t = length(psMINUSp3)/ length(piMINUSp3);
 	//t = abs(length(Ps - p3)) / abs(length(Pi - p3));
-	Zp = (UINT)(t * Zi + (1 - t) * z3);
+	Zp = (UINT) (round(t * Zi + (1 - t) * z3));
 
 	return Zp;
 }
