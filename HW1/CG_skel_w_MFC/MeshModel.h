@@ -73,8 +73,7 @@ public:
 	vector<vec3>* getFaceNormals() { return   &face_normals; }
 	vector<vec3>* getFaceNormalsViewSpace() { return   &face_normals_viewspace; }
 	Vertex* GetBuffer();
-	vec2* GetBuffer(MODEL_OBJECT 
-	);
+	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);
 
 	void loadFile(string fileName);

@@ -208,12 +208,11 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 						(*vnormals)[vertices[i + 2].vertex_index],	\
 						(*pFaceNormals)[vertices[i].face_index],	\
 						pModel->getMaterial(),						\
-						i / 3,										\
+						i/3,										\
 						vertices[i + 0].point_cameraspace,			\
 						vertices[i + 1].point_cameraspace,			\
 						vertices[i + 2].point_cameraspace			);
 
-		// Update renderer's min and max Ys
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
 	}
@@ -606,19 +605,11 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		for (auto lightSource : scene->lights)
 		{
-			/* Get all relevent vectors with notation from the lecture slides */
 			vec3 P = p.GetCenter();							// Point in camera space
 			vec3 N = p.GetFaceNormal();						// Normal of the polygon
 			vec3 V = -normalize(P);							// Direction to COP (center of projection === camera)
 			vec3 I = lightSource->getDirection();			// Light source direction to P (Assume Parallel light source)
 			vec3 R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
-			if (lightSource->getLightType() != AMBIENT_LIGHT)
-			{
-				/* Recalculate the I and R because it was calculated for parallel light source */
-				I = normalize(lightSource->getPosition() - P);
-				R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
-			}
-
 
 			if (lightSource->getLightType() == AMBIENT_LIGHT)
 			{
@@ -626,6 +617,12 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 			}
 			else /* Parallel or Point light source*/
 			{
+				/* Recalculate the I and R because it was calculated for parallel light source */
+				if (lightSource->getLightType() == POINT_LIGHT)
+				{
+					I = normalize(lightSource->getPosition() - P);
+					R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+				}
 
 				/* Calcualte diffuse */
 				float dotProduct_IN = max(0, dot(I, N));
@@ -640,12 +637,9 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		/* Add emissive light INDEPENDENT to any light source*/
 		Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
-
-		/* Color calculation is done :) */
 		p.FLAT_calculatedColor = true;
 		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
 		
-		/* clip to [0, 1] to prevent overflow */
 		p.FLAT_calculatedColorValue.x = max(0, min(1, p.FLAT_calculatedColorValue.x));
 		p.FLAT_calculatedColorValue.y = max(0, min(1, p.FLAT_calculatedColorValue.y));
 		p.FLAT_calculatedColorValue.z = max(0, min(1, p.FLAT_calculatedColorValue.z));
