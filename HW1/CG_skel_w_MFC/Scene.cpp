@@ -742,26 +742,30 @@ void Scene::drawModelTab()
 		float* kd = &(meshMaterial->Kd);
 		float* ks = &(meshMaterial->Ks);
 		float* emissivefactor = &(meshMaterial->EmissiveFactor);
+		int* alphaFactor = &(meshMaterial->COS_ALPHA);
 
 		ImGui::SeparatorText("Intensity");
-
-		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
+		ImGui::Text("Ambient Intensity (Ka)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 		ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
 
-		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
+		ImGui::Text("Diffuse Intensity (Kd)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 		ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
 
-		ImGui::Text("Specular Intensity"); ImGui::SameLine();
+		ImGui::Text("Specular Intensity (Ks)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 		ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
 
-		ImGui::Text("Emissive factor      "); ImGui::SameLine();
+		ImGui::Text("Emissive factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 		ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
+
+		ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
 		if (ImGui::Button("Reset all##RK"))
 		{
 			*ka = 0.5f;
 			*kd = 0.5f;
 			*ks = 0.5f;
 			*emissivefactor = 0.5f;
+			*alphaFactor = 1;
 		}
 	}
 

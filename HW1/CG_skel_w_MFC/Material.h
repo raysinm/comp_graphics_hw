@@ -22,7 +22,7 @@ public:
 
 	float Ka, Kd, Ks;
 	float EmissiveFactor;
-	UINT COS_ALPHA = 1;
+	int COS_ALPHA = 1;
 	Material() : c_emissive(1,1,1), c_diffuse(1, 1, 1), c_specular(1, 1, 1)
 	{
 		Ka = Kd = Ks = EmissiveFactor = 0.5f;
