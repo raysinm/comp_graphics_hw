@@ -89,7 +89,7 @@ public:
 class Pyramid : public PrimMeshModel
 {
 public:
-	Pyramid() : PrimMeshModel(5, 4)
+	Pyramid() : PrimMeshModel(5, 6)
 	{
 		name = "Pyramid";
 
@@ -142,7 +142,7 @@ public:
 class TriPyramid : public PrimMeshModel
 {
 public:
-	TriPyramid() : PrimMeshModel(4, 3)
+	TriPyramid() : PrimMeshModel(4, 4)
 	{
 		name = "Triangular Pyramid";
 

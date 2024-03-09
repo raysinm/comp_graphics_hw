@@ -1232,7 +1232,7 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->renderCamera = false;
 			}
-			if (ImGui::MenuItem("Allow clippping"))
+			if (ImGui::MenuItem("Allow clipping"))
 			{
 				for (auto camera : cameras)
 					camera->allowClipping = true;

@@ -77,9 +77,24 @@ UINT Poly::Depth(int x, int y)
 	//	return this->GetMinZ();
 	//}
 	
-	Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
+	//Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
+	// 
+	//float dotProduct = glm::dot(pMinusP0, p1MinusP0);
+	//float lengthSquared = glm::dot(p1MinusP0, p1MinusP0);
+
+	//float t = dotProduct / lengthSquared;
+
+	vec2 piMINUSp1 = Pi - p1;
+	vec2 p2MINUSp1 = p2 - p1;
+
+	Ti = dot(piMINUSp1, p2MINUSp1) / dot(p2MINUSp1, p2MINUSp1);
 	Zi = (UINT)((Ti * z2) + (1 - Ti) * z1);
  
+
+	vec2 psMINUSp3 = Ps - p3;
+	vec2 piMINUSp3 = Pi - p3;
+
+	Ti = dot(psMINUSp3, piMINUSp3) / dot(piMINUSp3, piMINUSp3);
 	t = abs(length(Ps - p3)) / abs(length(Pi - p3));
 	Zp = (UINT)(t * Zi + (1 - t) * z3);
 

@@ -20,7 +20,6 @@ private:
 	vec3 vnA, vnB, vnC;
 	vec3 fn;
 	
-	int id;
 
 	int min_y;
 	int max_y;
@@ -30,6 +29,7 @@ private:
 
 	std::vector<Line> lines;
 public:
+	int id;
 	bool FLAT_calculatedColor = false;
 	vec3 FLAT_calculatedColorValue;
 

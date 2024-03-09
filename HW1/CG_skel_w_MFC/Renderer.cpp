@@ -158,9 +158,11 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 	if (x_right > m_width - 1)
 		cout << "Error: CalcScanlineSpan: right x " << x_right << " out of bounds" << endl;
 
+	//DEBUG: (delete when all bugs fixed)
 	if(x_right == m_width-1)
 		cout << "WARNING: right x " << x_right << " reached boundary" << endl;
-
+	if (y == 0)
+		cout << "y=0"<<endl;
 	return std::make_pair(x_left, x_right);
 
 }
@@ -218,7 +220,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 					  (*vnormals)[vertices[i + 2].vertex_index], \
 					  (*pFaceNormals)[vertices[i].face_index],   \
 					  pModel->getMaterial(),
-					  i);
+					  i/3);
 
 		// Update renderer's min and max Ys
 		UpdateMinMaxY(P);
@@ -368,9 +370,9 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 				currentY = x;
 			}
 
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = color.x;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
-			m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = color.z;
+			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = color.x;
+			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
+			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = color.z;
 		}
 
 
@@ -396,9 +398,9 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 			currentY = B.x;
 		}
 
-		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)]   = color.x;
-		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
-		m_outBuffer[INDEX(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)]  = color.z;
+		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)]   = color.x;
+		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
+		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)]  = color.z;
 	}
 	return;
 }
@@ -441,6 +443,24 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 	{
 		for (auto P : polygons)
 		{
+			//========= FOR DEBUG
+			vec3 color;	
+			switch (P.id)
+			{
+			case(0):
+				color = vec3(0.25, 0.25, 0.25);	// grey
+				break;
+			case(1):
+				color = vec3(1, 0, 0);
+				break;
+			case(2):
+				color = vec3(0, 1, 0);
+				break;
+			case(3):
+				color = vec3(0, 0, 1);
+				break;
+			}
+			//=====================
 			if (P.GetMinY() > y || P.GetMaxY() < y)
 				continue;
 			
@@ -448,12 +468,18 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);
-				if (z <= m_zbuffer[Z_INDEX(m_width, x, y)])
+				if (z <= m_zbuffer[Z_Index(m_width, x, y)])
 				{
 					//PutColor(x, y, GetColor(vec3(x, y, z), P));	//TODO: Calculate ACTUAL COLOR!
-					auto fn = P.GetFaceNormal();
-					PutColor(x, y, vec3(abs(fn.x), abs(fn.y), abs(fn.z)));
-					m_zbuffer[Z_INDEX(m_width, x, y)] = z;
+					//auto fn = P.GetFaceNormal();
+					//PutColor(x, y, vec3(abs(fn.x), abs(fn.y), abs(fn.z)));
+					//// DEBUG
+					//vec3 color = vec3(0, 0, 0.25);
+					//color *= P.id;
+
+					PutColor(x, y, color);
+
+					m_zbuffer[Z_Index(m_width, x, y)] = z;
 				}
 			}
 		}
@@ -462,9 +488,9 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 
 void Renderer::PutColor(UINT x, UINT y, vec3& color)
 {
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), RED)]   = color.x;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), GREEN)] = color.y;
-	m_outBuffer[INDEX(m_width, x, (m_height - y - 1), BLUE)]  = color.z;
+	m_outBuffer[Index(m_width, x, (m_height - y - 1), RED)]   = color.x;
+	m_outBuffer[Index(m_width, x, (m_height - y - 1), GREEN)] = color.y;
+	m_outBuffer[Index(m_width, x, (m_height - y - 1), BLUE)]  = color.z;
 
 }
 
@@ -564,8 +590,8 @@ void Renderer::UpdateMinMaxY(Poly& P)
 
 void Renderer::ResetMinMaxY()
 {
-	m_min_obj_y = m_height - 1;
-	m_max_obj_y = 0;
+	m_max_obj_y = m_height - 1;
+	m_min_obj_y = 0;
 }
 
 vec3 Renderer::GetColor(vec3& pixl, Poly& p)
