@@ -11,6 +11,7 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	this->vnC = vc;
 	this->fn  = faceNormal;
 	this->material = mate;
+	this->id = id;
 	this->a_cameraspace = a_cameraspace;
 	this->b_cameraspace = b_cameraspace;
 	this->c_cameraspace = c_cameraspace;
