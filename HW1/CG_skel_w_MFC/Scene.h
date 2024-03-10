@@ -90,27 +90,31 @@ public:
 	void setPerspective();
 	void setPerspectiveByFov();
 	void setPerspectiveByParams();
+
 	void resetProjection();
 	void zoom(double s_offset, double update_rate = 0.1);
+	
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
 	vec4 getTranslation() { return vec4(c_trnsl); }
 	vec3& getPosition() { return vec3(c_trnsl.x, c_trnsl.y, c_trnsl.z); }
 	void setStartPosition(vec4& pos) { c_trnsl = pos; }
+	
 	void updateTransform();
 	void ResetTranslation() { c_trnsl = vec4(0,0,10,1); }
 	void ResetRotation() { c_rot = vec4(0,0,0,1); }
+	
 	void iconInit();
 	bool iconDraw(mat4& active_cTransform, mat4& active_projection);
 	vec2* getIconBuffer() { return iconBuffer; }
 	unsigned int getIconBufferSize() { return num_icon_vertices; }
+
+
 	void ResetTranslation_viewspace() { c_trnsl_viewspace = vec4(0, 0, 0, 1); }
 	void ResetRotation_viewspace() { c_rot_viewspace = vec4(0,0,0,1); }
+	
 	void unLockFovy() { lockFov_GUI = false; }
 	bool* getLockFovyPTR() { return &lockFov_GUI; }
-	float getZnear() { return c_zNear; }
-	float getZfar() { return c_zFar; }
-	
 	bool selected = false;
 	bool isOrtho = true;
 	bool renderCamera = false;
@@ -125,7 +129,7 @@ private:
 	friend Scene;
 
 public:
-	Fog() : _min_dist(0), _max_dist(MAX_Z-1), effect(DEF_MAX_FOG_EFFECT/2), _color(vec3(0.541, 0.753, 0.78)) {	}
+	Fog() : _min_dist(0), _max_dist(MAX_Z-1), effect(DEF_MAX_FOG_EFFECT), _color(vec3(0.541, 0.753, 0.78)) {	}
 
 	void setMinDist(float& min_dist) {
 		if (min_dist < _max_dist)
@@ -150,9 +154,9 @@ public:
 		pDist = max(_min_dist, min(pDist, _max_dist));
 		double fog_factor = (_max_dist - pDist) / (_max_dist - _min_dist);
 		//fog_factor *= (1 / effect);
-		float effect_factor = effect / DEF_MAX_FOG_EFFECT;
+		float effect_factor = 1 - (effect / DEF_MAX_FOG_EFFECT);
 		//fog_factor = max(0, min(fog_factor, 1));	// clamp
-		vec3 res = (1-effect_factor)*fog_factor * shadedColor + (1 - fog_factor) * effect_factor * _color;
+		vec3 res = (effect_factor + fog_factor)/2 * shadedColor + (2 - (fog_factor+effect_factor))/2 * _color;
 		return(res);
 	}
 
