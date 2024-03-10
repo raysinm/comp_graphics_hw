@@ -96,6 +96,7 @@ public:
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
 	vec4 getTranslation() { return vec4(c_trnsl); }
+	vec3& getPosition() { return vec3(c_trnsl.x, c_trnsl.y, c_trnsl.z); }
 	void setStartPosition(vec4& pos) { c_trnsl = pos; }
 	
 	void updateTransform();

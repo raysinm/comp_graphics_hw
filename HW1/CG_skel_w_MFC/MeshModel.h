@@ -22,7 +22,7 @@ protected:
 	MeshModel();
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
-	vector<vec3> t_vertex_positions_cameraspace;	//In Camera space
+	vector<vec3> t_vertex_positions_worldspace;		//In world space
 	vector<vec3> t_vertex_positions_normalized;		//In Clip space, normalized to [-1, 1]
 
 	vector<int> faces_v_indices;					//Each 3 indices makes a face. (triangle)

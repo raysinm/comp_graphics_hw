@@ -12,6 +12,9 @@ typedef unsigned int UINT;
 #define MAX_Z 65535
 #define LIGHT_DEFAULT_NAME "Light"
 #define EPSILON 0.00001
+#define DEFUALT_EMIS_FACTOR 0.15
+#define DEFUALT_LIGHT_K_VALUE 0.5
+#define DEFUALT_LIGHT_ALPHA 1
 
 inline int Index(int width, int x, int y, int c) { return (x + y * width) * 3 + c; }
 inline int Z_Index(int width, int x, int y) { return x + (y * width); }
@@ -26,12 +29,12 @@ enum DrawAlgo {
 
 typedef struct Vertex {
 	vec3 point;
-	vec3 point_cameraspace;
+	vec3 point_worldspace;
 	UINT vertex_index;
 	UINT face_index;
 
 	Vertex() : point(0, 0, 0), vertex_index(0), face_index(0) {}
-	Vertex(vec3& a, UINT v_indx, UINT f_indx, vec3& a_cameraspace) { point = a; vertex_index = v_indx; face_index = f_indx; point_cameraspace = a_cameraspace; }
+	Vertex(vec3& a, UINT v_indx, UINT f_indx, vec3& a_cameraspace) { point = a; vertex_index = v_indx; face_index = f_indx; point_worldspace = a_cameraspace; }
 	~Vertex() {}
 } Vertex;
 

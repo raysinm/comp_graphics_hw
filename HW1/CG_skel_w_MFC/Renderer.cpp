@@ -182,8 +182,8 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 	vector<vec3>* pFaceNormals = pModel->getFaceNormalsViewSpace();
 	vector<Poly> polygons;
 
+	ResetMinMaxY();
 	/* Add all polygons to polygons vector */
-
 	for (UINT i = 0; i < len; i += 3)
 	{
 		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
@@ -209,9 +209,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 						(*pFaceNormals)[vertices[i].face_index],	\
 						pModel->getMaterial(),						\
 						i/3,										\
-						vertices[i + 0].point_cameraspace,			\
-						vertices[i + 1].point_cameraspace,			\
-						vertices[i + 2].point_cameraspace			);
+						vertices[i + 0].point_worldspace,			\
+						vertices[i + 1].point_worldspace,			\
+						vertices[i + 2].point_worldspace			);
 
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
@@ -223,7 +223,6 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 void Renderer::Rasterize_Flat(const MeshModel* model)
 {
 	if (!model) return; /* Sanity check*/
-
 	vector<Poly> polygons = CreatePolygonsVector(model);
 	if (polygons.size() == 0)
 	{
@@ -421,13 +420,12 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			for (int x = scan_span.first; x <= scan_span.second; x++)
 			{
 				UINT z = P.Depth(x, y);
-				UINT prevValue = m_zbuffer[Z_Index(m_width, x, y)];
-				if (z >= prevValue)
+				int z_index = Z_Index(m_width, x, y);
+				UINT prevValue = m_zbuffer[z_index];
+				if (z <= prevValue)
 				{
 					PutColor(x, y, GetColor(vec3(x, y, z), P));
-					//PutColor(x, y, color);
-
-					m_zbuffer[Z_Index(m_width, x, y)] = z;
+					m_zbuffer[z_index] = z;
 				}
 			}
 		}
@@ -525,8 +523,7 @@ void Renderer::clearBuffer()
 	if (m_zbuffer)
 	{
 		for (UINT i = 0; i < m_width * m_height; i++)
-			m_zbuffer[i] = 0;
-		ResetMinMaxY();
+			m_zbuffer[i] = MAX_Z;
 	}
 }
 
@@ -563,11 +560,11 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		for (auto lightSource : scene->lights)
 		{
-			vec3 P = p.GetCenter();							// Point in camera space
-			vec3 N = p.GetFaceNormal();						// Normal of the polygon
-			vec3 V = -normalize(P);							// Direction to COP (center of projection === camera)
-			vec3 I = lightSource->getDirection();			// Light source direction to P (Assume Parallel light source)
-			vec3 R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+			vec3 P = p.GetCenter();												// Point in world space
+			vec3 N = p.GetFaceNormal();											// Normal of the polygon
+			vec3 V = normalize(scene->GetActiveCamera()->getPosition() - P);	// Direction to COP (center of projection === camera)
+			vec3 I = lightSource->getDirection();								// Light source direction to P (Assume Parallel light source)
+			vec3 R = normalize(I - (2 * dot(I, N) * N));						// Direction of reflected light
 
 			if (lightSource->getLightType() == AMBIENT_LIGHT)
 			{
@@ -595,6 +592,7 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		/* Add emissive light INDEPENDENT to any light source*/
 		Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
+
 		p.FLAT_calculatedColor = true;
 		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
 		

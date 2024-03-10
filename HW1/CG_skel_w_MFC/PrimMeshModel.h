@@ -17,7 +17,7 @@ protected:
 		
 		vertex_positions_raw			= vector<vec3>(num_vertices_raw);
 		t_vertex_positions_normalized	= vector<vec3>(num_vertices_raw);
-		t_vertex_positions_cameraspace	= vector<vec3>(num_vertices_raw);
+		t_vertex_positions_worldspace	= vector<vec3>(num_vertices_raw);
 		vertex_faces_neighbors			= vector<vector<int>>(num_vertices_raw);
 		faces_v_indices					= vector<int> (num_faces * 3);
 		vertex_normals					= vector<vec3>(num_vertices_raw);
