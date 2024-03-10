@@ -3,18 +3,18 @@
 Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate, int id,\
 		   vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
 {
-	this->a   = a;
-	this->b   = b;
-	this->c   = c;
-	this->vnA = va;
-	this->vnB = vb;
-	this->vnC = vc;
+	this->points[0]   = a;
+	this->points[1]   = b;
+	this->points[2]   = c;
+	this->vn[0] = va;
+	this->vn[1] = vb;
+	this->vn[2] = vc;
 	this->fn  = faceNormal;
 	this->material = mate;
 	this->id = id;
-	this->a_cameraspace = a_cameraspace;
-	this->b_cameraspace = b_cameraspace;
-	this->c_cameraspace = c_cameraspace;
+	this->points_cameraspace[0] = a_cameraspace;
+	this->points_cameraspace[1] = b_cameraspace;
+	this->points_cameraspace[2] = c_cameraspace;
 	this->centerOfPoly = (a_cameraspace + b_cameraspace + c_cameraspace) / 3.0f;
 
 	// Calculate y min, y max of polygon NOTICE: could be outside of screen
@@ -41,27 +41,27 @@ UINT Poly::Depth(int x, int y)
 	UINT z1, z2, z3;
 	vec2 Ps = vec2(x, y);
 
-	Line mainLine = Line(vec2(a.x, a.y), Ps);
+	Line mainLine = Line(vec2(points[0].x, points[0].y), Ps);
 	Line baseLine = lines[LINE_BC];
-	p1 = vec2(b.x, b.y); z1 = (UINT)b.z;
-	p2 = vec2(c.x, c.y); z2 = (UINT)c.z;
-	p3 = vec2(a.x, a.y); z3 = (UINT)a.z;
+	p1 = vec2(points[1].x, points[1].y); z1 = (UINT)points[1].z;
+	p2 = vec2(points[2].x, points[2].y); z2 = (UINT)points[2].z;
+	p3 = vec2(points[0].x, points[0].y); z3 = (UINT)points[0].z;
 
 	if (mainLine.isParallel(this->lines[LINE_AC]))
 	{
-		mainLine = Line(vec2(b.x, b.y), Ps);
+		mainLine = Line(vec2(points[1].x, points[1].y), Ps);
 		baseLine = lines[LINE_AC];
-		p1 = vec2(a.x, a.y); z1 = (UINT)a.z;
-		p2 = vec2(c.x, c.y); z2 = (UINT)c.z;
-		p3 = vec2(b.x, b.y); z3 = (UINT)b.z;
+		p1 = vec2(points[0].x, points[0].y); z1 = (UINT)points[0].z;
+		p2 = vec2(points[2].x, points[2].y); z2 = (UINT)points[2].z;
+		p3 = vec2(points[1].x, points[1].y); z3 = (UINT)points[1].z;
 	}
 	else if (mainLine.isParallel(this->lines[LINE_AB]))
 	{
-		mainLine = Line(vec2(c.x, c.y), Ps);
+		mainLine = Line(vec2(points[2].x, points[2].y), Ps);
 		baseLine = lines[LINE_AB];
-		p1 = vec2(a.x, a.y); z1 = (UINT)a.z;
-		p2 = vec2(b.x, b.y); z2 = (UINT)b.z;
-		p3 = vec2(c.x, c.y); z3 = (UINT)c.z;
+		p1 = vec2(points[0].x, points[0].y); z1 = (UINT)points[0].z;
+		p2 = vec2(points[1].x, points[1].y); z2 = (UINT)points[1].z;
+		p3 = vec2(points[2].x, points[2].y); z3 = (UINT)points[2].z;
 	}
 	
 	vec2 Pi;
@@ -69,13 +69,6 @@ UINT Poly::Depth(int x, int y)
 	Pi = mainLine.intersect(baseLine, &is_par);
 	if (is_par)
 		return max_z;
-	
-	//Ti = abs(length(Pi - p1)) / abs(length(p2 -p1));
-	// 
-	//float dotProduct = glm::dot(pMinusP0, p1MinusP0);
-	//float lengthSquared = glm::dot(p1MinusP0, p1MinusP0);
-
-	//float t = dotProduct / lengthSquared;
 
 	vec2 piMINUSp1 = Pi - p1;
 	vec2 p2MINUSp1 = p2 - p1;
@@ -94,19 +87,33 @@ UINT Poly::Depth(int x, int y)
 	return Zp;
 }
 
-vec3& Poly::getPoint(int index)
+vec3 Poly::GOUROD_interpolate(vec2& pixl)
 {
-	switch (index)
-	{
-	case 0:
-		return a;
-		break;
-	case 1:
-		return b;
-		break;
-	case 2:
-		return c;
-		break;
+	/* Interpolate the color value (Ia+Is+Id) from the 3 vertex in screen-space */
+	vec2 p1 = vec2(points[0].x, points[0].y);
+	vec2 p2 = vec2(points[1].x, points[1].y);
+	vec2 p3 = vec2(points[2].x, points[2].y);
+
+
+	vec3 p = vec3(pixl, 0);
+	vec3 p1p = vec3(p1, 0) - p;
+	vec3 p2p = vec3(p2, 0) - p;
+	vec3 p3p = vec3(p3, 0) - p;
+
+	float Ai[3]		= { 0 };
+	float alpha[3]	= { 0 };
+
+	Ai[0] = length(cross(p3p, p2p)) / 2.0;
+	Ai[1] = length(cross(p1p, p3p)) / 2.0;
+	Ai[2] = length(cross(p1p, p2p)) / 2.0;
+	
+	float sum = Ai[0] + Ai[1] + Ai[2];
+
+	vec3 result = vec3(0);
+	for (int i = 0; i < 3; i++) {
+		alpha[i] = Ai[i] / sum;
+		result += alpha[i] * GOUROD_colors[i];
 	}
 
+	return result;
 }

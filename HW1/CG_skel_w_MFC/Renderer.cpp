@@ -186,7 +186,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		return vector<Poly>();
 
 
-	vector<vec3>* vnormals = pModel->getVertexNormals();
+	vector<vec3>* vnormals = pModel->getVertexNormalsViewSpace();
 	vector<vec3>* pFaceNormals = pModel->getFaceNormalsViewSpace();
 	vector<Poly> polygons;
 
@@ -242,7 +242,14 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 
 void Renderer::Rasterize_Gouraud(const MeshModel* model)
 {
+	if (!model) return; /* Sanity check*/
+	vector<Poly> polygons = CreatePolygonsVector(model);
+	if (polygons.size() == 0)
+	{
+		return;	// Something failed in creation
+	}
 
+	ScanLineZ_Buffer(polygons);
 }
 
 void Renderer::Rasterize_Phong(const MeshModel* model)
@@ -547,24 +554,42 @@ void Renderer::ResetMinMaxY()
 	m_min_obj_y = m_height-1;
 }
 
+void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p)
+{
+	if (lightSource->getLightType() == AMBIENT_LIGHT)
+	{
+		Ia_total += lightSource->La * p.material->Ka * lightSource->getColor();
+	}
+	else /* Parallel or Point light source*/
+	{
+		/* Recalculate the I and R because it was calculated for parallel light source */
+		if (lightSource->getLightType() == POINT_LIGHT)
+		{
+			I = normalize(lightSource->getPositionCameraSpace() - P);
+			R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+		}
+
+		/* Calcualte diffuse */
+		float dotProduct_IN = max(0, dot(I, N));
+		Id_total += (lightSource->Ld * p.material->Kd * dotProduct_IN) * (lightSource->getColor() * p.material->getDiffuse());
+
+		/* Calcualte specular */
+		float dotProduct_RV = max(0, dot(R, V));
+		pow(dotProduct_RV, p.material->COS_ALPHA);
+		Is_total += (lightSource->Ls * p.material->Ks * dotProduct_RV) * (lightSource->getColor() * p.material->getSpecular());
+	}
+}
+
 vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 {
-	vec3 Ia_total;
-	vec3 Id_total;
-	vec3 Is_total;
-	switch (scene->draw_algo)
+	vec3 Ia_total = vec3(0);
+	vec3 Id_total = vec3(0);
+	vec3 Is_total = vec3(0);
+
+	if (scene->draw_algo == FLAT)
 	{
-	case FLAT:
 		if (p.FLAT_calculatedColor)
 			return p.FLAT_calculatedColorValue;
-
-		// ambient_color = (1, 0.7, 0) 
-		// 
-		//  Foreach lightsource:
-		//    Ia_total += Calculate Ia (Ia = Ka * La)					 (Ambient  Reflection)
-		//    Id_total += Calculate Id (Id = Kd * (I dot N) * Ld)        (Diffuse  Reflection)
-		//    Is_total += Calculate Is (Is = Ks * (r dot v)^alpha * Ls)  (Specular Reflection)
-		//  return
 
 		for (auto lightSource : scene->lights)
 		{
@@ -573,50 +598,55 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 			vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
 			vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
 			vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
-
-			if (lightSource->getLightType() == AMBIENT_LIGHT)
-			{
-				Ia_total += lightSource->La * p.material->Ka * lightSource->getColor();
-			}
-			else /* Parallel or Point light source*/
-			{
-				/* Recalculate the I and R because it was calculated for parallel light source */
-				if (lightSource->getLightType() == POINT_LIGHT)
-				{
-					I = normalize(lightSource->getPositionCameraSpace() - P);
-					R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
-				}
-
-				/* Calcualte diffuse */
-				float dotProduct_IN = max(0, dot(I, N));
-				Id_total += (lightSource->Ld * p.material->Kd * dotProduct_IN) * (lightSource->getColor() * p.material->getDiffuse());
-				
-				/* Calcualte specular */
-				float dotProduct_RV = max(0, dot(R, V));
-				pow(dotProduct_RV, p.material->COS_ALPHA);
-				Is_total += (lightSource->Ls * p.material->Ks * dotProduct_RV) * (lightSource->getColor() * p.material->getSpecular());
-			}
+			
+			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, I, R, p);
 		}
 
 		/* Add emissive light INDEPENDENT to any light source*/
 		Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
 
 		p.FLAT_calculatedColor = true;
-		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total);
-		
-		p.FLAT_calculatedColorValue.x = max(0, min(1, p.FLAT_calculatedColorValue.x));
-		p.FLAT_calculatedColorValue.y = max(0, min(1, p.FLAT_calculatedColorValue.y));
-		p.FLAT_calculatedColorValue.z = max(0, min(1, p.FLAT_calculatedColorValue.z));
-		
+		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total).clamp(0,1);
+
 		return p.FLAT_calculatedColorValue;
-
-	case GOURAUD:
-		return vec3(0);
-
-	case PHONG:
-		return vec3(0);
 	}
+	else if (scene->draw_algo == GOURAUD)
+	{
+		if (!p.GOUROD_calculatedColors)
+		{
+			for (int vert = 0; vert < 3; vert++)
+			{
+				Ia_total = vec3(0);
+				Id_total = vec3(0);
+				Is_total = vec3(0);
+				for (auto lightSource : scene->lights)
+				{
+					vec3 P = p.GetPoint(vert);							// Point in camera space
+					vec3 N = p.GetVN(vert);								// Normal of the polygon
+					vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
+					vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
+					vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
 
+					calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, I, R, p);
+				}
+
+				/* Add emissive light INDEPENDENT to any light source*/
+				Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
+				
+				p.GOUROD_colors[vert] = (Ia_total + Id_total + Is_total).clamp(0, 1);
+			}
+
+			p.GOUROD_calculatedColors = true;
+		}
+
+		return p.GOUROD_interpolate(vec2(pixl.x, pixl.y));
+
+	}
+	else if (scene->draw_algo == PHONG)
+	{
+
+	}
+	
 	return vec3(0);
 }
 

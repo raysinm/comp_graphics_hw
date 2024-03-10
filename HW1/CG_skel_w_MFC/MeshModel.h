@@ -29,6 +29,7 @@ protected:
 	vector<vector<int>> vertex_faces_neighbors;		//Used for calculating the vertex normals.
 
 	vector<vec3> vertex_normals;					// size: Num of vertices ("raw")
+	vector<vec3> vertex_normals_viewspace;			// size: Num of faces
 	vector<vec3> face_normals;						// size: Num of faces
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
 	vector<vec3> b_box_vertices;
@@ -70,6 +71,7 @@ public:
 	~MeshModel(void);
 
 	vector<vec3>* getVertexNormals() { return &vertex_normals; }
+	vector<vec3>* getVertexNormalsViewSpace() { return &vertex_normals_viewspace; }
 	vector<vec3>* getFaceNormals() { return   &face_normals; }
 	vector<vec3>* getFaceNormalsViewSpace() { return   &face_normals_viewspace; }
 	Vertex* GetBuffer();

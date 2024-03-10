@@ -4,8 +4,6 @@
 #include <stdexcept>
 
 typedef unsigned int UINT;
-//#define INDEX(width,x,y,c) (x+y*width)*3 + c
-//#define Z_INDEX(width,x,y) (x+(y*width))
 #define RED   0
 #define GREEN 1
 #define BLUE  2
@@ -148,3 +146,4 @@ typedef enum LIGHT_TYPE
 	POINT_LIGHT		= 1,
 	PARALLEL_LIGHT	= 2
 }LIGHT_TYPE;
+
