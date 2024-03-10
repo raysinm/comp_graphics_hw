@@ -366,19 +366,10 @@ void Scene::ResetPopUpFlags()
 
 void Scene::draw()
 {
-	//1. GUI
-	drawGUI();
-
-	//2. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
+	//1. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
 	m_renderer->clearBuffer();
 
-	//3. Update all light sources position in camera space (Multiply with the cTransform matrix...)
-	for (auto light : lights)
-	{
-		light->updatePositionCameraSpace(cameras[activeCamera]->cTransform);
-	}
-
-	//4. draw each MeshModel
+	//2. draw each MeshModel
 	for (auto model : models)
 	{
 		//Don't draw new model before user clicked 'OK'.
@@ -390,9 +381,8 @@ void Scene::draw()
 					cameras[activeCamera]->allowClipping,
 					cameras[activeCamera]->rotationMat_normals);
 
-		m_renderer->ResetMinMaxY();
 		unsigned int len = 0;
-		switch (draw_algo)	// Light calculation, material calculation
+		switch (draw_algo)
 		{
 			case WIRE_FRAME:
 			{
@@ -448,11 +438,9 @@ void Scene::draw()
 			if (f_norm_vertices)
 				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0, 0, 1));
 		}
-
-
 	}
 
-	//5. Render cameras as 3D plus signs
+	//3. Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
 		if (camera->renderCamera && camera != cameras[activeCamera])
@@ -470,7 +458,7 @@ void Scene::draw()
 		}
 	}
 
-	//6. Update the texture. (OpenGL stuff)
+	//4. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
   
 }
@@ -713,7 +701,7 @@ void Scene::drawModelTab()
 	ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
 
 	// Model material
-	if (ImGui::CollapsingHeader("Model Material"))
+	if (ImGui::CollapsingHeader("Material"))
 	{
 		Material* meshMaterial = activeMesh->getMaterial();
 		vec3& emis_real = meshMaterial->getEmissive();
@@ -763,16 +751,16 @@ void Scene::drawModelTab()
 		ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
 		if (ImGui::Button("Reset all##RK"))
 		{
-			*ka = 0.5f;
-			*kd = 0.5f;
-			*ks = 0.5f;
-			*emissivefactor = 0.5f;
-			*alphaFactor = 1;
+			*ka = DEFUALT_LIGHT_K_VALUE;
+			*kd = DEFUALT_LIGHT_K_VALUE;
+			*ks = DEFUALT_LIGHT_K_VALUE;
+			*emissivefactor = DEFUALT_EMIS_FACTOR;
+			*alphaFactor = DEFUALT_LIGHT_ALPHA;
 		}
 	}
 
 	// Model position
-	if (ImGui::CollapsingHeader("Model Position"))
+	if (ImGui::CollapsingHeader("Model"))
 	{
 
 		ImGui::SeparatorText("Model space");
@@ -888,8 +876,8 @@ void Scene::drawLightTab()
 	vec3* light_dir = currentLight->getDirectionPtr();
 	light_type_radio_button = (int)currentLight->getLightType();
 
-	ImGui::RadioButton("Ambient",  &light_type_radio_button, AMBIENT_LIGHT); //ImGui::SameLine();
-	ImGui::RadioButton("Point",    &light_type_radio_button, POINT_LIGHT);   //ImGui::SameLine();
+	ImGui::RadioButton("Ambient",  &light_type_radio_button, AMBIENT_LIGHT);
+	ImGui::RadioButton("Point",    &light_type_radio_button, POINT_LIGHT);  
 	ImGui::RadioButton("Parallel", &light_type_radio_button, PARALLEL_LIGHT);
 
 	currentLight->setLightType(light_type_radio_button);
@@ -928,9 +916,9 @@ void Scene::drawLightTab()
 		vec3* dir = currentLight->getDirectionPtr();
 
 		ImGui::Text("Direction (X Y Z)");
-		ImGui::DragFloat("##X_WDL", &(dir->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Y_WDL", &(dir->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Z_WDL", &(dir->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+		ImGui::DragFloat("##X_WDL", &(dir->x), 0.1f, 0, 0, "%.1f"); ImGui::SameLine();
+		ImGui::DragFloat("##Y_WDL", &(dir->y), 0.1f, 0, 0, "%.1f"); ImGui::SameLine();
+		ImGui::DragFloat("##Z_WDL", &(dir->z), 0.1f, 0, 0, "%.1f"); ImGui::SameLine();
 		if (ImGui::Button("reset##LD"))
 		{
 			currentLight->resetDirection();
@@ -961,9 +949,9 @@ void Scene::drawLightTab()
 
 	if (ImGui::Button("Reset all intensity##RI"))
 	{
-		*la = 0.5f;
-		*ld = 0.5f;
-		*ls = 0.5f;
+		*la = DEFUALT_LIGHT_K_VALUE;
+		*ld = DEFUALT_LIGHT_K_VALUE;
+		*ls = DEFUALT_LIGHT_K_VALUE;
 	}
 }
 
@@ -1066,10 +1054,10 @@ void Scene::drawGUI()
 			{
 				AddLight();
 				strcpy(nameBuffer, lights.back()->getName().c_str());
-				vec3 c_trnsl = lights.back()->getPosition();
-				posBuffer[0] = c_trnsl.x;
-				posBuffer[1] = c_trnsl.y;
-				posBuffer[2] = c_trnsl.z;
+				vec3* c_trnsl = lights.back()->getPositionPtr();
+				posBuffer[0] = c_trnsl->x;
+				posBuffer[1] = c_trnsl->y;
+				posBuffer[2] = c_trnsl->z;
 
 				add_showLightDlg = true;
 				showTransWindow  = true;

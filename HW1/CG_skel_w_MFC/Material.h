@@ -2,6 +2,7 @@
 //#include "Scene.h"
 //#include "mat.h"
 #include "Utils.h"
+static const vec3 whiteColor = vec3(1, 1, 1);
 
 class Reflection
 {
@@ -22,10 +23,11 @@ public:
 
 	float Ka, Kd, Ks;
 	float EmissiveFactor;
-	int COS_ALPHA = 1;
-	Material() : c_emissive(1,1,1), c_diffuse(1, 1, 1), c_specular(1, 1, 1)
+	int COS_ALPHA = DEFUALT_LIGHT_ALPHA;
+	Material() : c_emissive(whiteColor), c_diffuse(whiteColor), c_specular(whiteColor)
 	{
-		Ka = Kd = Ks = EmissiveFactor = 0.5f;
+		Ka = Kd = Ks = DEFUALT_LIGHT_K_VALUE;
+		EmissiveFactor = DEFUALT_EMIS_FACTOR;
 	}
 	Material(vec3 emis, vec3 diff, vec3 spec) : c_emissive(emis), c_diffuse(diff), c_specular(spec){}
 	vec3& getEmissive() { return c_emissive; }

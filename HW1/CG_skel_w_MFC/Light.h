@@ -4,7 +4,7 @@
 
 using namespace std;
 
-
+static const vec3 down = vec3(0, -1, 0);
 class Light
 {
 private:
@@ -18,7 +18,7 @@ private:
 
 public:
 	float La, Ld, Ls;
-	Light(vec3 pos = vec3(0), vec3 dir = vec3(0, -1, 0), LIGHT_TYPE ltype = AMBIENT_LIGHT);
+	Light(vec3 pos = vec3(0), vec3 dir = down, LIGHT_TYPE ltype = AMBIENT_LIGHT);
 	~Light() {}
 
 	bool selected = false;
@@ -28,14 +28,11 @@ public:
 	void setName(string name) { _name = name; }
 	void setColor(vec3& col) { _color = col; }
 	void setLightType(int t) { _type = (LIGHT_TYPE) t; }
-	void resetPosition() { this->setPosition(vec3(0, 0, 0)); }
-	void resetDirection() { this->setDirection(vec3(0, -1, 0)); }
-	void updatePositionCameraSpace(mat4 cTransform) {
-		_positionCameraSpace = cTransform * vec4(_position);
-	}
+	void resetPosition() { _position = vec3(0, 0, 0); }
+	void resetDirection() { _direction = down; }
 
-	vec3 getPosition() { return vec3(_positionCameraSpace.x, _positionCameraSpace.y, _positionCameraSpace.z); }
-	vec3 getDirection() { return normalize(- _direction); }
+	vec3 getPosition() { return _position; }
+	vec3 getDirection() { return -normalize(_direction); }
 	vec3* getDirectionPtr() { return &_direction; }
 	vec3* getPositionPtr() { return &_position; }
 	vec3& getColor() { return _color; }
