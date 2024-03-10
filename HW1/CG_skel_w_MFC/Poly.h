@@ -11,16 +11,11 @@ using namespace std;
 
 class Poly
 {
-	// Should contain screen coordinates only (pixel positions):
-	// a. Should contain a set of three 'original' screen coordinates, normalized in relation to screen size even if they are outside of the screen 
-	//	  (for color calculations)
-
 private:
-	vec3 a, b, c;
-	vec3 a_cameraspace, b_cameraspace, c_cameraspace;
-	vec3 vnA, vnB, vnC;
+	vec3 points[3];
+	vec3 points_cameraspace[3];
+	vec3 vn[3];
 	vec3 fn;
-
 	vec3 centerOfPoly;
 
 	int min_y;
@@ -35,6 +30,9 @@ public:
 	int id;
 	bool FLAT_calculatedColor = false;
 	vec3 FLAT_calculatedColorValue;
+
+	bool GOUROD_calculatedColors = false;
+	vec3 GOUROD_colors[3];
 
 	~Poly(void) {};
 	Poly(){};
@@ -53,10 +51,7 @@ public:
 	std::vector<Line>& GetLines() { return lines; }
 	UINT Depth(int x, int y);
 	Material* material;
-	vec3& getPoint(int index);
-
-	vec3& getA() { return a; }
-	vec3& getB() { return b; }
-	vec3& getC() { return c; }
-
+	vec3 GOUROD_interpolate(vec2& pixl);
+	vec3& GetPoint(int index) { return points_cameraspace[index]; }
+	vec3& GetVN(int index) { return vn[index]; }
 };

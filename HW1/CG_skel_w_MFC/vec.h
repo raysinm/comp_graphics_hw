@@ -12,6 +12,8 @@
 #include <cmath>
 #include "GL/glew.h"
 #define M_PI 3.14159265358979323846264338327
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 
 struct vec2;
 struct vec3;
@@ -323,6 +325,14 @@ struct vec3 {
     operator GLfloat* ()
     {
         return static_cast<GLfloat*>(&x);
+    }
+
+    vec3& clamp(int mini, int maxi)
+    {
+        x = min(maxi, max(mini, x));
+        y = min(maxi, max(mini, y));
+        z = min(maxi, max(mini, z));
+        return *this;
     }
 };
 

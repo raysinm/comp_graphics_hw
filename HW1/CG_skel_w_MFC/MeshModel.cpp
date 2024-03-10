@@ -316,6 +316,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 		return;
 
 	face_normals_viewspace.clear();
+	vertex_normals_viewspace.clear();
 
 	updateTransform();	
 	updateTransformWorld();
@@ -403,26 +404,32 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	}
 
 	// Vertex normals buffer
-	if (showVertexNormals)
 	{
 		for (unsigned int j = 0; j < num_vertices_raw; j++)
 		{
-			vec4 v_j (vertex_normals[j]);
+			vec4 v_j(vertex_normals[j]);
 
 			//Transform the normal vector:
 			v_j = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_j));
 
-			//Project the vector:
-			v_j = projection * v_j;
+			//Add it before projection
+			vec4 v_j_J = normalize(v_j);
+			vertex_normals_viewspace.push_back(vec3(v_j_J.x, v_j_J.y, v_j_J.z));
 
-			//Make sure it is still normalized:
-			v_j = normalize(v_j);
+			if (showVertexNormals)
+			{
+				//Project the vector:
+				v_j = projection * v_j;
 
-			vec4 start_point = t_vertex_positions_normalized[j];
-			vec4 end_point	 = start_point + (v_j * length_vertex_normals);
+				//Make sure it is still normalized:
+				v_j = normalize(v_j);
 
-			buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
-			buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
+				vec4 start_point = t_vertex_positions_normalized[j];
+				vec4 end_point = start_point + (v_j * length_vertex_normals);
+
+				buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
+				buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
+			}
 		}
 	}
 	
@@ -436,7 +443,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 			//Transform the normal vector:
 			v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
 
-			//Add it to vector before projection
+			//Add it before projection
 			vec4 v_n_N = normalize(v_n);
 			face_normals_viewspace.push_back(vec3(v_n_N.x, v_n_N.y, v_n_N.z));
 

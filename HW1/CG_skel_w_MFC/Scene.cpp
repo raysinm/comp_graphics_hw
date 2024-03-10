@@ -408,7 +408,7 @@ void Scene::draw()
 			}
 			case GOURAUD:
 			{
-
+				m_renderer->Rasterize_Gouraud((const MeshModel*)model);
 				break;
 			}
 			case PHONG:

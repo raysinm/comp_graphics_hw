@@ -4,16 +4,14 @@
 #include <vector>
 #include <algorithm>
 #include "CG_skel_w_glfw.h"
-//#include "vec.h"
-//#include "mat.h"
 #include "Poly.h"
 #include "Utils.h"
 #include "GL/glew.h"
+#include "Light.h"
+
 
 
 using namespace std;
-
-
 class MeshModel;
 
 class Renderer
@@ -37,9 +35,8 @@ private:
 	vec3 GetColor(vec3& pixl, Poly& p);
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 	void UpdateMinMaxY(Poly& P);
-
-
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
+	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
