@@ -11,6 +11,7 @@
 #define MODEL_TAB_INDEX  0
 #define CAMERA_TAB_INDEX 1
 #define LIGHT_TAB_INDEX  2
+#define FOG_TAB_INDEX  3
 
 using namespace std;
 
@@ -499,6 +500,7 @@ void colorPicker(ImVec4* color, std::string button_label, std::string id)
 	}
 }
 
+
 void Scene::drawCameraTab()
 {
 	string name(cameras[activeCamera]->getName());
@@ -962,6 +964,43 @@ void Scene::drawLightTab()
 	}
 }
 
+void Scene::drawFogTab()
+{
+	//ImGui::SeparatorText("Color");
+	if (ImGui::Button("Fog Enable/Disable"))
+	{
+		applyFog = !applyFog;
+	}
+	if (applyFog)
+	{
+		//Color
+		vec3& color = fog->getColor();
+
+		ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
+
+		colorPicker(&color_local, "Color", "##FogColor");
+		float brightness = 
+		//ImGui::DragFloat("##FogMinDist", &(fog->getMinDist()), 0.01f,0, fog->getMaxDist(), "%.2f"); ImGui::SameLine();
+
+		color.x = color_local.x;
+		color.y = color_local.y;
+		color.z = color_local.z;
+
+		Camera* activeCam = cameras[activeCamera];
+		//ImGui::DragFloat("##FogMinDist", &(fog->getMinDist()), 0.01f,0, fog->getMaxDist(), "%.2f"); ImGui::SameLine();
+		//ImGui::Text("Minimum distance");
+		//ImGui::DragFloat("##FogMaxDist", &(fog->getMaxDist()), 0.01f, fog->getMinDist(), MAX_Z, "%.2f"); ImGui::SameLine();
+		//ImGui::Text("Maximum distance");
+
+		ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 1.0f,0, DEF_MAX_FOG_EFFECT); ImGui::SameLine();
+		ImGui::Text("Fog effect");
+
+
+	}
+
+}
+
+
 void Scene::drawGUI()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -1231,6 +1270,9 @@ void Scene::drawGUI()
 				}
 				ImGui::EndMenu();
 			}
+
+			ImGui::MenuItem("Apply Fog", NULL, &(this->applyFog));
+			
 			ImGui::SeparatorText("Cameras");
 			if (ImGui::MenuItem("Render all cameras"))
 			{
@@ -1283,10 +1325,11 @@ void Scene::drawGUI()
 				resize_callback_handle(m_renderer->GetWindowSize().x, m_renderer->GetWindowSize().y);
 			}
 
-			const char* names[3] = { 0 };
+			const char* names[4] = { 0 };
 			names[MODEL_TAB_INDEX]  = "Model";
 			names[CAMERA_TAB_INDEX] = "Camera";
 			names[LIGHT_TAB_INDEX]  = "Light";
+			names[FOG_TAB_INDEX] = "Fog";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
@@ -1310,6 +1353,10 @@ void Scene::drawGUI()
 						else if (n == LIGHT_TAB_INDEX)
 						{
 							drawLightTab();
+						}
+						else if (n == FOG_TAB_INDEX)
+						{
+							drawFogTab();
 						}
 						
 						ImGui::EndTabItem();

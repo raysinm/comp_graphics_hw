@@ -432,7 +432,10 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				UINT prevValue = m_zbuffer[z_index];
 				if (z <= prevValue)
 				{
-					PutColor(x, y, GetColor(vec3(x, y, z), P));
+					vec3 color = GetColor(vec3(x, y, z), P);
+					if (scene->applyFog)
+						color = scene->fog->applyFog(z, color);
+					PutColor(x, y,color);
 					m_zbuffer[z_index] = z;
 				}
 			}
