@@ -12,6 +12,7 @@ private:
 	vec3 _color;
 
 	vec4 _positionCameraSpace;
+	vec3 _directionCameraSpace;
 	
 	LIGHT_TYPE _type;
 	string _name;
@@ -30,9 +31,24 @@ public:
 	void setLightType(int t) { _type = (LIGHT_TYPE) t; }
 	void resetPosition() { _position = vec3(0, 0, 0); }
 	void resetDirection() { _direction = down; }
+	void updatePosCameraSpace(mat4 cTransform) {
+		_positionCameraSpace = cTransform * vec4(_position);
+	}
+	void updateDirCameraSpace(mat4 cTransform) {
+		vec4 startPoint = cTransform * vec4(0, 0, 0, 1);
+		startPoint /= startPoint.w;
+
+		vec4 endPoint = cTransform * vec4(_direction);
+		endPoint /= endPoint.w;
+
+		vec4 res = endPoint - startPoint;
+		_directionCameraSpace = vec3(res.x, res.y, res.z);
+	}
 
 	vec3 getPosition() { return _position; }
-	vec3 getDirection() { return -normalize(_direction); }
+	vec3 getPositionCameraSpace() { return vec3(_positionCameraSpace.x, _positionCameraSpace.y, _positionCameraSpace.z) / _positionCameraSpace.w; }
+	vec3 getDirection() { return -normalize(_direction); } /* In World space*/
+	vec3 getDirectionCameraSpace() { return -normalize(_directionCameraSpace); }
 	vec3* getDirectionPtr() { return &_direction; }
 	vec3* getPositionPtr() { return &_position; }
 	vec3& getColor() { return _color; }

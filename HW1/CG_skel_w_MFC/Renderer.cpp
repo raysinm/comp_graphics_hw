@@ -209,9 +209,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 						(*pFaceNormals)[vertices[i].face_index],	\
 						pModel->getMaterial(),						\
 						i/3,										\
-						vertices[i + 0].point_worldspace,			\
-						vertices[i + 1].point_worldspace,			\
-						vertices[i + 2].point_worldspace			);
+						vertices[i + 0].point_cameraspace,			\
+						vertices[i + 1].point_cameraspace,			\
+						vertices[i + 2].point_cameraspace			);
 
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
@@ -560,11 +560,11 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		for (auto lightSource : scene->lights)
 		{
-			vec3 P = p.GetCenter();												// Point in world space
-			vec3 N = p.GetFaceNormal();											// Normal of the polygon
-			vec3 V = normalize(scene->GetActiveCamera()->getPosition() - P);	// Direction to COP (center of projection === camera)
-			vec3 I = lightSource->getDirection();								// Light source direction to P (Assume Parallel light source)
-			vec3 R = normalize(I - (2 * dot(I, N) * N));						// Direction of reflected light
+			vec3 P = p.GetCenter();								// Point in camera space
+			vec3 N = p.GetFaceNormal();							// Normal of the polygon
+			vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
+			vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
+			vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
 
 			if (lightSource->getLightType() == AMBIENT_LIGHT)
 			{
@@ -575,7 +575,7 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 				/* Recalculate the I and R because it was calculated for parallel light source */
 				if (lightSource->getLightType() == POINT_LIGHT)
 				{
-					I = normalize(lightSource->getPosition() - P);
+					I = normalize(lightSource->getPositionCameraSpace() - P);
 					R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
 				}
 

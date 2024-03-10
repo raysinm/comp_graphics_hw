@@ -29,12 +29,12 @@ enum DrawAlgo {
 
 typedef struct Vertex {
 	vec3 point;
-	vec3 point_worldspace;
+	vec3 point_cameraspace;
 	UINT vertex_index;
 	UINT face_index;
 
 	Vertex() : point(0, 0, 0), vertex_index(0), face_index(0) {}
-	Vertex(vec3& a, UINT v_indx, UINT f_indx, vec3& a_cameraspace) { point = a; vertex_index = v_indx; face_index = f_indx; point_worldspace = a_cameraspace; }
+	Vertex(vec3& a, UINT v_indx, UINT f_indx, vec3& a_cameraspace) { point = a; vertex_index = v_indx; face_index = f_indx; point_cameraspace = a_cameraspace; }
 	~Vertex() {}
 } Vertex;
 

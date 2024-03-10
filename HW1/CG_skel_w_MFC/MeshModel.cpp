@@ -175,7 +175,7 @@ void MeshModel::loadFile(string fileName)
 	num_vertices = 3 * num_faces;			//Each face is made from 3 vertices
 
 	t_vertex_positions_normalized	= vector<vec3> (num_vertices_raw);
-	t_vertex_positions_worldspace	= vector<vec3> (num_vertices_raw);
+	t_vertex_positions_cameraspace	= vector<vec3> (num_vertices_raw);
 	vertex_normals					= vector<vec3> (num_vertices_raw);
 	vertex_faces_neighbors			= vector<vector<int>> (num_vertices_raw);
 	buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
@@ -329,11 +329,12 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 		//Apply model-view transformation
 		v_i = (_world_transform * (_model_transform * v_i));
 
-		//Save vertex in camera space for shading algorithms
-		t_vertex_positions_worldspace[i] = vec3(v_i.x, v_i.y, v_i.z);
-
 		//Apply camera transform matrix
 		v_i = cTransform * v_i;
+
+		//Save vertex in camera space for shading algorithms
+		t_vertex_positions_cameraspace[i] = vec3(v_i.x, v_i.y, v_i.z);
+
 
 		//Apply projection:
 		v_i = projection * v_i;
@@ -374,8 +375,8 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 			{
 				UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
 				vec3 point = t_vertex_positions_normalized[vertIndex];
-				vec3 point_worldspace = t_vertex_positions_worldspace[vertIndex];
-				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_worldspace);
+				vec3 point_cameraspace = t_vertex_positions_cameraspace[vertIndex];
+				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_cameraspace);
 				num_vertices_to_draw++;
 			}
 			buffer_i++;
