@@ -1410,6 +1410,30 @@ void Scene::drawGUI()
 				}
 			}
 		}
+		else if (add_showLightDlg)
+		{
+			auto currLight = lights.back();
+
+			light_type_radio_button = (int)currLight->getLightType();
+
+			ImGui::RadioButton("Ambient", &light_type_radio_button, AMBIENT_LIGHT); ImGui::SameLine();
+			ImGui::RadioButton("Point", &light_type_radio_button, POINT_LIGHT); ImGui::SameLine();
+			ImGui::RadioButton("Parallel", &light_type_radio_button, PARALLEL_LIGHT); ImGui::SameLine();
+
+			currLight->setLightType(light_type_radio_button);
+
+
+			vec3& color = currLight->getColor();
+
+			ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
+
+			colorPicker(&color_local, "Color", "##LightColor");
+
+			color.x = color_local.x;
+			color.y = color_local.y;
+			color.z = color_local.z;
+
+		}
 
 		/* Validate position input */
 		bool arePositionValuesValid = true;
