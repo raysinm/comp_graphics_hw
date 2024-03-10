@@ -369,7 +369,14 @@ void Scene::draw()
 	//1. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
 	m_renderer->clearBuffer();
 
-	//2. draw each MeshModel
+	//2. Update each light source position
+	for (auto l : lights)
+	{
+		l->updatePosCameraSpace(GetActiveCamera()->cTransform);
+		l->updateDirCameraSpace(GetActiveCamera()->cTransform);
+	}
+
+	//3. draw each MeshModel
 	for (auto model : models)
 	{
 		//Don't draw new model before user clicked 'OK'.
@@ -440,7 +447,7 @@ void Scene::draw()
 		}
 	}
 
-	//3. Render cameras as 3D plus signs
+	//4. Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
 		if (camera->renderCamera && camera != cameras[activeCamera])
@@ -458,7 +465,7 @@ void Scene::draw()
 		}
 	}
 
-	//4. Update the texture. (OpenGL stuff)
+	//5. Update the texture. (OpenGL stuff)
 	m_renderer->updateTexture();
   
 }
