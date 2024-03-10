@@ -865,6 +865,7 @@ void Scene::drawModelTab()
 			activeMesh->ResetUserTransform_scale_world();
 		}
 
+	}
 		// Delete model
 		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
@@ -875,7 +876,6 @@ void Scene::drawModelTab()
 			activeModel = NOT_SELECTED;
 		}
 		ImGui::PopStyleColor(3);
-	}
 }
 
 void Scene::drawLightTab()
