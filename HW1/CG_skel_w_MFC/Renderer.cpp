@@ -41,6 +41,10 @@ void Renderer::CreateBuffers(int width, int height)
 
 }
 
+void Renderer::SetBufferLines(const vec2* points, unsigned int len)
+{
+	SetBufferLines(points, len, DEFAULT_WIREFRAME_COLOR);
+}
 void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 {
 
@@ -67,6 +71,10 @@ void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 	}
 }
 
+void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len)
+{
+	Rasterize_WireFrame(vertices, len, DEFAULT_WIREFRAME_COLOR);
+}
 void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec4 color)
 {
 	/*	Each 3 indexes make up a face.
@@ -517,7 +525,7 @@ void Renderer::clearBuffer()
 	if (m_outBuffer)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer[i] = 0; //Set all pixels to pure black.
+			m_outBuffer[i] = DEFAULT_BACKGROUND_COLOR; //Set all pixels to pure black.
 	}
 
 	if (m_zbuffer)

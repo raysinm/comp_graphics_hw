@@ -187,4 +187,5 @@ public:
 	int activeLight  = NOT_SELECTED;
 	int activeCamera = 0;	// Always at least one camera
 	DrawAlgo draw_algo = WIRE_FRAME;
+
 };

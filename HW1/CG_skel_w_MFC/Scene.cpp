@@ -1255,6 +1255,10 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu();	// End Options menu
 		}
+		if (ImGui::Button("Dark/Light Mode##lightmode"))
+		{
+			m_renderer->invertSceneColors();
+		}
 
 		ImGui::EndMainMenuBar();
 	}

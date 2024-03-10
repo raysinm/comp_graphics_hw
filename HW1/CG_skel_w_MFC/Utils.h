@@ -16,6 +16,9 @@ typedef unsigned int UINT;
 #define DEFUALT_LIGHT_K_VALUE 0.5
 #define DEFUALT_LIGHT_ALPHA 1
 
+
+
+
 inline int Index(int width, int x, int y, int c) { return (x + y * width) * 3 + c; }
 inline int Z_Index(int width, int x, int y) { return x + (y * width); }
 
