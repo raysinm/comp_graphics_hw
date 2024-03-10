@@ -30,6 +30,8 @@ bool cam_mode;	// Camera mode ON/OFF
 vec2 mouse_pos, mouse_pos_prev;
 float mouse_scroll;
 
+bool toUpdateScene = true;
+
 //----------------------------------------------------------------------------
 // ---------------------- Callbacks functions --------------------------------
 //----------------------------------------------------------------------------
@@ -43,6 +45,7 @@ void error_callback(int error, const char* description)
 // keyboard pressed
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
+	toUpdateScene = true;
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
 
@@ -64,6 +67,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 //mouse position
 void mouse_move_callback(GLFWwindow* window, double x, double y)
 {
+	toUpdateScene = true;
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_CursorPosCallback(window, x, y);
 
@@ -75,6 +79,7 @@ void mouse_move_callback(GLFWwindow* window, double x, double y)
 //mouse click
 void mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
 {
+	toUpdateScene = true;
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
@@ -96,13 +101,12 @@ void mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
 //mouse scroll
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	toUpdateScene = true;
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_ScrollCallback(window, xoffset,yoffset);
 
 	//Our callback:
-	mouse_scroll = yoffset;
-	//float update_rate = 0.1;
-	scene->zoom(mouse_scroll);
+	scene->zoom(yoffset);
 }
 
 //resize window
@@ -110,7 +114,7 @@ void resize_callback(GLFWwindow* window, int width, int height)
 {
 	if (!renderer || !scene)
 		return;
-	
+	toUpdateScene = true;
 	scene->resize_callback_handle(width, height);
 }
 
@@ -200,7 +204,6 @@ int my_main(int argc, char** argv)
 	{
 		glfwPollEvents(); //consider using glfwWaitEvents() ...
 
-
 		ImGui_ImplGlfw_NewFrame();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui::NewFrame();
@@ -208,12 +211,17 @@ int my_main(int argc, char** argv)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set clear color
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		/* All the GUI and scene draw will happen from scene->draw fuction*/
-		scene->draw();
+		scene->drawGUI();
+		if (toUpdateScene)
+		{
+			scene->draw();
+			toUpdateScene = false;
+		}
+
+
 
 		/* Debug window (demo window with all the ImGui controls */
 		//ImGui::ShowDemoWindow();
-
 
 		/* Render the scene */
 		ImGui::Render();

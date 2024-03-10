@@ -367,7 +367,7 @@ void Scene::ResetPopUpFlags()
 void Scene::draw()
 {
 	//1. GUI
-	drawGUI();
+	//drawGUI();
 
 	//2. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
 	m_renderer->clearBuffer();

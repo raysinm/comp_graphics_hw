@@ -171,8 +171,6 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 
 vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 {
-
-	//	Get vertices buffer from model
 	MeshModel* pModel = (MeshModel*)model;
 	Vertex* vertices = pModel->GetBuffer();
 	UINT len = pModel->GetBuffer_len(MODEL);
@@ -226,60 +224,23 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 {
 	if (!model) return; /* Sanity check*/
 
-	/* -------------- 'polygons' vector initialization-------------- */
 	vector<Poly> polygons = CreatePolygonsVector(model);
 	if (polygons.size() == 0)
 	{
-		cout << "NOTICE: Rasterize: Polygon vector empty" << endl;
 		return;	// Something failed in creation
 	}
 
-//#ifdef _DEBUG
-//	// --- CalcScanlineSpan test --- //
-//	auto vertices = ((MeshModel*)model)->GetBuffer();
-//	int len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-//	if (vertices)
-//		Rasterize_WireFrame(vertices, len);
-//	
-//	int y_test = m_height/2;
-//	auto range = CalcScanlineSpan(polygons[0], y_test);
-//	cout << "TEST result: " << range.first << ",\t" << range.second << endl;
-//	
-//	// --- CalcScanlineSpan test --- //
-//	cout << "TEST MinMaxY: minY: " << m_min_obj_y << ", maxY: " << m_max_obj_y << endl;
-//#endif // _DEBUG
-
-
-	/* -------------- Scanline-Zbuffer-------------- */
 	ScanLineZ_Buffer(polygons);
 }
 
 void Renderer::Rasterize_Gouraud(const MeshModel* model)
 {
-	if (!model) return; /* Sanity check*/
 
-	/* -------------- 'polygons' vector initialization-------------- */
-	vector<Poly> polygons = CreatePolygonsVector(model);
-	if (polygons.empty())
-		return;	// Something failed in creation
-
-	/* -------------- Shading calculation -------------- */
-
-	ScanLineZ_Buffer(polygons);
 }
 
 void Renderer::Rasterize_Phong(const MeshModel* model)
 {
-	if (!model) return; /* Sanity check*/
 
-	/* -------------- 'polygons' vector initialization-------------- */
-	vector<Poly> polygons = CreatePolygonsVector(model);
-	if (polygons.empty())
-		return;	// Something failed in creation
-
-	/* -------------- Shading calculation -------------- */
-
-	ScanLineZ_Buffer(polygons);
 }
 
 void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
