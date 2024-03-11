@@ -19,13 +19,17 @@ class Renderer
 {
 private:
 	unordered_map<vec2, vec3, vec2Hash> highlightPixels;
-	float* m_outBuffer;			// 3*width*height
+	float* m_outBuffer_screen;			// 3*width*height
+	float* m_outBuffer_antialiasing;
+	float* m_outBuffer;
 	float* m_outBuffer_fsblur;	// 3*width*height
 	UINT* m_zbuffer;   // width*height
-	int m_width, m_height;
+	int m_width, m_height, true_width, true_height;
 	int m_max_obj_y, m_min_obj_y;
 	GLFWwindow* m_window;	// For glfw swap buffers
 	vector<float> kernel;
+
+	bool ss_antialias = true;
 
 	vec4 DEFAULT_WIREFRAME_COLOR = vec4(1.0, 1.0, 1.0);
 	int DEFAULT_BACKGROUND_COLOR = 0;
@@ -82,6 +86,20 @@ public:
 	void invertSceneColors() {
 		DEFAULT_WIREFRAME_COLOR = vec4(1) - DEFAULT_WIREFRAME_COLOR;
 		DEFAULT_BACKGROUND_COLOR = 1 - DEFAULT_BACKGROUND_COLOR;
+	}
+	void toggleAntialiasing(bool enable) {
+		if (enable)
+		{
+			ss_antialias = true;
+			true_height = 2 * m_height;
+			true_width = 2 * m_width;
+			m_outBuffer = m_outBuffer_antialiasing;
+		}
+		else
+		{
+			ss_antialias = false;
+			m_outBuffer = m_outBuffer_screen;
+		}
 	}
 
 	GLuint m_textureID;

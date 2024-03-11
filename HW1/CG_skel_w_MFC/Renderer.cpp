@@ -21,8 +21,11 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 
 Renderer::~Renderer(void)
 {
-	if(m_outBuffer)
-		delete[] (m_outBuffer);
+	if(m_outBuffer_screen)
+		delete[] (m_outBuffer_screen);
+
+	if (m_outBuffer_antialiasing)
+		delete[](m_outBuffer_antialiasing);
 
 	if (m_zbuffer)
 		delete[] m_zbuffer;
@@ -35,17 +38,28 @@ void Renderer::CreateBuffers(int width, int height)
 {
 	CreateOpenGLBuffer(); //Do not remove this line.
 
-	m_outBuffer			= new float[3 * width * height];
+	m_outBuffer_screen = new float[3 * width * height];
+	m_outBuffer_antialiasing = new float[3 * width*2 * height*2];
 	m_outBuffer_fsblur	= new float[3 * width * height];
 	m_zbuffer			= new UINT[width * height];
 	
+	//for antialiasing
+	if (ss_antialias)
+		m_outBuffer = m_outBuffer_antialiasing;
+	else 
+		m_outBuffer = m_outBuffer_screen;
+
+
+	for (UINT i = 0; i < 3 * width * 2 * height * 2; i++)
+		m_outBuffer_antialiasing[i] = 0;
+
 	for (UINT i = 0; i < 3 * width * height; i++) {
 		m_outBuffer[i] = 0;
 		m_outBuffer_fsblur[i] = 0;
 	}
-
 	for (UINT i = 0; i < width * height; i++)
 		m_zbuffer[i] = MAX_Z;
+
 }
 
 void Renderer::SetBufferLines(const vec2* points, unsigned int len)
@@ -67,8 +81,8 @@ void Renderer::SetBufferLines(const vec2* points, unsigned int len, vec4 color)
 							   [0, m_height - 1] (Y)
 			Also, keep it in-bound of the screen.
 		*/
-		vec2 A_Pxl = vec2(max(min(m_width - 1, (A.x * (m_width - 1))), 0), max(min(m_height - 1, (A.y * (m_height - 1))), 0));
-		vec2 B_Pxl = vec2(max(min(m_width - 1, (B.x * (m_width - 1))), 0), max(min(m_height - 1, (B.y * (m_height - 1))), 0));
+		vec2 A_Pxl = vec2(max(min(true_width - 1, (A.x * (true_width - 1))), 0), max(min(true_height - 1, (A.y * (true_height - 1))), 0));
+		vec2 B_Pxl = vec2(max(min(true_width - 1, (B.x * (true_width - 1))), 0), max(min(true_height - 1, (B.y * (true_height - 1))), 0));
 		
 
 		/* At this point, we have 2 points, in screen space, in-bound */
@@ -106,9 +120,9 @@ void Renderer::Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec
 							   [0, m_height - 1] (Y)
 			Also, keep it in-bound of the screen.
 		*/
-		vec2 A_Pxl = vec2( max(min(m_width - 1, (A.x * (m_width - 1))) , 0), max(min(m_height - 1,  (A.y * (m_height - 1))), 0));
-		vec2 B_Pxl = vec2( max(min(m_width - 1, (B.x * (m_width - 1))) , 0), max(min(m_height - 1,  (B.y * (m_height - 1))), 0));
-		vec2 C_Pxl = vec2( max(min(m_width - 1, (C.x * (m_width - 1))) , 0), max(min(m_height - 1,  (C.y * (m_height - 1))), 0));
+		vec2 A_Pxl = vec2( max(min(true_width - 1, (A.x * (true_width - 1))) , 0), max(min(true_height - 1,  (A.y * (true_height - 1))), 0));
+		vec2 B_Pxl = vec2( max(min(true_width - 1, (B.x * (true_width - 1))) , 0), max(min(true_height - 1,  (B.y * (true_height - 1))), 0));
+		vec2 C_Pxl = vec2( max(min(true_width - 1, (C.x * (true_width - 1))) , 0), max(min(true_height - 1,  (C.y * (true_height - 1))), 0));
 
 		
 		/* At this point, we have 3 points, in screen space, in-bound */
@@ -160,7 +174,7 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 	
 	//*** Find scanline polygon intersection coords (left, right)
 	
-	int x_left=0, x_right=m_width-1;
+	int x_left=0, x_right= true_width -1;
 
 	bool left_found = false;
 	for (int x : intersectionsSorted)
@@ -175,7 +189,7 @@ std::pair<int, int> Renderer::CalcScanlineSpan(Poly& p, int y)
 		}
 		else
 		{
-			x_right = max(0, min(x, m_width - 1));
+			x_right = max(0, min(x, true_width - 1));
 			break;
 		}
 	}
@@ -211,9 +225,9 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		//	Set range:   [0, m_width - 1]  (X)
 		//				 [0, m_height - 1] (Y)
 		//				 [0, MAX_Z]		   (Z)
-		vec3 A_Pxl = vec3((int)(A.x * (m_width - 1)), (int)(A.y * (m_height - 1)), (UINT)(A.z * MAX_Z));
-		vec3 B_Pxl = vec3((int)(B.x * (m_width - 1)), (int)(B.y * (m_height - 1)), (UINT)(B.z * MAX_Z));
-		vec3 C_Pxl = vec3((int)(C.x * (m_width - 1)), (int)(C.y * (m_height - 1)), (UINT)(C.z * MAX_Z));
+		vec3 A_Pxl = vec3((int)(A.x * (true_width - 1)), (int)(A.y * (true_height - 1)), (UINT)(A.z * MAX_Z));
+		vec3 B_Pxl = vec3((int)(B.x * (true_width - 1)), (int)(B.y * (true_height - 1)), (UINT)(B.z * MAX_Z));
+		vec3 C_Pxl = vec3((int)(C.x * (true_width - 1)), (int)(C.y * (true_height - 1)), (UINT)(C.z * MAX_Z));
 
 		Poly P = Poly(	A_Pxl,										\
 						B_Pxl,										\
@@ -332,9 +346,9 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 				currentY = x;
 			}
 
-			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)] = color.x;
-			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
-			m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)] = color.z;
+			m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), RED)] = color.x;
+			m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), GREEN)] = color.y;
+			m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), BLUE)] = color.z;
 		}
 
 
@@ -360,9 +374,9 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 			currentY = B.x;
 		}
 
-		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), RED)]   = color.x;
-		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), GREEN)] = color.y;
-		m_outBuffer[Index(m_width, currentX, (m_height - (y_mul * currentY) - 1), BLUE)]  = color.z;
+		m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), RED)]   = color.x;
+		m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), GREEN)] = color.y;
+		m_outBuffer[Index(true_width, currentX, (true_height - (y_mul * currentY) - 1), BLUE)]  = color.z;
 	}
 	return;
 }
@@ -376,7 +390,7 @@ void Renderer::SwapBuffers()
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
 
 	a = glGetError();
-	//glTexSubImage2D(/GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer);
+	//glTexSubImage2D(/GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer_screen);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	a = glGetError();
 
@@ -432,7 +446,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 			tbb::parallel_for(scan_span.first, scan_span.second, [&](int x)
 				{
 					UINT z = P.Depth(x, y);
-					int z_index = Z_Index(m_width, x, y);
+					int z_index = Z_Index(true_width, x, y);
 					UINT prevValue = m_zbuffer[z_index];
 					if (z <= prevValue)
 					{
@@ -449,9 +463,10 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 
 void Renderer::PutColor(UINT x, UINT y, vec3& color)
 {
-	m_outBuffer[Index(m_width, x, (m_height - y - 1), RED)]   = color.x;
-	m_outBuffer[Index(m_width, x, (m_height - y - 1), GREEN)] = color.y;
-	m_outBuffer[Index(m_width, x, (m_height - y - 1), BLUE)]  = color.z;
+
+	m_outBuffer[Index(true_width, x, (true_height - y - 1), RED)]   = color.x;
+	m_outBuffer[Index(true_width, x, (true_height - y - 1), GREEN)] = color.y;
+	m_outBuffer[Index(true_width, x, (true_height - y - 1), BLUE)]  = color.z;
 
 }
 
@@ -459,7 +474,7 @@ void Renderer::CreateTexture()
 {
 	glGenTextures(1, &m_textureID);
 	glBindTexture(GL_TEXTURE_2D, m_textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer_screen);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
@@ -482,7 +497,7 @@ void Renderer::updateTexture()
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// Allocate texture storage with the updated buffer data
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer_screen);
 }
 
 void Renderer::ApplyBloomFilter()
@@ -490,14 +505,16 @@ void Renderer::ApplyBloomFilter()
 	int NUM_OF_WEIGHTS = kernel.size();
 	int halfKernelSize = (int)(NUM_OF_WEIGHTS / 2);
 
-	for (UINT x = 0; x < m_width; x++)
+
+
+	for (UINT x = 0; x < true_width; x++)
 	{
-		for (UINT y = 0; y < m_height; y++)
+		for (UINT y = 0; y < true_height; y++)
 		{
 			vec3 value = vec3(0);
-			value.x = m_outBuffer[Index(m_width, x, y, RED)];
-			value.y = m_outBuffer[Index(m_width, x, y, GREEN)];
-			value.z = m_outBuffer[Index(m_width, x, y, BLUE)];
+			value.x = m_outBuffer_screen[Index(true_width, x, y, RED)];
+			value.y = m_outBuffer_screen[Index(true_width, x, y, GREEN)];
+			value.z = m_outBuffer_screen[Index(true_width, x, y, BLUE)];
 
 			if (value.sum() > bloom_filter_threshold)
 			{
@@ -507,7 +524,7 @@ void Renderer::ApplyBloomFilter()
 					for (int dy = -2; dy < 2; dy++)
 					{
 						if (dx == 0 && dy == 0) continue;
-						if (x + dx < 0 || x + dx >= m_width || y + dy < 0 || y + dy >= m_height) continue;
+						if (x + dx < 0 || x + dx >= true_width || y + dy < 0 || y + dy >= true_height) continue;
 						auto it = highlightPixels.find(vec2(x + dx, y + dy));
 						if (it != highlightPixels.end()) continue;
 						
@@ -557,7 +574,7 @@ void Renderer::ApplyBloomFilter()
 
 		// Add the result to the scene
 		for (int c = 0; c < 3; c++)
-			m_outBuffer[Index(m_width, pixel.x, pixel.y, c)] += result[c];
+			m_outBuffer_screen[Index(true_width, pixel.x, pixel.y, c)] += result[c];
 	}
 	
 	highlightPixels.clear();
@@ -569,13 +586,13 @@ void Renderer::ApplyFullScreenBlur()
 
 	for (int i = 0; i < fs_blur_iterations; i++)
 	{
-		gaussianBlur(m_outBuffer, m_outBuffer_fsblur, 1.0f);
+		gaussianBlur(m_outBuffer_screen, m_outBuffer_fsblur, 1.0f);
 	}
 
 
 	for (int i = 0; i < m_width * m_height * 3; i++)
 	{
-		m_outBuffer[i] = m_outBuffer_fsblur[i];
+		m_outBuffer_screen[i] = m_outBuffer_fsblur[i];
 	}
 }
 
@@ -599,6 +616,9 @@ void Renderer::update(int width, int height)
 	{
 		m_width = width;
 		m_height = height;
+		true_width = ss_antialias ? m_width * 2 : m_width;
+		true_height = ss_antialias ? m_height * 2 : m_height;
+
 		updateBuffer();
 		updateTexture();
 	}
@@ -606,10 +626,16 @@ void Renderer::update(int width, int height)
 
 void Renderer::updateBuffer()
 {
-	if (m_outBuffer)
+
+	if (m_outBuffer_screen)
 	{
-		delete[] m_outBuffer;
-		m_outBuffer = new float[3 * m_width * m_height];
+		delete[] m_outBuffer_screen;
+		m_outBuffer_screen = new float[3 * m_width * m_height];
+	}
+	if (ss_antialias && m_outBuffer_antialiasing)
+	{
+		delete[] m_outBuffer_antialiasing;
+		m_outBuffer_antialiasing = new float[3 * m_width*2 * m_height*2];
 	}
 
 	if (m_outBuffer_fsblur)
@@ -629,12 +655,16 @@ void Renderer::updateBuffer()
 
 void Renderer::clearBuffer()
 {
-	if (m_outBuffer)
+	if (m_outBuffer_screen)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer[i] = DEFAULT_BACKGROUND_COLOR;
+			m_outBuffer_screen[i] = DEFAULT_BACKGROUND_COLOR;
 	}
-
+	if (ss_antialias && m_outBuffer_antialiasing)
+	{
+		for (int i = 0; i < 3 * m_width*2 * m_height*2; i++)
+			m_outBuffer_antialiasing[i] = DEFAULT_BACKGROUND_COLOR;
+	}
 	if (m_outBuffer_fsblur)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
@@ -646,6 +676,10 @@ void Renderer::clearBuffer()
 		for (UINT i = 0; i < m_width * m_height; i++)
 			m_zbuffer[i] = MAX_Z;
 	}
+
+	true_width = ss_antialias ? m_width * 2 : m_width;
+	true_height = ss_antialias ? m_height * 2 : m_height;
+
 }
 
 void Renderer::UpdateMinMaxY(Poly& P)
