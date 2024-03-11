@@ -12,8 +12,12 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 	m_width(width), m_height(height)
 {
 	m_window = window;
+	m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
+
+	true_width = ss_antialias ? m_width * 2 : m_width;
+	true_height = ss_antialias ? m_height * 2 : m_height;
 	//InitOpenGLRendering();	// Probably needed for later
-	CreateBuffers(m_width, m_height);
+	CreateBuffers();
 	CreateTexture();
 
 	kernel = createGaussianKernel(10, 1);
@@ -34,33 +38,7 @@ Renderer::~Renderer(void)
 		delete[] m_outBuffer_fsblur;
 }
 
-void Renderer::CreateBuffers(int width, int height)
-{
-	CreateOpenGLBuffer(); //Do not remove this line.
 
-	m_outBuffer_screen = new float[3 * width * height];
-	m_outBuffer_antialiasing = new float[3 * width*2 * height*2];
-	m_outBuffer_fsblur	= new float[3 * width * height];
-	m_zbuffer			= new UINT[width * height];
-	
-	//for antialiasing
-	if (ss_antialias)
-		m_outBuffer = m_outBuffer_antialiasing;
-	else 
-		m_outBuffer = m_outBuffer_screen;
-
-
-	for (UINT i = 0; i < 3 * width * 2 * height * 2; i++)
-		m_outBuffer_antialiasing[i] = 0;
-
-	for (UINT i = 0; i < 3 * width * height; i++) {
-		m_outBuffer[i] = 0;
-		m_outBuffer_fsblur[i] = 0;
-	}
-	for (UINT i = 0; i < width * height; i++)
-		m_zbuffer[i] = MAX_Z;
-
-}
 
 void Renderer::SetBufferLines(const vec2* points, unsigned int len)
 {
@@ -507,14 +485,14 @@ void Renderer::ApplyBloomFilter()
 
 
 
-	for (UINT x = 0; x < true_width; x++)
+	for (UINT x = 0; x < m_width; x++)
 	{
-		for (UINT y = 0; y < true_height; y++)
+		for (UINT y = 0; y < m_height; y++)
 		{
 			vec3 value = vec3(0);
-			value.x = m_outBuffer_screen[Index(true_width, x, y, RED)];
-			value.y = m_outBuffer_screen[Index(true_width, x, y, GREEN)];
-			value.z = m_outBuffer_screen[Index(true_width, x, y, BLUE)];
+			value.x = m_outBuffer_screen[Index(m_width, x, y, RED)];
+			value.y = m_outBuffer_screen[Index(m_width, x, y, GREEN)];
+			value.z = m_outBuffer_screen[Index(m_width, x, y, BLUE)];
 
 			if (value.sum() > bloom_filter_threshold)
 			{
@@ -524,7 +502,7 @@ void Renderer::ApplyBloomFilter()
 					for (int dy = -2; dy < 2; dy++)
 					{
 						if (dx == 0 && dy == 0) continue;
-						if (x + dx < 0 || x + dx >= true_width || y + dy < 0 || y + dy >= true_height) continue;
+						if (x + dx < 0 || x + dx >= m_width || y + dy < 0 || y + dy >= m_height) continue;
 						auto it = highlightPixels.find(vec2(x + dx, y + dy));
 						if (it != highlightPixels.end()) continue;
 						
@@ -574,7 +552,7 @@ void Renderer::ApplyBloomFilter()
 
 		// Add the result to the scene
 		for (int c = 0; c < 3; c++)
-			m_outBuffer_screen[Index(true_width, pixel.x, pixel.y, c)] += result[c];
+			m_outBuffer_screen[Index(m_width, pixel.x, pixel.y, c)] += result[c];
 	}
 	
 	highlightPixels.clear();
@@ -624,8 +602,30 @@ void Renderer::update(int width, int height)
 	}
 }
 
+void Renderer::CreateBuffers()
+{
+	//m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
+
+	//true_width = ss_antialias ? m_width * 2 : m_width;
+	//true_height = ss_antialias ? m_height * 2 : m_height;
+
+	CreateOpenGLBuffer(); //Do not remove this line.
+
+	m_outBuffer_screen = new float[3 * m_width * m_width];
+	m_outBuffer_antialiasing = new float[3 * m_width * DEF_SUPERSAMPLE_SCALE * m_height * DEF_SUPERSAMPLE_SCALE];
+	m_outBuffer_fsblur = new float[3 * m_width * m_height];
+	m_zbuffer = new UINT[m_width * DEF_SUPERSAMPLE_SCALE * m_height * DEF_SUPERSAMPLE_SCALE];
+
+
+	clearBuffer();
+}
+
 void Renderer::updateBuffer()
 {
+	m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
+
+	true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
+	true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
 
 	if (m_outBuffer_screen)
 	{
@@ -635,7 +635,7 @@ void Renderer::updateBuffer()
 	if (ss_antialias && m_outBuffer_antialiasing)
 	{
 		delete[] m_outBuffer_antialiasing;
-		m_outBuffer_antialiasing = new float[3 * m_width*2 * m_height*2];
+		m_outBuffer_antialiasing = new float[3 * m_width * DEF_SUPERSAMPLE_SCALE * m_height * DEF_SUPERSAMPLE_SCALE];
 	}
 
 	if (m_outBuffer_fsblur)
@@ -647,7 +647,7 @@ void Renderer::updateBuffer()
 	if (m_zbuffer)
 	{
 		delete[] m_zbuffer;
-		m_zbuffer = new UINT[m_width * m_height];
+		m_zbuffer = new UINT[m_width * DEF_SUPERSAMPLE_SCALE * m_height * DEF_SUPERSAMPLE_SCALE];
 	}
 
 	clearBuffer();
@@ -655,6 +655,11 @@ void Renderer::updateBuffer()
 
 void Renderer::clearBuffer()
 {
+	m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
+
+	true_width = ss_antialias ? m_width * 2 : m_width;
+	true_height = ss_antialias ? m_height * 2 : m_height;
+
 	if (m_outBuffer_screen)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
@@ -662,7 +667,7 @@ void Renderer::clearBuffer()
 	}
 	if (ss_antialias && m_outBuffer_antialiasing)
 	{
-		for (int i = 0; i < 3 * m_width*2 * m_height*2; i++)
+		for (int i = 0; i < 3 * true_width * true_height; i++)
 			m_outBuffer_antialiasing[i] = DEFAULT_BACKGROUND_COLOR;
 	}
 	if (m_outBuffer_fsblur)
@@ -673,25 +678,23 @@ void Renderer::clearBuffer()
 
 	if (m_zbuffer)
 	{
-		for (UINT i = 0; i < m_width * m_height; i++)
+		for (UINT i = 0; i < true_width * true_height; i++)
 			m_zbuffer[i] = MAX_Z;
 	}
 
-	true_width = ss_antialias ? m_width * 2 : m_width;
-	true_height = ss_antialias ? m_height * 2 : m_height;
 
 }
 
 void Renderer::UpdateMinMaxY(Poly& P)
 {
-	m_min_obj_y = min(m_height-1, max(0, min(m_min_obj_y, P.GetMinY())));
-	m_max_obj_y = min(m_height-1, max(0, max(m_max_obj_y, P.GetMaxY())));
+	m_min_obj_y = min(true_height -1, max(0, min(m_min_obj_y, P.GetMinY())));
+	m_max_obj_y = min(true_height -1, max(0, max(m_max_obj_y, P.GetMaxY())));
 }
 
 void Renderer::ResetMinMaxY()
 {
 	m_max_obj_y = 0;
-	m_min_obj_y = m_height-1;
+	m_min_obj_y = true_height-1;
 }
 
 void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p)
@@ -845,6 +848,39 @@ std::vector<float> Renderer::createGaussianKernel(int size, float sigma)
 		kernel[i] /= sum;
 	}
 	return kernel;
+}
+
+
+void Renderer::sampleAntialias()
+{
+	if (!ss_antialias)
+		return;	// Do nothing if not supposed to be here
+
+	for (int outer_x = 0; outer_x < m_width * 2; outer_x+=2)
+	{
+		int inner_x = outer_x / 2;
+		for (int outer_y = 0; outer_y < m_height * 2; outer_y += 2)
+		{
+			int inner_y = outer_y / 2;
+
+			float* val0 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y, 0)]);
+			float* val1 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x+1, outer_y, 0)]);
+			float* val2 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y+1, 0)]);
+			float* val3 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x+1, outer_y+1, 0)]);
+
+			float avg_r = (*(val0 + 0) + *(val1 + 0) + *(val2 + 0) + *(val3 + 0)) / 4;
+			float avg_g = (*(val0 + 1) + *(val1 + 1) + *(val2 + 1) + *(val3 + 1)) / 4;
+			float avg_b = (*(val0 + 2) + *(val1 + 2) + *(val2 + 2) + *(val3 + 2)) / 4;
+
+			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 0)] = avg_r;
+			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 1)] = avg_g;
+			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 2)] = avg_b;
+
+		}
+	}
+
+
+
 }
 
 /////////////////////////////////////////////////////

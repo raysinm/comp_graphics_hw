@@ -448,6 +448,11 @@ void Scene::draw()
 		}
 	}
 
+	// ANTIALISING
+
+	m_renderer->sampleAntialias();	// Won't do anything if not needed
+
+
 	//4. Apply bloom filter
 	if (applyBloom)
 	{
@@ -1292,6 +1297,7 @@ void Scene::drawGUI()
 			ImGui::MenuItem("Fog", NULL, &applyFog);
 			ImGui::MenuItem("Bloom Filter", NULL, &applyBloom);
 			ImGui::MenuItem("Full screen blur", NULL, &applyFullScreenBlur);
+			ImGui::MenuItem("Supersampling Antialiasing", NULL, &(m_renderer->ss_antialias));
 			ImGui::EndMenu();	// End Effects menu
 
 		}
@@ -1317,6 +1323,7 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->allowClipping = false;
 			}
+
 
 			ImGui::EndMenu();	// End Options menu
 		}

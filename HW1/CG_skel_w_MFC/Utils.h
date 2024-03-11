@@ -16,7 +16,7 @@ typedef unsigned int UINT;
 #define DEFUALT_LIGHT_LD_VALUE 1
 #define DEFUALT_LIGHT_LS_VALUE 0
 #define DEFUALT_LIGHT_ALPHA 1
-
+#define DEF_SUPERSAMPLE_SCALE 2
 
 
 

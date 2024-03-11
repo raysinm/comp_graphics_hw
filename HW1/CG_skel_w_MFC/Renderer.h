@@ -23,18 +23,17 @@ private:
 	float* m_outBuffer_antialiasing;
 	float* m_outBuffer;
 	float* m_outBuffer_fsblur;	// 3*width*height
-	UINT* m_zbuffer;   // width*height
+	UINT* m_zbuffer;   // width*DEF_SUPERSAMPLE_SCALE*height*DEF_SUPERSAMPLE_SCALE	
 	int m_width, m_height, true_width, true_height;
 	int m_max_obj_y, m_min_obj_y;
 	GLFWwindow* m_window;	// For glfw swap buffers
 	vector<float> kernel;
 
-	bool ss_antialias = true;
 
 	vec4 DEFAULT_WIREFRAME_COLOR = vec4(1.0, 1.0, 1.0);
 	int DEFAULT_BACKGROUND_COLOR = 0;
 
-	void CreateBuffers(int width, int height);
+	void CreateBuffers();
 	void DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color);
 	void ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color);
 	void ScanLineZ_Buffer(vector<Poly>& polygons);
@@ -56,6 +55,13 @@ private:
 	//////////////////////////////
 	
 public:
+	GLuint m_textureID;
+	float bloom_filter_threshold = 1.0f;
+	float bloom_filter_factor = 0.5f;
+	int fs_blur_iterations = 1;
+	bool ss_antialias = false;
+
+
 	Renderer(int width, int height, GLFWwindow* window);
 	~Renderer(void);
 	void SwapBuffers();
@@ -72,6 +78,7 @@ public:
 	void ApplyBloomFilter();
 	void ApplyFullScreenBlur();
 	void gaussianBlur(const float* image, float* blurredImage, const float factor);
+	void sampleAntialias();
 
 	// New funcs
 	void CreateTexture();
@@ -87,24 +94,21 @@ public:
 		DEFAULT_WIREFRAME_COLOR = vec4(1) - DEFAULT_WIREFRAME_COLOR;
 		DEFAULT_BACKGROUND_COLOR = 1 - DEFAULT_BACKGROUND_COLOR;
 	}
-	void toggleAntialiasing(bool enable) {
-		if (enable)
-		{
-			ss_antialias = true;
-			true_height = 2 * m_height;
-			true_width = 2 * m_width;
-			m_outBuffer = m_outBuffer_antialiasing;
-		}
-		else
-		{
-			ss_antialias = false;
-			m_outBuffer = m_outBuffer_screen;
-		}
-	}
+	//void toggleAntialiasing(bool enable) {
+	//	if (enable)
+	//	{
+	//		ss_antialias = true;
+	//		true_height = 2 * m_height;
+	//		true_width = 2 * m_width;
+	//		m_outBuffer = m_outBuffer_antialiasing;
+	//	}
+	//	else
+	//	{
+	//		ss_antialias = false;
+	//		m_outBuffer = m_outBuffer_screen;
+	//	}
+	//}
 
-	GLuint m_textureID;
-	float bloom_filter_threshold = 1.0f;
-	float bloom_filter_factor = 0.5f;
-	int fs_blur_iterations = 1;
+
 
 };
