@@ -722,59 +722,70 @@ void Scene::drawModelTab()
 	// Model material
 	if (ImGui::CollapsingHeader("Material"))
 	{
-		Material* meshMaterial = activeMesh->getMaterial();
-		vec3& emis_real = meshMaterial->getEmissive();
-		vec3& diff_real = meshMaterial->getDiffuse();
-		vec3& spec_real = meshMaterial->getSpecular();
-
-		ImVec4 emis_local = ImVec4(emis_real.x, emis_real.y, emis_real.z, 1);
-		ImVec4 diff_local = ImVec4(diff_real.x, diff_real.y, diff_real.z, 1);
-		ImVec4 spec_local = ImVec4(spec_real.x, spec_real.y, spec_real.z, 1);
-
-		colorPicker(&emis_local, "Emissive Color", "##pickerEmis");
-		colorPicker(&diff_local, "Diffuse Color", "##pickerDiff");
-		colorPicker(&spec_local, "Specular Color", "##pickerSpec");
-
-		emis_real.x = emis_local.x;
-		emis_real.y = emis_local.y;
-		emis_real.z = emis_local.z;
-
-		diff_real.x = diff_local.x;
-		diff_real.y = diff_local.y;
-		diff_real.z = diff_local.z;
-
-		spec_real.x = spec_local.x;
-		spec_real.y = spec_local.y;
-		spec_real.z = spec_local.z;
-
-		float* ka = &(meshMaterial->Ka);
-		float* kd = &(meshMaterial->Kd);
-		float* ks = &(meshMaterial->Ks);
-		float* emissivefactor = &(meshMaterial->EmissiveFactor);
-		int* alphaFactor = &(meshMaterial->COS_ALPHA);
-
-		ImGui::SeparatorText("Intensity");
-		ImGui::Text("Ambient Intensity (Ka)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
-
-		ImGui::Text("Diffuse Intensity (Kd)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
-
-		ImGui::Text("Specular Intensity (Ks)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
-
-		ImGui::Text("Emissive factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
-
-		ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
-		if (ImGui::Button("Reset all##RK"))
+		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
+		if (activeMesh->isUniformMaterial)
 		{
-			*ka = DEFUALT_LIGHT_K_VALUE;
-			*kd = DEFUALT_LIGHT_K_VALUE;
-			*ks = DEFUALT_LIGHT_K_VALUE;
-			*emissivefactor = DEFUALT_EMIS_FACTOR;
-			*alphaFactor = DEFUALT_LIGHT_ALPHA;
+			Material& meshMaterial = activeMesh->getUserDefinedMaterial();
+			vec3& emis_real = meshMaterial.getEmissive();
+			vec3& diff_real = meshMaterial.getDiffuse();
+			vec3& spec_real = meshMaterial.getSpecular();
+
+			ImVec4 emis_local = ImVec4(emis_real.x, emis_real.y, emis_real.z, 1);
+			ImVec4 diff_local = ImVec4(diff_real.x, diff_real.y, diff_real.z, 1);
+			ImVec4 spec_local = ImVec4(spec_real.x, spec_real.y, spec_real.z, 1);
+
+			colorPicker(&emis_local, "Emissive Color", "##pickerEmis");
+			colorPicker(&diff_local, "Diffuse Color", "##pickerDiff");
+			colorPicker(&spec_local, "Specular Color", "##pickerSpec");
+
+			emis_real.x = emis_local.x;
+			emis_real.y = emis_local.y;
+			emis_real.z = emis_local.z;
+
+			diff_real.x = diff_local.x;
+			diff_real.y = diff_local.y;
+			diff_real.z = diff_local.z;
+
+			spec_real.x = spec_local.x;
+			spec_real.y = spec_local.y;
+			spec_real.z = spec_local.z;
+
+			float* ka = &(meshMaterial.Ka);
+			float* kd = &(meshMaterial.Kd);
+			float* ks = &(meshMaterial.Ks);
+			float* emissivefactor = &(meshMaterial.EmissiveFactor);
+			int* alphaFactor = &(meshMaterial.COS_ALPHA);
+
+			ImGui::SeparatorText("Intensity");
+			ImGui::Text("Ambient Intensity (Ka)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Diffuse Intensity (Kd)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Specular Intensity (Ks)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Emissive factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
+
+			ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
+			if (ImGui::Button("Reset all##RK"))
+			{
+				*ka = DEFUALT_LIGHT_K_VALUE;
+				*kd = DEFUALT_LIGHT_K_VALUE;
+				*ks = DEFUALT_LIGHT_K_VALUE;
+				*emissivefactor = DEFUALT_EMIS_FACTOR;
+				*alphaFactor = DEFUALT_LIGHT_ALPHA;
+			}
+		}
+		else
+		{
+			if (ImGui::Button("Generate Random Material"))
+			{
+				activeMesh->GenerateMaterials();
+			}
 		}
 	}
 

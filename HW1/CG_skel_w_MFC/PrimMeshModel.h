@@ -24,6 +24,7 @@ protected:
 		buffer_vertrices				= new Vertex[num_vertices];
 		buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
 		buffer2d_f_normals				= new vec2[num_faces * 2];
+		GenerateMaterials();
 	}
 
 	void initNeighbors()
