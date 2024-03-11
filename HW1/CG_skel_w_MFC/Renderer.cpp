@@ -405,35 +405,34 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 //					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)		// Col(p) Will get Polygon and Lighting sources
 //					m_zbuffer[x][y] = z
 
-	for (auto y = m_min_obj_y; y <= m_max_obj_y; y++)
-	{
-		for (auto P : polygons)
+	tbb::parallel_for(m_min_obj_y, m_max_obj_y, [&](int y)
 		{
-			////========= FOR DEBUG
-			//vec3 color;	
-			//switch (P.id)
-			//{
-			//case(0):
-			//	color = vec3(0.25, 0.25, 0.25);	// grey
-			//	break;
-			//case(1):
-			//	color = vec3(1, 0, 0);
-			//	break;
-			//case(2):
-			//	color = vec3(0, 1, 0);
-			//	break;
-			//case(3):
-			//	color = vec3(0, 0, 1);
-			//	break;
-			//}
-			////=====================
-			if (P.GetMinY() > y || P.GetMaxY() < y)
-				continue;
-			
-			std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
+			//for (auto y = m_min_obj_y; y <= m_max_obj_y; y++)
+			for (auto P : polygons)
+			{
+				////========= FOR DEBUG
+				//vec3 color;	
+				//switch (P.id)
+				//{
+				//case(0):
+				//	color = vec3(0.25, 0.25, 0.25);	// grey
+				//	break;
+				//case(1):
+				//	color = vec3(1, 0, 0);
+				//	break;
+				//case(2):
+				//	color = vec3(0, 1, 0);
+				//	break;
+				//case(3):
+				//	color = vec3(0, 0, 1);
+				//	break;
+				//}
+				////=====================
+				if (P.GetMinY() > y || P.GetMaxY() < y)
+					continue;
 
-			//for (int x = scan_span.first; x <= scan_span.second; x++)
-			tbb::parallel_for(scan_span.first, scan_span.second, [&](int x)
+				std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
+				for (int x = scan_span.first; x <= scan_span.second; x++)
 				{
 					UINT z = P.Depth(x, y);
 					int z_index = Z_Index(m_width, x, y);
@@ -446,9 +445,9 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 						PutColor(x, y, color);
 						m_zbuffer[z_index] = z;
 					}
-				});
-		}
-	}
+				}
+			}
+		});
 }
 
 void Renderer::PutColor(UINT x, UINT y, vec3& color)
