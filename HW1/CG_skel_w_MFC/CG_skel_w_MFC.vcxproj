@@ -30,7 +30,7 @@
     <CharacterSet>NotSet</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <UseInteloneTBB>false</UseInteloneTBB>
+    <UseInteloneTBB>true</UseInteloneTBB>
     <PreferredToolArchitecture>x86</PreferredToolArchitecture>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -61,7 +61,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\program_files\oneTBB\tbb\2021.11\include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\oneTBB\tbb\2021.11\include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLFW_STATIC;FREEGLUT_STATIC;GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -81,7 +81,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;C:\program_files\oneTBB\tbb\2021.11\lib32\tbb12.lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb;D:\technion\comp_graphics_hw\HW1\oneTBB;../imgui/backends/;../imgui;../glfw/lib-vc2019;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32\vc14_mt\tbb12.lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerbose</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
