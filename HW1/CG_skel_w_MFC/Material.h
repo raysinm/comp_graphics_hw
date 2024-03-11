@@ -17,7 +17,9 @@ public:
 		c_emissive = whiteColor;
 		c_diffuse = whiteColor;
 		c_specular = whiteColor;
-		Ka = Kd = Ks = DEFUALT_LIGHT_K_VALUE;
+		Ka = DEFUALT_LIGHT_Ka_VALUE;
+		Kd = DEFUALT_LIGHT_Kd_VALUE;
+		Ks = DEFUALT_LIGHT_Ks_VALUE;
 		EmissiveFactor = DEFUALT_EMIS_FACTOR;
 		COS_ALPHA = DEFUALT_LIGHT_ALPHA;
 	}

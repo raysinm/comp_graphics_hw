@@ -407,27 +407,8 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 
 	tbb::parallel_for(m_min_obj_y, m_max_obj_y, [&](int y)
 		{
-			//for (auto y = m_min_obj_y; y <= m_max_obj_y; y++)
 			for (auto P : polygons)
 			{
-				////========= FOR DEBUG
-				//vec3 color;	
-				//switch (P.id)
-				//{
-				//case(0):
-				//	color = vec3(0.25, 0.25, 0.25);	// grey
-				//	break;
-				//case(1):
-				//	color = vec3(1, 0, 0);
-				//	break;
-				//case(2):
-				//	color = vec3(0, 1, 0);
-				//	break;
-				//case(3):
-				//	color = vec3(0, 0, 1);
-				//	break;
-				//}
-				////=====================
 				if (P.GetMinY() > y || P.GetMaxY() < y)
 					continue;
 
