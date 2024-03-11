@@ -863,28 +863,29 @@ void Renderer::sampleAntialias()
 	if (!ss_antialias)
 		return;	// Do nothing if not supposed to be here
 
-	for (int outer_x = 0; outer_x < m_width * 2; outer_x+=2)
-	{
-		int inner_x = outer_x / 2;
-		for (int outer_y = 0; outer_y < m_height * 2; outer_y += 2)
+	//for (int outer_x = 0; outer_x < m_width * 2; outer_x+=2)
+	tbb::parallel_for(0, true_width, [&](int outer_x)
 		{
-			int inner_y = outer_y / 2;
+			int inner_x = outer_x / 2;
+			for (int outer_y = 0; outer_y < m_height * 2; outer_y += 2)
+			{
+				int inner_y = outer_y / 2;
 
-			float* val0 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y, 0)]);
-			float* val1 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x+1, outer_y, 0)]);
-			float* val2 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y+1, 0)]);
-			float* val3 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x+1, outer_y+1, 0)]);
+				float* val0 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y, 0)]);
+				float* val1 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x + 1, outer_y, 0)]);
+				float* val2 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x, outer_y + 1, 0)]);
+				float* val3 = &(m_outBuffer_antialiasing[Index(m_width * 2, outer_x + 1, outer_y + 1, 0)]);
 
-			float avg_r = (*(val0 + 0) + *(val1 + 0) + *(val2 + 0) + *(val3 + 0)) / 4;
-			float avg_g = (*(val0 + 1) + *(val1 + 1) + *(val2 + 1) + *(val3 + 1)) / 4;
-			float avg_b = (*(val0 + 2) + *(val1 + 2) + *(val2 + 2) + *(val3 + 2)) / 4;
+				float avg_r = (*(val0 + 0) + *(val1 + 0) + *(val2 + 0) + *(val3 + 0)) / 4;
+				float avg_g = (*(val0 + 1) + *(val1 + 1) + *(val2 + 1) + *(val3 + 1)) / 4;
+				float avg_b = (*(val0 + 2) + *(val1 + 2) + *(val2 + 2) + *(val3 + 2)) / 4;
 
-			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 0)] = avg_r;
-			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 1)] = avg_g;
-			m_outBuffer_screen[Index(m_width, inner_x, inner_y, 2)] = avg_b;
+				m_outBuffer_screen[Index(m_width, inner_x, inner_y, 0)] = avg_r;
+				m_outBuffer_screen[Index(m_width, inner_x, inner_y, 1)] = avg_g;
+				m_outBuffer_screen[Index(m_width, inner_x, inner_y, 2)] = avg_b;
 
-		}
-	}
+			}
+		});
 
 
 
