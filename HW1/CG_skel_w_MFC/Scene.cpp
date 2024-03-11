@@ -448,7 +448,13 @@ void Scene::draw()
 		}
 	}
 
-	//4. Render cameras as 3D plus signs
+	//4. Apply bloom filter
+	if (applyBloom)
+	{
+		m_renderer->ApplyBloomFilter();
+	}
+
+	//5. Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
 		if (camera->renderCamera && camera != cameras[activeCamera])
@@ -1294,6 +1300,8 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->allowClipping = false;
 			}
+			ImGui::SeparatorText("Effects");
+			ImGui::MenuItem("Bloom Filter",NULL, &applyBloom);
 
 			ImGui::EndMenu();	// End Options menu
 		}

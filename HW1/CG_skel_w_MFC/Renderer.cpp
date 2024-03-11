@@ -22,6 +22,9 @@ Renderer::~Renderer(void)
 	if(m_outBuffer)
 		delete[] (m_outBuffer);
 
+	if(m_outBuffer_bloom)
+		delete[] (m_outBuffer_bloom);
+
 	if (m_zbuffer)
 		delete[] m_zbuffer;
 }
@@ -30,15 +33,18 @@ void Renderer::CreateBuffers(int width, int height)
 {
 	CreateOpenGLBuffer(); //Do not remove this line.
 
-	m_outBuffer = new float[3 * width * height];
+	m_outBuffer			= new float[3 * width * height];
+	m_outBuffer_bloom	= new float[3 * width * height];
 	for (UINT i = 0; i < 3 * width * height; i++)
-		m_outBuffer[i] = 1.0f; //Set all pixels to pure white.
+	{
+		m_outBuffer[i] = 1.0f;	
+		m_outBuffer_bloom[i] = 1.0f;
+
+	}
 
 	m_zbuffer = new UINT[width * height];
 	for (UINT i = 0; i < width * height; i++)
 		m_zbuffer[i] = MAX_Z;
-
-
 }
 
 void Renderer::SetBufferLines(const vec2* points, unsigned int len)
@@ -276,16 +282,13 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
 	{
 		if (dy <= dx) /* 0 < Slope < 1*/
 		{
-			//pixels = ComputePixels_Bresenhams(A, B, false, y_mul);
 			ComputePixels_Bresenhams(A, B, false, y_mul, color);
 			return;
 		}
 		else          /* 1 < Slope */
 		{
-			//pixels = ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul); //flip x with y to make it slope < 1
 			ComputePixels_Bresenhams(A.flip(), B.flip(), true, y_mul, color); //flip x with y to make it slope < 1
 			return;
-			//flipXY = true;
 		}
 	}
 	else /* Negative Slope - reflect of X axis */
@@ -293,15 +296,6 @@ void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
 		DrawLine(vec2(A.x, -A.y), vec2(B.x, -B.y), true, color); // Draw with reflection of X axis.
 		return;
 	}
-
-	
-	//Draw all selected pixels:
-	//for (vec2 pix : pixels)
-	//{
-
-	//}
-
-
 }
 
 void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, vec4 color)
@@ -488,6 +482,53 @@ void Renderer::updateTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer);
 }
 
+void Renderer::ApplyBloomFilter()
+{
+	//Gaussian weights
+	const float weights[5] = { 0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f };
+	const float BLOOM_FILTER_THRESHOLD = 1.0f; //(out of 3)
+	const float factor = 0.5f;
+
+	for (UINT i = 0; i < 3 * m_width * m_height; i += 3)
+	{
+		if (m_outBuffer[i + 0] + m_outBuffer[i + 1] + m_outBuffer[i + 2] > BLOOM_FILTER_THRESHOLD)
+		{
+			// dict[x,y] = value 
+			m_outBuffer_bloom[i + 0] = m_outBuffer[i + 0];
+			m_outBuffer_bloom[i + 1] = m_outBuffer[i + 1];
+			m_outBuffer_bloom[i + 2] = m_outBuffer[i + 2];
+		}
+	}
+
+	for (int x = 4; x < m_width - 4; x++)
+	{
+		for (int y = 4; y < m_height - 4; y++)
+		{
+			vec3 result = vec3(0);
+			
+			for (int color = 0; color < 3; color++)
+			{
+				result[color] = weights[0] * m_outBuffer_bloom[Index(m_width, x, y, color)];
+				for (int dx = 1; dx < 5; dx++)
+				{
+					result[color] += weights[dx] * m_outBuffer_bloom[Index(m_width, x + dx, y, color)];
+					result[color] += weights[dx] * m_outBuffer_bloom[Index(m_width, x - dx, y, color)];
+				}
+				for (int dy = 1; dy < 5; dy++)
+				{
+					result[color] += weights[dy] * m_outBuffer_bloom[Index(m_width, x, y + dy, color)];
+					result[color] += weights[dy] * m_outBuffer_bloom[Index(m_width, x, y - dy, color)];
+				}
+
+			}
+			
+			for (int c = 0; c < 3; c++)
+				m_outBuffer[Index(m_width, x, y, c)] += result[c] * factor;
+		}
+	}
+
+}
+
 vec2 Renderer::GetWindowSize()
 {
 	int width, height;
@@ -518,7 +559,12 @@ void Renderer::updateBuffer()
 	{
 		delete[] m_outBuffer;
 		m_outBuffer = new float[3 * m_width * m_height];
+	}
 
+	if (m_outBuffer_bloom)
+	{
+		delete[] m_outBuffer_bloom;
+		m_outBuffer_bloom = new float[3 * m_width * m_height];
 	}
 
 	if (m_zbuffer)
@@ -535,7 +581,13 @@ void Renderer::clearBuffer()
 	if (m_outBuffer)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer[i] = DEFAULT_BACKGROUND_COLOR; //Set all pixels to pure black.
+			m_outBuffer[i] = DEFAULT_BACKGROUND_COLOR;
+	}
+
+	if (m_outBuffer_bloom)
+	{
+		for (int i = 0; i < 3 * m_width * m_height; i++)
+			m_outBuffer_bloom[i] = 0;
 	}
 
 	if (m_zbuffer)

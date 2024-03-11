@@ -18,7 +18,8 @@ class Renderer
 {
 private:
 
-	float* m_outBuffer; // 3*width*height
+	float* m_outBuffer;			// 3*width*height
+	float* m_outBuffer_bloom;	// 3*width*height
 	UINT* m_zbuffer;   // width*height
 	int m_width, m_height;
 	int m_max_obj_y, m_min_obj_y;
@@ -61,7 +62,7 @@ public:
 
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color);
 	void SetBufferLines(const vec2* points, unsigned int len);
-
+	void ApplyBloomFilter();
 
 	// New funcs
 	void CreateTexture();

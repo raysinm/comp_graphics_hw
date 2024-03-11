@@ -183,6 +183,7 @@ private:
 
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;
+	bool applyBloom = false;
 	int viewportX;
 	int viewportY;
 	int viewportWidth;
