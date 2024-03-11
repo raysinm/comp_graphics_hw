@@ -216,6 +216,11 @@ public:
 		cameras[activeCamera]->selected = true;  //Select it because it is the default
 		lights[activeLight]->selected   = true;  //Select it because it is the default
 	};
+	~Scene()
+	{
+		if (fog)
+			delete fog;
+	}
 	void loadOBJModel(string fileName);
 	void draw();
 	void drawGUI();

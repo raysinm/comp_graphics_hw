@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include <oneapi/tbb.h>
 #include "Renderer.h"
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
@@ -426,20 +426,22 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 				continue;
 			
 			std::pair<int, int> scan_span = CalcScanlineSpan(P, y);
-			for (int x = scan_span.first; x <= scan_span.second; x++)
-			{
-				UINT z = P.Depth(x, y);
-				int z_index = Z_Index(m_width, x, y);
-				UINT prevValue = m_zbuffer[z_index];
-				if (z <= prevValue)
+
+			//for (int x = scan_span.first; x <= scan_span.second; x++)
+			tbb::parallel_for(scan_span.first, scan_span.second, [&](int x)
 				{
-					vec3 color = GetColor(vec3(x, y, z), P);
-					if (scene->applyFog)
-						color = scene->fog->applyFog(z, color);
-					PutColor(x, y,color);
-					m_zbuffer[z_index] = z;
-				}
-			}
+					UINT z = P.Depth(x, y);
+					int z_index = Z_Index(m_width, x, y);
+					UINT prevValue = m_zbuffer[z_index];
+					if (z <= prevValue)
+					{
+						vec3 color = GetColor(vec3(x, y, z), P);
+						if (scene->applyFog)
+							color = scene->fog->applyFog(z, color);
+						PutColor(x, y, color);
+						m_zbuffer[z_index] = z;
+					}
+				});
 		}
 	}
 }

@@ -1,7 +1,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <oneapi/tbb.h>
-//#include "stdafx.h"
 #include <cstdlib>
 #include "CG_skel_w_glfw.h"
 #include "GL/glew.h"

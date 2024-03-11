@@ -1,4 +1,3 @@
-#include "StdAfx.h"
 #include "scene.h"
 #include "MeshModel.h"
 #include "vec.h"

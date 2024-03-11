@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mat.h"
-#include <stdexcept>
+//#include <stdexcept>
 
 typedef unsigned int UINT;
 #define RED   0

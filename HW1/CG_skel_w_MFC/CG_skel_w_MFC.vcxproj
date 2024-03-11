@@ -24,6 +24,7 @@
     <CharacterSet>NotSet</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v142</PlatformToolset>
+    <UseInteloneTBB>true</UseInteloneTBB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -32,6 +33,7 @@
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseInteloneTBB>true</UseInteloneTBB>
     <PreferredToolArchitecture>x86</PreferredToolArchitecture>
+    <InstrumentInteloneTBB>true</InstrumentInteloneTBB>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -61,8 +63,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\oneTBB\tbb\2021.11\include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>GLFW_STATIC;FREEGLUT_STATIC;GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../oneTBB/tbb/2021.11/include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GLFW_STATIC;FREEGLUT_STATIC;GLEW_STATIC;_USE_STATIC_TBB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -76,21 +78,22 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3.lib;../freeglut/lib/freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3.lib;../freeglut/lib/freeglut_static.lib;../oneTBB/tbb/2021.11/lib32/tbb12.lib;../oneTBB/tbb/2021.11/lib32/tbb12_debug.lib;../oneTBB/tbb/2021.11/lib/tbb12.lib;../oneTBB/tbb/2021.11/lib/tbb12_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb;D:\technion\comp_graphics_hw\HW1\oneTBB;../imgui/backends/;../imgui;../glfw/lib-vc2019;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32\vc14_mt\tbb12.lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../oneTBB/tbb/2021.11/bin/vc_mt;../oneTBB/tbb/2021.11/bin32/vc_mt;../oneTBB/tbb/2021.11/bin32;../oneTBB/tbb/2021.11/lib32;../oneTBB/tbb/2021.11/lib;../oneTBB/tbb/2021.11/bin;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib;D:\technion\comp_graphics_hw\HW1\oneTBB;../imgui/backends/;../imgui;../glfw/lib-vc2019</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerbose</ShowProgress>
+      <PerUserRedirection>true</PerUserRedirection>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>FREEGLUT_STATIC;GLEW_STATIC;WIN32;_CONSOLE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;../oneTBB/tbb/2021.11/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>FREEGLUT_STATIC;GLEW_STATIC;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -98,13 +101,13 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3.lib;../freeglut/lib/freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3_mt.lib;../freeglut/lib/freeglut_static.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;..\oneTBB\tbb\2021.11\bin32;..\oneTBB\tbb\2021.11\lib32</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
