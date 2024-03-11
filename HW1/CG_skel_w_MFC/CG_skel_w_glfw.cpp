@@ -1,11 +1,14 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include "stdafx.h"
+#include <oneapi/tbb.h>
+#include <cstdlib>
 #include "CG_skel_w_glfw.h"
 #include "GL/glew.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+
+
 #include "vec.h"
 #include "mat.h"
 #include "InitShader.h"
@@ -255,15 +258,21 @@ int main(int argc, char** argv)
 {
     int nRetCode = 0;
 	glfwSetErrorCallback(error_callback);	// To track errors during & after init
-	if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
+	/*if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
 	{
 		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
 		nRetCode = 1;
-	}
-	else
-	{
-		nRetCode = my_main(argc, argv);
-	}
+	}*/
+	//if (system("cmd /c start"))
+	//{
+	//	cout << "Fatal Error: CMD initialization failed" << endl;
+	//	nRetCode = 1;
+	//}
+	//else
+	//{
+	//	nRetCode = my_main(argc, argv);
+	//}
+	nRetCode = my_main(argc, argv);
 
 	glfwTerminate();
 	return nRetCode;
