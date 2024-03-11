@@ -4,7 +4,7 @@
 #include "InitShader.h"
 #include "GL\freeglut.h"
 #include "MeshModel.h"
-#include <set>
+
 
 extern Scene* scene;
 
@@ -15,6 +15,8 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 	//InitOpenGLRendering();	// Probably needed for later
 	CreateBuffers(m_width, m_height);
 	CreateTexture();
+
+	kernel = createGaussianKernel(10, 1);
 }
 
 Renderer::~Renderer(void)
@@ -22,11 +24,11 @@ Renderer::~Renderer(void)
 	if(m_outBuffer)
 		delete[] (m_outBuffer);
 
-	if(m_outBuffer_bloom)
-		delete[] (m_outBuffer_bloom);
-
 	if (m_zbuffer)
 		delete[] m_zbuffer;
+
+	if (m_outBuffer_fsblur)
+		delete[] m_outBuffer_fsblur;
 }
 
 void Renderer::CreateBuffers(int width, int height)
@@ -34,15 +36,14 @@ void Renderer::CreateBuffers(int width, int height)
 	CreateOpenGLBuffer(); //Do not remove this line.
 
 	m_outBuffer			= new float[3 * width * height];
-	m_outBuffer_bloom	= new float[3 * width * height];
-	for (UINT i = 0; i < 3 * width * height; i++)
-	{
-		m_outBuffer[i] = 1.0f;	
-		m_outBuffer_bloom[i] = 1.0f;
-
+	m_outBuffer_fsblur	= new float[3 * width * height];
+	m_zbuffer			= new UINT[width * height];
+	
+	for (UINT i = 0; i < 3 * width * height; i++) {
+		m_outBuffer[i] = 0;
+		m_outBuffer_fsblur[i] = 0;
 	}
 
-	m_zbuffer = new UINT[width * height];
 	for (UINT i = 0; i < width * height; i++)
 		m_zbuffer[i] = MAX_Z;
 }
@@ -486,50 +487,98 @@ void Renderer::updateTexture()
 
 void Renderer::ApplyBloomFilter()
 {
-	//Gaussian weights
-	const float weights[5] = { 0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f };
-	const float BLOOM_FILTER_THRESHOLD = 1.0f; //(out of 3)
-	const float factor = 0.5f;
+	int NUM_OF_WEIGHTS = kernel.size();
+	int halfKernelSize = (int)(NUM_OF_WEIGHTS / 2);
 
-	for (UINT i = 0; i < 3 * m_width * m_height; i += 3)
+	for (UINT x = 0; x < m_width; x++)
 	{
-		if (m_outBuffer[i + 0] + m_outBuffer[i + 1] + m_outBuffer[i + 2] > BLOOM_FILTER_THRESHOLD)
+		for (UINT y = 0; y < m_height; y++)
 		{
-			// dict[x,y] = value 
-			m_outBuffer_bloom[i + 0] = m_outBuffer[i + 0];
-			m_outBuffer_bloom[i + 1] = m_outBuffer[i + 1];
-			m_outBuffer_bloom[i + 2] = m_outBuffer[i + 2];
-		}
-	}
+			vec3 value = vec3(0);
+			value.x = m_outBuffer[Index(m_width, x, y, RED)];
+			value.y = m_outBuffer[Index(m_width, x, y, GREEN)];
+			value.z = m_outBuffer[Index(m_width, x, y, BLUE)];
 
-	for (int x = 4; x < m_width - 4; x++)
-	{
-		for (int y = 4; y < m_height - 4; y++)
-		{
-			vec3 result = vec3(0);
-			
-			for (int color = 0; color < 3; color++)
+			if (value.sum() > bloom_filter_threshold)
 			{
-				result[color] = weights[0] * m_outBuffer_bloom[Index(m_width, x, y, color)];
-				for (int dx = 1; dx < 5; dx++)
+				highlightPixels[vec2(x, y)] = value;
+				for (int dx = -2; dx < 2; dx++)
 				{
-					result[color] += weights[dx] * m_outBuffer_bloom[Index(m_width, x + dx, y, color)];
-					result[color] += weights[dx] * m_outBuffer_bloom[Index(m_width, x - dx, y, color)];
+					for (int dy = -2; dy < 2; dy++)
+					{
+						if (dx == 0 && dy == 0) continue;
+						if (x + dx < 0 || x + dx >= m_width || y + dy < 0 || y + dy >= m_height) continue;
+						auto it = highlightPixels.find(vec2(x + dx, y + dy));
+						if (it != highlightPixels.end()) continue;
+						
+						highlightPixels.insert({ vec2(x + dx,y + dy), vec3(0) });
+					}
 				}
-				for (int dy = 1; dy < 5; dy++)
-				{
-					result[color] += weights[dy] * m_outBuffer_bloom[Index(m_width, x, y + dy, color)];
-					result[color] += weights[dy] * m_outBuffer_bloom[Index(m_width, x, y - dy, color)];
-				}
-
 			}
-			
-			for (int c = 0; c < 3; c++)
-				m_outBuffer[Index(m_width, x, y, c)] += result[c] * factor;
 		}
 	}
 
+	for (const auto& pair : highlightPixels)
+	{
+		const vec2& pixel = pair.first;
+		const vec3& value = pair.second;
+		
+		vec3 result = kernel[0] * value;
+
+		// Apply the gauissian blurr, save the result.
+		for (int t = 1; t < NUM_OF_WEIGHTS; t++)
+		{
+			/* Right */
+			auto it = highlightPixels.find(vec2(pixel.x + t, pixel.y));
+			if (it != highlightPixels.end())
+				result += kernel[t] * (it->second);
+
+
+			/* Left*/
+			it = highlightPixels.find(vec2(pixel.x - t, pixel.y));
+			if (it != highlightPixels.end())
+				result += kernel[t] * (it->second);
+
+			
+			/* Up */
+			it = highlightPixels.find(vec2(pixel.x, pixel.y - t));
+			if (it != highlightPixels.end())
+				result += kernel[t] * (it->second);
+
+
+			/* Down */
+			it = highlightPixels.find(vec2(pixel.x, pixel.y + t));
+			if (it != highlightPixels.end())
+				result += kernel[t] * (it->second);
+		}
+
+		// Apply the multiplier factor
+		result *= bloom_filter_factor;
+
+		// Add the result to the scene
+		for (int c = 0; c < 3; c++)
+			m_outBuffer[Index(m_width, pixel.x, pixel.y, c)] += result[c];
+	}
+	
+	highlightPixels.clear();
 }
+
+void Renderer::ApplyFullScreenBlur()
+{
+	if (fs_blur_iterations == 0) return;
+
+	for (int i = 0; i < fs_blur_iterations; i++)
+	{
+		gaussianBlur(m_outBuffer, m_outBuffer_fsblur, 1.0f);
+	}
+
+
+	for (int i = 0; i < m_width * m_height * 3; i++)
+	{
+		m_outBuffer[i] = m_outBuffer_fsblur[i];
+	}
+}
+
 
 vec2 Renderer::GetWindowSize()
 {
@@ -563,10 +612,10 @@ void Renderer::updateBuffer()
 		m_outBuffer = new float[3 * m_width * m_height];
 	}
 
-	if (m_outBuffer_bloom)
+	if (m_outBuffer_fsblur)
 	{
-		delete[] m_outBuffer_bloom;
-		m_outBuffer_bloom = new float[3 * m_width * m_height];
+		delete[] m_outBuffer_fsblur;
+		m_outBuffer_fsblur = new float[3 * m_width * m_height];
 	}
 
 	if (m_zbuffer)
@@ -586,10 +635,10 @@ void Renderer::clearBuffer()
 			m_outBuffer[i] = DEFAULT_BACKGROUND_COLOR;
 	}
 
-	if (m_outBuffer_bloom)
+	if (m_outBuffer_fsblur)
 	{
 		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer_bloom[i] = 0;
+			m_outBuffer_fsblur[i] = 0;
 	}
 
 	if (m_zbuffer)
@@ -707,6 +756,62 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 	return vec3(0);
 }
 
+// Function to apply Gaussian blur to an image
+void Renderer::gaussianBlur(const float* image, float* blurredImage, const float factor)
+{
+	int NUM_OF_WEIGHTS = kernel.size();
+	int halfKernelSize = (int)(NUM_OF_WEIGHTS / 2);
+
+	// Convolve the image with the kernel
+	for (int y = 0; y < m_height; ++y)
+	{
+		for (int x = 0; x < m_width; ++x)
+		{
+			vec3 res = vec3(0);
+			for (int horizontal = 0; horizontal < 2; horizontal++)
+			{
+				for (int i = -halfKernelSize; i < halfKernelSize; ++i)
+				{
+					int newX;
+					int newY;
+					if (horizontal == 1)
+					{
+						if (i == 0) continue;
+						newX = max(0, min(m_width - 1, x + i));
+						newY = y;
+					}
+					else
+					{
+						newX = x;
+						newY = max(0, min(m_height - 1, y + i));
+					}
+
+					for (int c = 0; c < 3; c++)
+						res[c] += image[Index(m_width, newX, newY, c)] * kernel[i + halfKernelSize];
+				}
+			}
+
+			for (int c = 0; c < 3; c++)
+				blurredImage[Index(m_width, x, y, c)] += res[c] * factor / 2;
+		}
+	}
+}
+
+std::vector<float> Renderer::createGaussianKernel(int size, float sigma)
+{
+	std::vector<float> kernel(size);
+	float sum = 0.0f;
+	int halfSize = size / 2;
+	for (int i = -halfSize; i < halfSize; ++i) {
+		kernel[i + halfSize] = exp(-(i * i) / (2 * sigma * sigma)) / (sqrt(2 * M_PI) * sigma);
+		sum += kernel[i + halfSize];
+	}
+	// Normalize the kernel
+	for (int i = 0; i < size; ++i) {
+		kernel[i] /= sum;
+	}
+	return kernel;
+}
 
 /////////////////////////////////////////////////////
 //         OpenGL stuff. Don't touch.			   //

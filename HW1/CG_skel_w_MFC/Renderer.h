@@ -3,12 +3,13 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <algorithm>
+#include <set>
+#include <unordered_map>
 #include "CG_skel_w_glfw.h"
 #include "Poly.h"
 #include "Utils.h"
 #include "GL/glew.h"
 #include "Light.h"
-
 
 
 using namespace std;
@@ -17,13 +18,14 @@ class MeshModel;
 class Renderer
 {
 private:
-
+	unordered_map<vec2, vec3, vec2Hash> highlightPixels;
 	float* m_outBuffer;			// 3*width*height
-	float* m_outBuffer_bloom;	// 3*width*height
+	float* m_outBuffer_fsblur;	// 3*width*height
 	UINT* m_zbuffer;   // width*height
 	int m_width, m_height;
 	int m_max_obj_y, m_min_obj_y;
 	GLFWwindow* m_window;	// For glfw swap buffers
+	vector<float> kernel;
 
 	vec4 DEFAULT_WIREFRAME_COLOR = vec4(1.0, 1.0, 1.0);
 	int DEFAULT_BACKGROUND_COLOR = 0;
@@ -38,6 +40,7 @@ private:
 	void UpdateMinMaxY(Poly& P);
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
 	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p);
+	vector<float> createGaussianKernel(int size, float sigma);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -63,6 +66,8 @@ public:
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color);
 	void SetBufferLines(const vec2* points, unsigned int len);
 	void ApplyBloomFilter();
+	void ApplyFullScreenBlur();
+	void gaussianBlur(const float* image, float* blurredImage, const float factor);
 
 	// New funcs
 	void CreateTexture();
@@ -80,5 +85,8 @@ public:
 	}
 
 	GLuint m_textureID;
+	float bloom_filter_threshold = 1.0f;
+	float bloom_filter_factor = 0.5f;
+	int fs_blur_iterations = 1;
 
 };

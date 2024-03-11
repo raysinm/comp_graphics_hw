@@ -11,7 +11,7 @@
 #define MODEL_TAB_INDEX  0
 #define CAMERA_TAB_INDEX 1
 #define LIGHT_TAB_INDEX  2
-#define FOG_TAB_INDEX  3
+#define EFFECTS_TAB_INDEX  3
 
 using namespace std;
 
@@ -454,6 +454,11 @@ void Scene::draw()
 		m_renderer->ApplyBloomFilter();
 	}
 
+	if (applyFullScreenBlur)
+	{
+		m_renderer->ApplyFullScreenBlur();
+	}
+
 	//5. Render cameras as 3D plus signs
 	for (auto camera : cameras)
 	{
@@ -505,7 +510,6 @@ void colorPicker(ImVec4* color, std::string button_label, std::string id)
 		ImGui::EndPopup();
 	}
 }
-
 
 void Scene::drawCameraTab()
 {
@@ -964,19 +968,16 @@ void Scene::drawLightTab()
 
 	if (ImGui::Button("Reset all intensity##RI"))
 	{
-		*la = DEFUALT_LIGHT_K_VALUE;
-		*ld = DEFUALT_LIGHT_K_VALUE;
-		*ls = DEFUALT_LIGHT_K_VALUE;
+		*la = DEFUALT_LIGHT_LA_VALUE;
+		*ld = DEFUALT_LIGHT_LD_VALUE;
+		*ls = DEFUALT_LIGHT_LS_VALUE;
 	}
 }
 
-void Scene::drawFogTab()
+void Scene::drawEffectsTab()
 {
-	//ImGui::SeparatorText("Color");
-	if (ImGui::Button("Fog Enable/Disable"))
-	{
-		applyFog = !applyFog;
-	}
+	ImGui::SeparatorText("Fog");
+	ImGui::Checkbox("Fog##fog_bool", &applyFog);
 	if (applyFog)
 	{
 		//Color
@@ -985,27 +986,38 @@ void Scene::drawFogTab()
 		ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
 
 		colorPicker(&color_local, "Color", "##FogColor");
-		float brightness = 
-		//ImGui::DragFloat("##FogMinDist", &(fog->getMinDist()), 0.01f,0, fog->getMaxDist(), "%.2f"); ImGui::SameLine();
 
 		color.x = color_local.x;
 		color.y = color_local.y;
 		color.z = color_local.z;
 
 		Camera* activeCam = cameras[activeCamera];
-		//ImGui::DragFloat("##FogMinDist", &(fog->getMinDist()), 0.01f,0, fog->getMaxDist(), "%.2f"); ImGui::SameLine();
-		//ImGui::Text("Minimum distance");
-		//ImGui::DragFloat("##FogMaxDist", &(fog->getMaxDist()), 0.01f, fog->getMinDist(), MAX_Z, "%.2f"); ImGui::SameLine();
-		//ImGui::Text("Maximum distance");
 
-		ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 1.0f,0, DEF_MAX_FOG_EFFECT); ImGui::SameLine();
+		ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 0.1f, 0, DEF_MAX_FOG_EFFECT, "%.1f"); ImGui::SameLine();
 		ImGui::Text("Fog effect");
+	}
+	
+	
+	ImGui::SeparatorText("Bloom Filter");
+	ImGui::Checkbox("Bloom Filter##bloom_bool", &applyBloom);
+	if (applyBloom)
+	{
+		ImGui::Text("Threshold [0 - 3]"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##BolomThresh", &(m_renderer->bloom_filter_threshold), 0.001f, 0, 3, "%.3f"); 
 
-
+		ImGui::Text("Multiply factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f"); 
 	}
 
-}
+	ImGui::SeparatorText("Full screen blur");
+	ImGui::Checkbox("Full Screen Blur##bfs_blur", &applyFullScreenBlur);
+	if (applyFullScreenBlur)
+	{
+		ImGui::Text("Blur factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragInt("##BlurFactor", &(m_renderer->fs_blur_iterations), 1, 0, 10);
 
+	}
+}
 
 void Scene::drawGUI()
 {
@@ -1264,22 +1276,27 @@ void Scene::drawGUI()
 				ImGui::EndMenu(); //End delete
 			}
 		}
-		if (ImGui::BeginMenu("Options"))
+		
+		if (ImGui::BeginMenu("Shading Algorithm"))
 		{
-			ImGui::SeparatorText("General");
-			if(ImGui::BeginMenu("Shading Mode..."))
-			{
-				for (int i = 0; i < static_cast<int>(DrawAlgo::COUNT); ++i) {
-					DrawAlgo algo = static_cast<DrawAlgo>(i);
-					if (ImGui::MenuItem(drawAlgoToString(algo), NULL, this->draw_algo == algo))
-						this->draw_algo = algo;
-				}
-				ImGui::EndMenu();
+			for (int i = 0; i < static_cast<int>(DrawAlgo::COUNT); ++i) {
+				DrawAlgo algo = static_cast<DrawAlgo>(i);
+				if (ImGui::MenuItem(drawAlgoToString(algo), NULL, draw_algo == algo))
+					draw_algo = algo;
 			}
 
-			ImGui::MenuItem("Apply Fog", NULL, &(this->applyFog));
-			
-			ImGui::SeparatorText("Cameras");
+			ImGui::EndMenu();	// End Shading algo menu
+		}
+		if (ImGui::BeginMenu("Visual Effects"))
+		{
+			ImGui::MenuItem("Fog", NULL, &applyFog);
+			ImGui::MenuItem("Bloom Filter", NULL, &applyBloom);
+			ImGui::MenuItem("Full screen blur", NULL, &applyFullScreenBlur);
+			ImGui::EndMenu();	// End Effects menu
+
+		}
+		if (ImGui::BeginMenu("Options"))
+		{
 			if (ImGui::MenuItem("Render all cameras"))
 			{
 				for (auto camera : cameras)
@@ -1300,8 +1317,6 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->allowClipping = false;
 			}
-			ImGui::SeparatorText("Effects");
-			ImGui::MenuItem("Bloom Filter",NULL, &applyBloom);
 
 			ImGui::EndMenu();	// End Options menu
 		}
@@ -1334,10 +1349,10 @@ void Scene::drawGUI()
 			}
 
 			const char* names[4] = { 0 };
-			names[MODEL_TAB_INDEX]  = "Model";
-			names[CAMERA_TAB_INDEX] = "Camera";
-			names[LIGHT_TAB_INDEX]  = "Light";
-			names[FOG_TAB_INDEX] = "Fog";
+			names[MODEL_TAB_INDEX]   = "Model";
+			names[CAMERA_TAB_INDEX]  = "Camera";
+			names[LIGHT_TAB_INDEX]   = "Light";
+			names[EFFECTS_TAB_INDEX] = "Effects";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
@@ -1362,9 +1377,9 @@ void Scene::drawGUI()
 						{
 							drawLightTab();
 						}
-						else if (n == FOG_TAB_INDEX)
+						else if (n == EFFECTS_TAB_INDEX)
 						{
-							drawFogTab();
+							drawEffectsTab();
 						}
 						
 						ImGui::EndTabItem();
