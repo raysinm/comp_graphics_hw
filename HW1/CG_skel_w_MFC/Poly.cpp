@@ -1,7 +1,64 @@
 #include "Poly.h"
 
-Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, Material* mate, int id,\
-		   vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
+vector<float> Poly::getBarycentricCoords(vec2& pixl)
+{
+	vec2 p1 = vec2(points[0].x, points[0].y);
+	vec2 p2 = vec2(points[1].x, points[1].y);
+	vec2 p3 = vec2(points[2].x, points[2].y);
+
+
+	vec3 p = vec3(pixl, 0);
+	vec3 p1p = vec3(p1, 0) - p;
+	vec3 p2p = vec3(p2, 0) - p;
+	vec3 p3p = vec3(p3, 0) - p;
+
+	float Ai[3] = { 0 };
+
+	Ai[0] = length(cross(p3p, p2p)) / 2.0;
+	Ai[1] = length(cross(p1p, p3p)) / 2.0;
+	Ai[2] = length(cross(p1p, p2p)) / 2.0;
+
+	float sum = Ai[0] + Ai[1] + Ai[2];
+
+	vector<float> alpha(3);
+	for (int i = 0; i < 3; i++) {
+		alpha[i] = Ai[i] / sum;
+	}
+
+	return alpha;
+}
+
+vector<float> Poly::getBarycentricCoords(vec3& pos)
+{
+	vec3 p1 = points_cameraspace[0];
+	vec3 p2 = points_cameraspace[1];
+	vec3 p3 = points_cameraspace[2];
+
+
+	vec3 p = pos;
+	vec3 p1p = p1 - p;
+	vec3 p2p = p2 - p;
+	vec3 p3p = p3 - p;
+
+	float Ai[3] = { 0 };
+
+	Ai[0] = length(cross(p3p, p2p)) / 2.0;
+	Ai[1] = length(cross(p1p, p3p)) / 2.0;
+	Ai[2] = length(cross(p1p, p2p)) / 2.0;
+
+	float sum = Ai[0] + Ai[1] + Ai[2];
+
+	vector<float> alpha(3);
+	for (int i = 0; i < 3; i++) {
+		alpha[i] = Ai[i] / sum;
+	}
+
+	return alpha;
+}
+
+Poly::Poly(	vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, bool isUniform, vector<Material>& mates, \
+			Material& uniformMaterial, int vertInd1, int vertInd2, int vertInd3, \
+			vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
 {
 	this->points[0]   = a;
 	this->points[1]   = b;
@@ -10,8 +67,7 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 	this->vn[1] = vb;
 	this->vn[2] = vc;
 	this->fn  = faceNormal;
-	this->material = mate;
-	this->id = id;
+	this->isUniformMaterial = isUniform;
 	this->points_cameraspace[0] = a_cameraspace;
 	this->points_cameraspace[1] = b_cameraspace;
 	this->points_cameraspace[2] = c_cameraspace;
@@ -26,12 +82,24 @@ Poly::Poly(vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNo
 
 	min_z = (int)min(min(a.z, b.z), c.z);
 	max_z = (int)max(max(a.z, b.z), c.z);
+	
 	// Set triangle lines
 	lines.push_back(Line(vec2(a.x, a.y), vec2(b.x, b.y)));
 	lines.push_back(Line(vec2(a.x, a.y), vec2(c.x, c.y)));
 	lines.push_back(Line(vec2(b.x, b.y), vec2(c.x, c.y)));
 
+	if (isUniform)
+		this->userDefinedMate = uniformMaterial;
+	else
+	{
+		this->material = vector<Material>(3);
+		this->material[0] = mates[vertInd1];
+		this->material[1] = mates[vertInd2];
+		this->material[2] = mates[vertInd3];
+	}
+	helper_result = Material();
 }
+
 
 UINT Poly::Depth(int x, int y)
 {
@@ -89,31 +157,40 @@ UINT Poly::Depth(int x, int y)
 
 vec3 Poly::GOUROD_interpolate(vec2& pixl)
 {
-	/* Interpolate the color value (Ia+Is+Id) from the 3 vertex in screen-space */
-	vec2 p1 = vec2(points[0].x, points[0].y);
-	vec2 p2 = vec2(points[1].x, points[1].y);
-	vec2 p3 = vec2(points[2].x, points[2].y);
+	vector<float> alpha = getBarycentricCoords(pixl);
 
-
-	vec3 p = vec3(pixl, 0);
-	vec3 p1p = vec3(p1, 0) - p;
-	vec3 p2p = vec3(p2, 0) - p;
-	vec3 p3p = vec3(p3, 0) - p;
-
-	float Ai[3]		= { 0 };
-	float alpha[3]	= { 0 };
-
-	Ai[0] = length(cross(p3p, p2p)) / 2.0;
-	Ai[1] = length(cross(p1p, p3p)) / 2.0;
-	Ai[2] = length(cross(p1p, p2p)) / 2.0;
-	
-	float sum = Ai[0] + Ai[1] + Ai[2];
-
-	vec3 result = vec3(0);
-	for (int i = 0; i < 3; i++) {
-		alpha[i] = Ai[i] / sum;
+	vec3 result(0);
+	for (int i = 0; i < 3; i++)
 		result += alpha[i] * GOUROD_colors[i];
-	}
-
+	
 	return result;
+}
+
+Material& Poly::InterpolateMaterial(vec2& pixl)
+{
+	if (isUniformMaterial)
+		return material[0];
+
+	vector<float> alpha = getBarycentricCoords(pixl);
+
+	helper_result = Material();
+	for (int i = 0; i < 3; i++)
+		helper_result += alpha[i] * material[i];
+
+	return helper_result;
+
+}
+
+Material& Poly::InterpolateMaterial(vec3& pos)
+{
+	if (isUniformMaterial)
+		return userDefinedMate;
+
+	vector<float> alpha = getBarycentricCoords(pos);
+
+	helper_result = Material() * 0;
+	for (int i = 0; i < 3; i++)
+		helper_result += alpha[i] * material[i];
+
+	return helper_result;
 }

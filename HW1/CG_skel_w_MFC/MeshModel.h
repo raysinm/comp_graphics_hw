@@ -34,7 +34,8 @@ protected:
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
 	vector<vec3> b_box_vertices;
 
-	Material* material;
+	vector<Material> materials;
+	Material userDefinedMaterial;
 
 	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
@@ -65,6 +66,7 @@ public:
 	bool showVertexNormals	= false;
 	bool showFaceNormals	= false;
 	bool showBoundingBox    = false;
+	bool isUniformMaterial  = true;
 
 
 	MeshModel(string fileName);
@@ -83,7 +85,6 @@ public:
 
 	void updateTransform();
 	void updateTransformWorld();
-
 	vec4 getCenterOffMass();
 
 	float* getLengthFaceNormal()   { return &length_face_normals; }
@@ -107,6 +108,9 @@ public:
 	void ResetUserTransform_translate_world();
 	void ResetUserTransform_rotate_world();
 	void ResetUserTransform_scale_world();
-	Material* getMaterial() { return material; }
+	
+	void GenerateMaterials();
+	vector<Material>& getMaterials() { return materials; }
+	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
 
 };

@@ -42,7 +42,7 @@ private:
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 	void UpdateMinMaxY(Poly& P);
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
-	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p);
+	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, Material& mate);
 	vector<float> createGaussianKernel(int size, float sigma);
 
 	//////////////////////////////

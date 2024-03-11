@@ -2,9 +2,12 @@
 #include "MeshModel.h"
 #include "vec.h"
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <random>
 
 using namespace std;
 
@@ -99,7 +102,6 @@ unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 MeshModel::MeshModel()
 {
 	ResetAllUserTransforms();
-	material = new Material();
 }
 
 MeshModel::MeshModel(string fileName) : MeshModel()
@@ -111,6 +113,7 @@ MeshModel::MeshModel(string fileName) : MeshModel()
 	initBoundingBox();
 
 	buffer_vertrices = new Vertex[num_vertices];
+	GenerateMaterials();
 
 }
 
@@ -124,8 +127,6 @@ MeshModel::~MeshModel(void)
 		delete[] buffer2d_v_normals;
 	if (buffer2d_f_normals)
 		delete[] buffer2d_f_normals;
-	if (material)
-		delete material;
 }
 
 void MeshModel::loadFile(string fileName)
@@ -596,4 +597,33 @@ void MeshModel::ResetUserTransform_rotate_world()
 void MeshModel::ResetUserTransform_scale_world()
 {
 	_scale_w = vec4(1);
+}
+
+void MeshModel::GenerateMaterials()
+{
+	materials.clear();
+
+	for (int i = 0; i < num_vertices_raw; i++)
+	{
+		Material current = Material();
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<> dis(0.0, 1.0);
+
+		float randomValue = dis(gen);
+		float randomValue2 = dis(gen);
+		float randomValue3 = dis(gen);
+		current.c_diffuse = vec3(randomValue, randomValue2, randomValue3);
+		//if (i % 3 == randomValue) {
+		//	current.c_diffuse = vec3(1, 0, 0);
+		//}
+		//else if (i % 3 == (randomValue + 1)%3) {
+		//	current.c_diffuse = vec3(0, 1, 0);
+		//}
+		//else {
+		//	current.c_diffuse = vec3(0, 0, 1);
+		//}
+
+		materials.push_back(current);
+	}
 }

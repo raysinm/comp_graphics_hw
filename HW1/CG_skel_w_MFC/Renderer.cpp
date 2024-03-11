@@ -193,8 +193,6 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 	/* Add all polygons to polygons vector */
 	for (UINT i = 0; i < len; i += 3)
 	{
-		// TODO: Implement clipping - Without disfiguring the triangle using the algorithm from clipping tutorial
-
 		/* Set range: [0, 1]  (All dimensions) */
 		vec3 A = vec3((vertices[i + 0].point.x + 1) / 2, (vertices[i + 0].point.y + 1) / 2, (vertices[i + 0].point.z + 1) / 2);
 		vec3 B = vec3((vertices[i + 1].point.x + 1) / 2, (vertices[i + 1].point.y + 1) / 2, (vertices[i + 1].point.z + 1) / 2);
@@ -207,6 +205,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 		vec3 B_Pxl = vec3((int)(B.x * (true_width - 1)), (int)(B.y * (true_height - 1)), (UINT)(B.z * MAX_Z));
 		vec3 C_Pxl = vec3((int)(C.x * (true_width - 1)), (int)(C.y * (true_height - 1)), (UINT)(C.z * MAX_Z));
 
+
 		Poly P = Poly(	A_Pxl,										\
 						B_Pxl,										\
 						C_Pxl,										\
@@ -214,11 +213,16 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 						(*vnormals)[vertices[i + 1].vertex_index],	\
 						(*vnormals)[vertices[i + 2].vertex_index],	\
 						(*pFaceNormals)[vertices[i].face_index],	\
-						pModel->getMaterial(),						\
-						i/3,										\
+						pModel->isUniformMaterial,					\
+						pModel->getMaterials(), 					\
+						pModel->getUserDefinedMaterial(), 			\
+						vertices[i + 0].vertex_index,				\
+						vertices[i + 1].vertex_index,				\
+						vertices[i + 2].vertex_index,				\
 						vertices[i + 0].point_cameraspace,			\
 						vertices[i + 1].point_cameraspace,			\
-						vertices[i + 2].point_cameraspace			);
+						vertices[i + 2].point_cameraspace );
+		
 
 		UpdateMinMaxY(P);
 		polygons.push_back(P);
@@ -574,7 +578,6 @@ void Renderer::ApplyFullScreenBlur()
 	}
 }
 
-
 vec2 Renderer::GetWindowSize()
 {
 	int width, height;
@@ -697,11 +700,14 @@ void Renderer::ResetMinMaxY()
 	m_min_obj_y = true_height-1;
 }
 
-void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, vec3& I, vec3& R, Poly& p)
+void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, Material& mate)
 {
+	vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
+	vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
+
 	if (lightSource->getLightType() == AMBIENT_LIGHT)
 	{
-		Ia_total += lightSource->La * p.material->Ka * lightSource->getColor();
+		Ia_total += lightSource->La * mate.Ka * lightSource->getColor();
 	}
 	else /* Parallel or Point light source*/
 	{
@@ -714,12 +720,12 @@ void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total,
 
 		/* Calcualte diffuse */
 		float dotProduct_IN = max(0, dot(I, N));
-		Id_total += (lightSource->Ld * p.material->Kd * dotProduct_IN) * (lightSource->getColor() * p.material->getDiffuse());
+		Id_total += (lightSource->Ld * mate.Kd * dotProduct_IN) * (lightSource->getColor() * mate.getDiffuse());
 
 		/* Calcualte specular */
 		float dotProduct_RV = max(0, dot(R, V));
-		pow(dotProduct_RV, p.material->COS_ALPHA);
-		Is_total += (lightSource->Ls * p.material->Ks * dotProduct_RV) * (lightSource->getColor() * p.material->getSpecular());
+		pow(dotProduct_RV, mate.COS_ALPHA);
+		Is_total += (lightSource->Ls * mate.Ks * dotProduct_RV) * (lightSource->getColor() * mate.getSpecular());
 	}
 }
 
@@ -734,19 +740,20 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 		if (p.FLAT_calculatedColor)
 			return p.FLAT_calculatedColorValue;
 
+
+		vec3 P = p.GetCenter();								// Point in camera space
+		vec3 N = p.GetFaceNormal();							// Normal of the polygon
+		vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
+
+		Material& mate = p.InterpolateMaterial(P);
+
 		for (auto lightSource : scene->lights)
 		{
-			vec3 P = p.GetCenter();								// Point in camera space
-			vec3 N = p.GetFaceNormal();							// Normal of the polygon
-			vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
-			vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
-			vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
-			
-			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, I, R, p);
+			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, mate);
 		}
 
 		/* Add emissive light INDEPENDENT to any light source*/
-		Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
+		Ia_total += mate.EmissiveFactor * mate.c_emissive;
 
 		p.FLAT_calculatedColor = true;
 		p.FLAT_calculatedColorValue = (Ia_total + Id_total + Is_total).clamp(0,1);
@@ -762,19 +769,19 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 				Ia_total = vec3(0);
 				Id_total = vec3(0);
 				Is_total = vec3(0);
+				
+				vec3 P = p.GetPoint(vert);							// Point in camera space
+				vec3 N = p.GetVN(vert);								// Normal of the polygon
+				vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
+
+				Material mate = p.InterpolateMaterial(P);
 				for (auto lightSource : scene->lights)
 				{
-					vec3 P = p.GetPoint(vert);							// Point in camera space
-					vec3 N = p.GetVN(vert);								// Normal of the polygon
-					vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
-					vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
-					vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
-
-					calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, I, R, p);
+					calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, mate);
 				}
 
 				/* Add emissive light INDEPENDENT to any light source*/
-				Ia_total += p.material->EmissiveFactor * p.material->getEmissive();
+				Ia_total += mate.EmissiveFactor * mate.c_emissive;
 				
 				p.GOUROD_colors[vert] = (Ia_total + Id_total + Is_total).clamp(0, 1);
 			}
