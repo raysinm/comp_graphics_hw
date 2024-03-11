@@ -123,6 +123,13 @@ struct vec2 {
         return *this;
     }
 
+    bool operator == (const vec2& other) const {
+        return x == other.x && y == other.y;
+    }
+
+    bool operator < (const vec2& other) const {
+        return x < other.x || (x == other.x && y < other.y);
+    }
     //
     //  --- Insertion and Extraction Operators ---
     //
@@ -179,6 +186,14 @@ vec2 normalize(const vec2& v)
 {
     return v / length(v); /*BUG - fixed*/   
 }
+
+struct vec2Hash {
+    size_t operator()(const vec2& v) const {
+        size_t hashX = std::hash<int>()(v.x);
+        size_t hashY = std::hash<int>()(v.y);
+        return hashX ^ (hashY << 1); // Combine hashes
+    }
+};
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -300,6 +315,14 @@ struct vec3 {
         return !(*this == v);
     }
 
+    bool operator == (const vec3& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    bool operator < (const vec3& other) const {
+        return x < other.x || (x == other.x && (y < other.y || (y == other.y && z < other.z)));
+    }
+
     //
     //  --- Insertion and Extraction Operators ---
     //
@@ -333,6 +356,10 @@ struct vec3 {
         y = min(maxi, max(mini, y));
         z = min(maxi, max(mini, z));
         return *this;
+    }
+
+    float sum() {
+        return x + y + z; 
     }
 };
 

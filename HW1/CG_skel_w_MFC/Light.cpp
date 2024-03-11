@@ -7,5 +7,7 @@ Light::Light(vec3 pos, vec3 dir, LIGHT_TYPE ltype)
 	_type = ltype;
 	_color = (1, 1, 1);
 	_name = string(LIGHT_DEFAULT_NAME);
-	La = Ld = Ls = DEFUALT_LIGHT_K_VALUE;
+	La = DEFUALT_LIGHT_LA_VALUE;
+	Ld = DEFUALT_LIGHT_LD_VALUE;
+	Ls = DEFUALT_LIGHT_LS_VALUE;
 }

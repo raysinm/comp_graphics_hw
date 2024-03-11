@@ -179,11 +179,11 @@ private:
 	void drawCameraTab();
 	void drawModelTab();
 	void drawLightTab();
-	void drawFogTab();
+	void drawEffectsTab();
 
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;
-	bool applyBloom = false;
+
 	int viewportX;
 	int viewportY;
 	int viewportWidth;
@@ -237,6 +237,8 @@ public:
 	int activeCamera = 0;	// Always at least one camera
 	DrawAlgo draw_algo = WIRE_FRAME;
 	bool applyFog = false;
+	bool applyBloom = false;
+	bool applyFullScreenBlur = false;
 
 };
 
