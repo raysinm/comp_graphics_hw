@@ -6,6 +6,9 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+
+#include <oneapi/tbb.h>
+
 #include "vec.h"
 #include "mat.h"
 #include "InitShader.h"
