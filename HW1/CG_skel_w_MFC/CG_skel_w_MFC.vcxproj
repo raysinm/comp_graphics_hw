@@ -81,7 +81,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;C:\program_files\oneTBB\tbb\2021.11\lib32\vc14_uwd</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;C:\program_files\oneTBB\tbb\2021.11\lib32\tbb12.lib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerbose</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
