@@ -129,7 +129,7 @@ private:
 	friend Scene;
 
 public:
-	Fog() : _min_dist(0), _max_dist(MAX_Z-1), effect(DEF_MAX_FOG_EFFECT), _color(vec3(0.541, 0.753, 0.78)) {	}
+	Fog() : _min_dist(0), _max_dist(MAX_Z-1), effect(0), _color(vec3(0.541, 0.753, 0.78)) {	}
 
 	void setMinDist(float& min_dist) {
 		if (min_dist < _max_dist)

@@ -58,7 +58,7 @@ public:
 	GLuint m_textureID;
 	float bloom_filter_threshold = 1.0f;
 	float bloom_filter_factor = 0.5f;
-	int fs_blur_iterations = 1;
+	float fs_blur_iterations = 1;
 	bool ss_antialias = false;
 
 

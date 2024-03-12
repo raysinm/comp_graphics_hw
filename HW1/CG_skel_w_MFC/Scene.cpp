@@ -1054,6 +1054,11 @@ void Scene::drawGUI()
 		
 	if (ImGui::BeginMainMenuBar())
 	{
+		if (ImGui::ArrowButton("Sidebar", ImGuiDir_Right))
+		{
+			showTransWindow = ! showTransWindow;
+
+		}
 		if (ImGui::BeginMenu("Add"))
 		{
 			if (ImGui::MenuItem("Model (.obj file)"))	// Loading Model
@@ -1131,67 +1136,66 @@ void Scene::drawGUI()
 			
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("Select"))
+
+		// SELECT
+
+		if (ImGui::BeginMenu("Models"))
 		{
 			if (models.size() > 0)
 			{
-				if (ImGui::BeginMenu("Models"))
-				{
-					int len = models.size();
-					for (int c = 0; c < len; c++)
-					{
-						if (ImGui::MenuItem(models[c]->getName().c_str(), NULL, &models[c]->selected))
-						{
-							activeModel = c;
-							UpdateModelSelection();
-
-							showTransWindow = true;
-						}
-					}
-					ImGui::EndMenu();
-				}
-			}
-			if (ImGui::BeginMenu("Cameras"))
-			{
-				int len = cameras.size();
+				int len = models.size();
 				for (int c = 0; c < len; c++)
 				{
-					if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL, &cameras[c]->selected))
+					if (ImGui::MenuItem(models[c]->getName().c_str(), NULL, &models[c]->selected))
 					{
-						/* Deselect all others */
-						for (int t = 0; t < len; t++)
-							cameras[t]->selected = false;
+						activeModel = c;
+						UpdateModelSelection();
 
-						/* Select current camera */
-						activeCamera = c;
-						cameras[c]->selected = true;
 						showTransWindow = true;
 					}
 				}
-				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Lights"))
-			{
-				int len = lights.size();
-				for (int c = 0; c < len; c++)
-				{
-					if (ImGui::MenuItem(lights[c]->getName().c_str(), NULL, &lights[c]->selected))
-					{
-						/* Deselect all others */
-						for (int t = 0; t < len; t++)
-							lights[t]->selected = false;
-
-						/* Select current light */
-						activeLight			= c;
-						lights[c]->selected = true;
-						showTransWindow		= true;
-					}
-				}
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMenu(); //End select
+			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("Cameras"))
+		{
+			int len = cameras.size();
+			for (int c = 0; c < len; c++)
+			{
+				if (ImGui::MenuItem(cameras[c]->getName().c_str(), NULL, &cameras[c]->selected))
+				{
+					/* Deselect all others */
+					for (int t = 0; t < len; t++)
+						cameras[t]->selected = false;
+
+					/* Select current camera */
+					activeCamera = c;
+					cameras[c]->selected = true;
+					showTransWindow = true;
+				}
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Lights"))
+		{
+			int len = lights.size();
+			for (int c = 0; c < len; c++)
+			{
+				if (ImGui::MenuItem(lights[c]->getName().c_str(), NULL, &lights[c]->selected))
+				{
+					/* Deselect all others */
+					for (int t = 0; t < len; t++)
+						lights[t]->selected = false;
+
+					/* Select current light */
+					activeLight			= c;
+					lights[c]->selected = true;
+					showTransWindow		= true;
+				}
+			}
+			ImGui::EndMenu();
+		}
+
 		
 		// Delete Model/Camera/Lights
 		if (models.size() > 0 || cameras.size() > 1 || lights.size() > 1)
