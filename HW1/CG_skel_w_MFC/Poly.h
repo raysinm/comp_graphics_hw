@@ -65,4 +65,6 @@ public:
 	Material& GetMaterial(int index) { return material[index]; }
 	Material& InterpolateMaterial(vec2& pixl);
 	Material& InterpolateMaterial(vec3& pos);
+	vec3 PHONG_interpolatePosition(vec2& pixl);
+	vec3 PHONG_interpolateNormal(vec2& pixl);
 };
