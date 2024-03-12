@@ -761,7 +761,7 @@ void Scene::drawModelTab()
 			ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
 
 			ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
+			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 100);
 			if (ImGui::Button("Reset all##RK"))
 			{
 				*ka = DEFUALT_LIGHT_Ka_VALUE;

@@ -664,7 +664,8 @@ void Renderer::ResetMinMaxY()
 void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, Material& mate)
 {
 	vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
-	vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
+	
+	vec3 R = normalize((2 * dot(I, N) * N) - I);		// Direction of reflected light
 	vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
 
 	if (lightSource->getLightType() == AMBIENT_LIGHT)
@@ -677,7 +678,7 @@ void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total,
 		if (lightSource->getLightType() == POINT_LIGHT)
 		{
 			I = normalize(lightSource->getPositionCameraSpace() - P);
-			R = normalize(I - (2 * dot(I, N) * N));	// Direction of reflected light
+			R = normalize((2 * dot(I, N) * N) - I);	// Direction of reflected light
 		}
 
 		/* Calcualte diffuse */
@@ -686,7 +687,7 @@ void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total,
 
 		/* Calcualte specular */
 		float dotProduct_RV = max(0, dot(R, V));
-		pow(dotProduct_RV, mate.COS_ALPHA);
+		dotProduct_RV = pow(dotProduct_RV, mate.COS_ALPHA);
 		Is_total += (lightSource->Ls * mate.Ks * dotProduct_RV) * (lightSource->getColor() * mate.getSpecular());
 	}
 }
@@ -754,10 +755,6 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 	}
 	else if (scene->draw_algo == PHONG)
 	{
-		Ia_total = vec3(0);
-		Id_total = vec3(0);
-		Is_total = vec3(0);
-
 		vec2 pxl = vec2(pixl.x, pixl.y);
 
 		vec3 P = p.PHONG_interpolatePosition(pxl); 	// Point in camera space
