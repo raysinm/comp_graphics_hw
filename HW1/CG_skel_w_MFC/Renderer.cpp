@@ -426,20 +426,18 @@ void Renderer::CreateTexture()
 
 void Renderer::updateTexture()
 {
-	//Yonatan: It seems to work without all this deleting & generating... better performance without them
+	// Delete the existing texture
+	glDeleteTextures(1, &m_textureID);
 
-	//// Delete the existing texture
-	//glDeleteTextures(1, &m_textureID);
+	// Generate a new texture
+	glGenTextures(1, &m_textureID);
 
-	//// Generate a new texture
-	//glGenTextures(1, &m_textureID);
+	// Bind the new texture
+	glBindTexture(GL_TEXTURE_2D, m_textureID);
 
-	//// Bind the new texture
-	//glBindTexture(GL_TEXTURE_2D, m_textureID);
-
-	//// Set texture parameters (adjust as needed)
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Set texture parameters (adjust as needed)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// Allocate texture storage with the updated buffer data
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer_screen);

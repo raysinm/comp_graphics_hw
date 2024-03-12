@@ -22,9 +22,11 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <PlatformToolset>v142</PlatformToolset>
     <UseInteloneTBB>true</UseInteloneTBB>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
+    <InstrumentInteloneTBB>false</InstrumentInteloneTBB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -90,15 +92,19 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Full</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;../oneTBB/tbb/2021.11/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../oneTBB/tbb/2021.11/include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEGLUT_STATIC;GLEW_STATIC;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3_mt.lib;../freeglut/lib/freeglut_static.lib</AdditionalDependencies>
@@ -107,7 +113,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;..\oneTBB\tbb\2021.11\bin32;..\oneTBB\tbb\2021.11\lib32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../oneTBB/tbb/2021.11/bin/vc_mt;../oneTBB/tbb/2021.11/bin32/vc_mt;../oneTBB/tbb/2021.11/bin32;../oneTBB/tbb/2021.11/lib32;../oneTBB/tbb/2021.11/lib;../oneTBB/tbb/2021.11/bin;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib32;D:\technion\comp_graphics_hw\HW1\oneTBB\tbb\2021.11\lib;D:\technion\comp_graphics_hw\HW1\oneTBB;../imgui/backends/;../imgui;../glfw/lib-vc2019</AdditionalLibraryDirectories>
+      <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
