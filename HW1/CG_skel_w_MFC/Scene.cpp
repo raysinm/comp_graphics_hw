@@ -778,9 +778,9 @@ void Scene::drawModelTab()
 			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 5);
 			if (ImGui::Button("Reset all##RK"))
 			{
-				*ka = DEFUALT_LIGHT_K_VALUE;
-				*kd = DEFUALT_LIGHT_K_VALUE;
-				*ks = DEFUALT_LIGHT_K_VALUE;
+				*ka = DEFUALT_LIGHT_Ka_VALUE;
+				*kd = DEFUALT_LIGHT_Kd_VALUE;
+				*ks = DEFUALT_LIGHT_Ks_VALUE;
 				*emissivefactor = DEFUALT_EMIS_FACTOR;
 				*alphaFactor = DEFUALT_LIGHT_ALPHA;
 			}
@@ -969,16 +969,16 @@ void Scene::drawLightTab()
 	if (currentLight->getLightType() == AMBIENT_LIGHT)
 	{
 		ImGui::Text("Ambient Intensity "); ImGui::SameLine();
-		ImGui::DragFloat("##I_amb", la, 0.001f, 0, 1, "%.3f");
+		ImGui::DragFloat("##I_amb", la, 0.001f, 0, 10, "%.3f");
 	}
 
 	else
 	{
 		ImGui::Text("Diffuse Intensity   "); ImGui::SameLine();
-		ImGui::DragFloat("##I_dif", ld, 0.001f, 0, 1, "%.3f");
+		ImGui::DragFloat("##I_dif", ld, 0.001f, 0, 10, "%.3f");
 	
 		ImGui::Text("Specular Intensity"); ImGui::SameLine();
-		ImGui::DragFloat("##I_spc", ls, 0.001f, 0, 1, "%.3f");
+		ImGui::DragFloat("##I_spc", ls, 0.001f, 0, 10, "%.3f");
 	}
 
 
