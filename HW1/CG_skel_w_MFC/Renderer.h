@@ -42,7 +42,7 @@ private:
 	vector<Poly> CreatePolygonsVector(const MeshModel* model);
 	void UpdateMinMaxY(Poly& P);
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
-	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, Material& mate);
+	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, Material& mate);
 	vector<float> createGaussianKernel(int size, float sigma);
 
 	//////////////////////////////
@@ -69,9 +69,8 @@ public:
 
 	void Rasterize_WireFrame(const Vertex* vertices, unsigned int len, vec4 color);
 	void Rasterize_WireFrame(const Vertex* vertices, unsigned int len);
-	void Rasterize_Flat(const MeshModel* model);
-	void Rasterize_Gouraud(const MeshModel* model);
-	void Rasterize_Phong(const MeshModel* model);
+	void Rasterize(const MeshModel* model);
+
 
 	void SetBufferLines(const vec2* points, unsigned int len, vec4 color);
 	void SetBufferLines(const vec2* points, unsigned int len);

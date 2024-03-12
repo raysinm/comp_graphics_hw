@@ -390,33 +390,19 @@ void Scene::draw()
 					cameras[activeCamera]->rotationMat_normals);
 
 		unsigned int len = 0;
-		switch (draw_algo)
-		{
-			case WIRE_FRAME:
-			{
+		if (draw_algo == WIRE_FRAME) {
 				//values: [-1, 1]
 				auto vertices = ((MeshModel*)model)->GetBuffer();
 				len = ((MeshModel*)model)->GetBuffer_len(MODEL);
 				if (vertices)
 					m_renderer->Rasterize_WireFrame(vertices, len);
-				break;
-			}
-			case FLAT:
-			{
-				m_renderer->Rasterize_Flat((const MeshModel*)model);
-				break;
-			}
-			case GOURAUD:
-			{
-				m_renderer->Rasterize_Gouraud((const MeshModel*)model);
-				break;
-			}
-			case PHONG:
-			{
-
-				break;
-			}
 		}
+		else {
+			m_renderer->Rasterize((const MeshModel*)model);
+		}
+
+
+			
 
 
 		// Bounding Box

@@ -1,5 +1,49 @@
 #include "Poly.h"
 
+Poly::Poly(	vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, bool isUniform, vector<Material>& mates, \
+			Material& uniformMaterial, int vertInd1, int vertInd2, int vertInd3, \
+			vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
+{
+	this->points[0]   = a;
+	this->points[1]   = b;
+	this->points[2]   = c;
+	this->vn[0] = va;
+	this->vn[1] = vb;
+	this->vn[2] = vc;
+	this->fn  = faceNormal;
+	this->isUniformMaterial = isUniform;
+	this->points_cameraspace[0] = a_cameraspace;
+	this->points_cameraspace[1] = b_cameraspace;
+	this->points_cameraspace[2] = c_cameraspace;
+	this->centerOfPoly = (a_cameraspace + b_cameraspace + c_cameraspace) / 3.0f;
+
+	// Calculate y min, y max of polygon NOTICE: could be outside of screen
+	min_y = (int) min(min(a.y, b.y), c.y);
+	max_y = (int) max(max(a.y, b.y), c.y);
+			 
+	min_x = (int)min(min(a.x, b.x), c.x);
+	max_x = (int)max(max(a.x, b.x), c.x);
+
+	min_z = (int)min(min(a.z, b.z), c.z);
+	max_z = (int)max(max(a.z, b.z), c.z);
+	
+	// Set triangle lines
+	lines.push_back(Line(vec2(a.x, a.y), vec2(b.x, b.y)));
+	lines.push_back(Line(vec2(a.x, a.y), vec2(c.x, c.y)));
+	lines.push_back(Line(vec2(b.x, b.y), vec2(c.x, c.y)));
+
+	if (isUniform)
+		this->userDefinedMate = uniformMaterial;
+	else
+	{
+		this->material = vector<Material>(3);
+		this->material[0] = mates[vertInd1];
+		this->material[1] = mates[vertInd2];
+		this->material[2] = mates[vertInd3];
+	}
+	helper_result = Material();
+}
+
 vector<float> Poly::getBarycentricCoords(vec2& pixl)
 {
 	vec2 p1 = vec2(points[0].x, points[0].y);
@@ -55,51 +99,6 @@ vector<float> Poly::getBarycentricCoords(vec3& pos)
 
 	return alpha;
 }
-
-Poly::Poly(	vec3& a, vec3& b, vec3& c, vec3& va, vec3& vb, vec3& vc, vec3& faceNormal, bool isUniform, vector<Material>& mates, \
-			Material& uniformMaterial, int vertInd1, int vertInd2, int vertInd3, \
-			vec3& a_cameraspace, vec3& b_cameraspace, vec3& c_cameraspace)
-{
-	this->points[0]   = a;
-	this->points[1]   = b;
-	this->points[2]   = c;
-	this->vn[0] = va;
-	this->vn[1] = vb;
-	this->vn[2] = vc;
-	this->fn  = faceNormal;
-	this->isUniformMaterial = isUniform;
-	this->points_cameraspace[0] = a_cameraspace;
-	this->points_cameraspace[1] = b_cameraspace;
-	this->points_cameraspace[2] = c_cameraspace;
-	this->centerOfPoly = (a_cameraspace + b_cameraspace + c_cameraspace) / 3.0f;
-
-	// Calculate y min, y max of polygon NOTICE: could be outside of screen
-	min_y = (int) min(min(a.y, b.y), c.y);
-	max_y = (int) max(max(a.y, b.y), c.y);
-			 
-	min_x = (int)min(min(a.x, b.x), c.x);
-	max_x = (int)max(max(a.x, b.x), c.x);
-
-	min_z = (int)min(min(a.z, b.z), c.z);
-	max_z = (int)max(max(a.z, b.z), c.z);
-	
-	// Set triangle lines
-	lines.push_back(Line(vec2(a.x, a.y), vec2(b.x, b.y)));
-	lines.push_back(Line(vec2(a.x, a.y), vec2(c.x, c.y)));
-	lines.push_back(Line(vec2(b.x, b.y), vec2(c.x, c.y)));
-
-	if (isUniform)
-		this->userDefinedMate = uniformMaterial;
-	else
-	{
-		this->material = vector<Material>(3);
-		this->material[0] = mates[vertInd1];
-		this->material[1] = mates[vertInd2];
-		this->material[2] = mates[vertInd3];
-	}
-	helper_result = Material();
-}
-
 
 UINT Poly::Depth(int x, int y)
 {
@@ -193,4 +192,26 @@ Material& Poly::InterpolateMaterial(vec3& pos)
 		helper_result += alpha[i] * material[i];
 
 	return helper_result;
+}
+
+vec3 Poly::PHONG_interpolatePosition(vec2& pixl)
+{
+	vector<float> alpha = getBarycentricCoords(pixl);
+
+	vec3 result(0);
+	for (int i = 0; i < 3; i++)
+		result += alpha[i] * points_cameraspace[i];
+
+	return result;
+}
+
+vec3 Poly::PHONG_interpolateNormal(vec2& pixl)
+{
+	vector<float> alpha = getBarycentricCoords(pixl);
+
+	vec3 result(0);
+	for (int i = 0; i < 3; i++)
+		result += alpha[i] * vn[i];
+
+	return result;
 }

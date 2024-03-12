@@ -231,7 +231,7 @@ vector<Poly> Renderer::CreatePolygonsVector(const MeshModel* model)
 	return polygons;
 }
 
-void Renderer::Rasterize_Flat(const MeshModel* model)
+void Renderer::Rasterize(const MeshModel* model)
 {
 	if (!model) return; /* Sanity check*/
 	vector<Poly> polygons = CreatePolygonsVector(model);
@@ -241,23 +241,6 @@ void Renderer::Rasterize_Flat(const MeshModel* model)
 	}
 
 	ScanLineZ_Buffer(polygons);
-}
-
-void Renderer::Rasterize_Gouraud(const MeshModel* model)
-{
-	if (!model) return; /* Sanity check*/
-	vector<Poly> polygons = CreatePolygonsVector(model);
-	if (polygons.size() == 0)
-	{
-		return;	// Something failed in creation
-	}
-
-	ScanLineZ_Buffer(polygons);
-}
-
-void Renderer::Rasterize_Phong(const MeshModel* model)
-{
-
 }
 
 void Renderer::DrawLine(vec2 A, vec2 B, bool isNegative, vec4 color)
@@ -680,10 +663,11 @@ void Renderer::ResetMinMaxY()
 	m_min_obj_y = true_height-1;
 }
 
-void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, vec3& V, Material& mate)
+void Renderer::calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, Material& mate)
 {
 	vec3 I = lightSource->getDirectionCameraSpace();	// Light source direction to P (Assume Parallel light source)
 	vec3 R = normalize(I - (2 * dot(I, N) * N));		// Direction of reflected light
+	vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
 
 	if (lightSource->getLightType() == AMBIENT_LIGHT)
 	{
@@ -723,13 +707,12 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 
 		vec3 P = p.GetCenter();								// Point in camera space
 		vec3 N = p.GetFaceNormal();							// Normal of the polygon
-		vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
 
 		Material& mate = p.InterpolateMaterial(P);
 
 		for (auto lightSource : scene->lights)
 		{
-			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, mate);
+			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, mate);
 		}
 
 		/* Add emissive light INDEPENDENT to any light source*/
@@ -752,12 +735,11 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 				
 				vec3 P = p.GetPoint(vert);							// Point in camera space
 				vec3 N = p.GetVN(vert);								// Normal of the polygon
-				vec3 V = normalize(-P);								// Direction to COP (center of projection === camera)
 
 				Material mate = p.InterpolateMaterial(P);
 				for (auto lightSource : scene->lights)
 				{
-					calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, V, mate);
+					calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, mate);
 				}
 
 				/* Add emissive light INDEPENDENT to any light source*/
@@ -774,13 +756,30 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 	}
 	else if (scene->draw_algo == PHONG)
 	{
+		Ia_total = vec3(0);
+		Id_total = vec3(0);
+		Is_total = vec3(0);
 
+		vec2 pxl = vec2(pixl.x, pixl.y);
+
+		vec3 P = p.PHONG_interpolatePosition(pxl); 	// Point in camera space
+		vec3 N = p.PHONG_interpolateNormal(pxl); 	// Normal of the polygon
+
+		Material mate = p.InterpolateMaterial(P);
+		for (auto lightSource : scene->lights)
+		{
+			calcIntensity(lightSource, Ia_total, Id_total, Is_total, P, N, mate);
+		}
+
+		/* Add emissive light INDEPENDENT to any light source*/
+		Ia_total += mate.EmissiveFactor * mate.c_emissive;
+
+		return (Ia_total + Id_total + Is_total).clamp(0, 1);
 	}
 	
 	return vec3(0);
 }
 
-// Function to apply Gaussian blur to an image
 void Renderer::gaussianBlur(const float* image, float* blurredImage, const float factor)
 {
 	int NUM_OF_WEIGHTS = kernel.size();
