@@ -598,7 +598,7 @@ void Renderer::updateBuffer()
 		delete[] m_outBuffer_screen;
 		m_outBuffer_screen = new float[3 * m_width * m_height];
 	}
-	if (ss_antialias && m_outBuffer_antialiasing)
+	if (m_outBuffer_antialiasing)
 	{
 		delete[] m_outBuffer_antialiasing;
 		m_outBuffer_antialiasing = new float[3 * m_width * DEF_SUPERSAMPLE_SCALE * m_height * DEF_SUPERSAMPLE_SCALE];
@@ -623,8 +623,8 @@ void Renderer::clearBuffer()
 {
 	m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
 
-	true_width = ss_antialias ? m_width * 2 : m_width;
-	true_height = ss_antialias ? m_height * 2 : m_height;
+	true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
+	true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
 
 	if (m_outBuffer_screen)
 	{
