@@ -1008,17 +1008,32 @@ void Scene::drawEffectsTab()
 		ImGui::DragFloat("##BolomThresh", &(m_renderer->bloom_filter_threshold), 0.001f, 0, 3, "%.3f"); 
 
 		ImGui::Text("Multiply factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f"); 
+		ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f");
+
+		ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragInt("##bloomkernelsize", &(m_renderer->kernelbloomFilterSize), 0.01f, 0, 100);
+
+		ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##bloomkernelsigma", &(m_renderer->kernelbloomFilterSigma), 0.001f, 0.1, 100);
 	}
+
 
 	ImGui::SeparatorText("Full screen blur");
 	ImGui::Checkbox("Full Screen Blur##bfs_blur", &applyFullScreenBlur);
 	if (applyFullScreenBlur)
 	{
-		ImGui::Text("Blur factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragInt("##BlurFactor", &(m_renderer->fs_blur_iterations), 1, 0, 10);
+		ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragInt("##Blurkernelsize", &(m_renderer->kernelFSBlurSize), 0.01f, 0, 100);
 
+		ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##Blurkernelsigma", &(m_renderer->FSblurSigma),0.001f, 0.1, 100);
 	}
+
+
+	ImGui::SeparatorText("Anti-Aliasing");
+	ImGui::Checkbox("Super Sampling Anti-Aliasing##aass", &m_renderer->ss_antialias);
+
+	
 }
 
 void Scene::drawGUI()

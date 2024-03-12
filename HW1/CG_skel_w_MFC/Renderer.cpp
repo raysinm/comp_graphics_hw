@@ -20,7 +20,11 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 	CreateBuffers();
 	CreateTexture();
 
-	kernel = createGaussianKernel(10, 1);
+	kernel = generateGaussianKernel(kernelbloomFilterSize, kernelbloomFilterSigma);
+	prevbloomFilterSigma = kernelbloomFilterSigma;
+	
+	kernelFSBLUR = generateGaussianKernel(kernelFSBlurSize, FSblurSigma);
+	prevFSblurSigma = FSblurSigma;
 }
 
 Renderer::~Renderer(void)
@@ -445,9 +449,14 @@ void Renderer::updateTexture()
 
 void Renderer::ApplyBloomFilter()
 {
+	if (kernel.size() != kernelbloomFilterSize || kernelbloomFilterSigma != prevbloomFilterSigma)
+	{
+		kernel = generateGaussianKernel(kernelbloomFilterSize, kernelbloomFilterSigma);
+		prevbloomFilterSigma = kernelbloomFilterSigma;
+	}
+
 	int NUM_OF_WEIGHTS = kernel.size();
 	int halfKernelSize = (int)(NUM_OF_WEIGHTS / 2);
-
 
 
 	for (UINT x = 0; x < m_width; x++)
@@ -462,9 +471,9 @@ void Renderer::ApplyBloomFilter()
 			if (value.sum() > bloom_filter_threshold)
 			{
 				highlightPixels[vec2(x, y)] = value;
-				for (int dx = -2; dx < 2; dx++)
+				for (int dx = -halfKernelSize; dx < halfKernelSize; dx++)
 				{
-					for (int dy = -2; dy < 2; dy++)
+					for (int dy = -halfKernelSize; dy < halfKernelSize; dy++)
 					{
 						if (dx == 0 && dy == 0) continue;
 						if (x + dx < 0 || x + dx >= m_width || y + dy < 0 || y + dy >= m_height) continue;
@@ -483,33 +492,18 @@ void Renderer::ApplyBloomFilter()
 		const vec2& pixel = pair.first;
 		const vec3& value = pair.second;
 		
-		vec3 result = kernel[0] * value;
+		vec3 result = vec3(0);
 
 		// Apply the gauissian blurr, save the result.
-		for (int t = 1; t < NUM_OF_WEIGHTS; t++)
+		for (int dy = -halfKernelSize; dy < halfKernelSize; dy++)
 		{
-			/* Right */
-			auto it = highlightPixels.find(vec2(pixel.x + t, pixel.y));
-			if (it != highlightPixels.end())
-				result += kernel[t] * (it->second);
-
-
-			/* Left*/
-			it = highlightPixels.find(vec2(pixel.x - t, pixel.y));
-			if (it != highlightPixels.end())
-				result += kernel[t] * (it->second);
-
-			
-			/* Up */
-			it = highlightPixels.find(vec2(pixel.x, pixel.y - t));
-			if (it != highlightPixels.end())
-				result += kernel[t] * (it->second);
-
-
-			/* Down */
-			it = highlightPixels.find(vec2(pixel.x, pixel.y + t));
-			if (it != highlightPixels.end())
-				result += kernel[t] * (it->second);
+			for (int dx = -halfKernelSize; dx < halfKernelSize; dx++)
+			{
+				auto it = highlightPixels.find(vec2(pixel.x + dx, pixel.y + dy));
+				if (it == highlightPixels.end()) continue;
+				
+				result += kernel[dx + halfKernelSize][dy + halfKernelSize] * it->second;
+			}
 		}
 
 		// Apply the multiplier factor
@@ -525,18 +519,19 @@ void Renderer::ApplyBloomFilter()
 
 void Renderer::ApplyFullScreenBlur()
 {
-	if (fs_blur_iterations == 0) return;
-
-	for (int i = 0; i < fs_blur_iterations; i++)
+	if (kernelFSBLUR.size() != kernelFSBlurSize || FSblurSigma != prevFSblurSigma)
 	{
-		gaussianBlur(m_outBuffer_screen, m_outBuffer_fsblur, 1.0f);
+		kernelFSBLUR = generateGaussianKernel(kernelFSBlurSize, FSblurSigma);
+		prevFSblurSigma = FSblurSigma;
 	}
-
 
 	for (int i = 0; i < m_width * m_height * 3; i++)
 	{
-		m_outBuffer_screen[i] = m_outBuffer_fsblur[i];
+		m_outBuffer_fsblur[i] = m_outBuffer_screen[i];
 	}
+
+
+	gaussianBlur(m_outBuffer_fsblur, m_outBuffer_screen, kernelFSBLUR);
 }
 
 vec2 Renderer::GetWindowSize()
@@ -775,9 +770,9 @@ vec3 Renderer::GetColor(vec3& pixl, Poly& p)
 	return vec3(0);
 }
 
-void Renderer::gaussianBlur(const float* image, float* blurredImage, const float factor)
+void Renderer::gaussianBlur(const float* image, float* blurredImage, vector<vector<float>>& kernelToUse)
 {
-	int NUM_OF_WEIGHTS = kernel.size();
+	int NUM_OF_WEIGHTS = kernelToUse.size();
 	int halfKernelSize = (int)(NUM_OF_WEIGHTS / 2);
 
 	// Convolve the image with the kernel
@@ -786,51 +781,49 @@ void Renderer::gaussianBlur(const float* image, float* blurredImage, const float
 		for (int x = 0; x < m_width; ++x)
 		{
 			vec3 res = vec3(0);
-			for (int horizontal = 0; horizontal < 2; horizontal++)
+			
+			for (int dy = -halfKernelSize; dy < halfKernelSize; dy++)
 			{
-				for (int i = -halfKernelSize; i < halfKernelSize; ++i)
+				for (int dx = -halfKernelSize; dx < halfKernelSize; dx++)
 				{
-					int newX;
-					int newY;
-					if (horizontal == 1)
-					{
-						if (i == 0) continue;
-						newX = max(0, min(m_width - 1, x + i));
-						newY = y;
-					}
-					else
-					{
-						newX = x;
-						newY = max(0, min(m_height - 1, y + i));
-					}
+					int	newX = max(0, min(m_width - 1, x + dx));
+					int	newY = max(0, min(m_height - 1, y + dy));
 
 					for (int c = 0; c < 3; c++)
-						res[c] += image[Index(m_width, newX, newY, c)] * kernel[i + halfKernelSize];
+						res[c] += (kernelToUse[dx + halfKernelSize][dy + halfKernelSize]) * (image[Index(m_width, newX, newY, c)]);
 				}
 			}
+			
 
 			for (int c = 0; c < 3; c++)
-				blurredImage[Index(m_width, x, y, c)] += res[c] * factor / 2;
+				blurredImage[Index(m_width, x, y, c)] = res[c];
 		}
 	}
 }
 
-std::vector<float> Renderer::createGaussianKernel(int size, float sigma)
+vector<vector<float>> Renderer::generateGaussianKernel(int size, float sigma)
 {
-	std::vector<float> kernel(size);
-	float sum = 0.0f;
+	vector<vector<float>> k (size);
+	for (int i = 0; i < size; i++)
+		k[i] = vector<float>(size);
+	float sum = 0.0;
 	int halfSize = size / 2;
-	for (int i = -halfSize; i < halfSize; ++i) {
-		kernel[i + halfSize] = exp(-(i * i) / (2 * sigma * sigma)) / (sqrt(2 * M_PI) * sigma);
-		sum += kernel[i + halfSize];
-	}
-	// Normalize the kernel
-	for (int i = 0; i < size; ++i) {
-		kernel[i] /= sum;
-	}
-	return kernel;
-}
 
+	for (int i = -halfSize; i < halfSize; ++i)
+	{
+		for (int j = -halfSize; j < halfSize; ++j)
+		{
+			float value = std::exp(-(i * i + j * j) / (2 * sigma * sigma));
+			k[i + halfSize][j + halfSize] = value;
+			sum += value;
+		}
+	}
+	for (int i = 0; i < size; ++i)
+		for (int j = 0; j < size; ++j)
+			k[i][j] /= sum;
+
+	return k;
+}
 
 void Renderer::sampleAntialias()
 {

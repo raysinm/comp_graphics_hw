@@ -27,7 +27,8 @@ private:
 	int m_width, m_height, true_width, true_height;
 	int m_max_obj_y, m_min_obj_y;
 	GLFWwindow* m_window;	// For glfw swap buffers
-	vector<float> kernel;
+	vector<vector<float>> kernel;
+	vector<vector<float>> kernelFSBLUR;
 
 
 	vec4 DEFAULT_WIREFRAME_COLOR = vec4(1.0, 1.0, 1.0);
@@ -43,7 +44,10 @@ private:
 	void UpdateMinMaxY(Poly& P);
 	std::pair<int, int> CalcScanlineSpan(Poly& p, int y);
 	void calcIntensity(Light* lightSource, vec3& Ia_total, vec3& Id_total, vec3& Is_total, vec3& P, vec3& N, Material& mate);
-	vector<float> createGaussianKernel(int size, float sigma);
+	vector<vector<float>> generateGaussianKernel(int size, float sigma);
+	float prevFSblurSigma;
+	float prevbloomFilterSigma;
+
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -61,6 +65,12 @@ public:
 	int fs_blur_iterations = 1;
 	bool ss_antialias = false;
 
+	int kernelFSBlurSize = 11;
+	float FSblurSigma = 2;
+
+	int kernelbloomFilterSize = 11;
+	float kernelbloomFilterSigma = 2;
+
 
 	Renderer(int width, int height, GLFWwindow* window);
 	~Renderer(void);
@@ -76,7 +86,7 @@ public:
 	void SetBufferLines(const vec2* points, unsigned int len);
 	void ApplyBloomFilter();
 	void ApplyFullScreenBlur();
-	void gaussianBlur(const float* image, float* blurredImage, const float factor);
+	void gaussianBlur(const float* image, float* blurredImage, vector<vector<float>>& kernelToUse);
 	void sampleAntialias();
 
 	// New funcs
@@ -93,21 +103,5 @@ public:
 		DEFAULT_WIREFRAME_COLOR = vec4(1) - DEFAULT_WIREFRAME_COLOR;
 		DEFAULT_BACKGROUND_COLOR = 1 - DEFAULT_BACKGROUND_COLOR;
 	}
-	//void toggleAntialiasing(bool enable) {
-	//	if (enable)
-	//	{
-	//		ss_antialias = true;
-	//		true_height = 2 * m_height;
-	//		true_width = 2 * m_width;
-	//		m_outBuffer = m_outBuffer_antialiasing;
-	//	}
-	//	else
-	//	{
-	//		ss_antialias = false;
-	//		m_outBuffer = m_outBuffer_screen;
-	//	}
-	//}
-
-
 
 };
