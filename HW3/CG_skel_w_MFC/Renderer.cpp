@@ -1,4 +1,3 @@
-#include <oneapi/tbb.h>
 #include "Renderer.h"
 #include "CG_skel_w_glfw.h"
 #include "InitShader.h"
@@ -384,8 +383,9 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 //					PutColor(x,y, Col(p))	(Get the color of the pixel (x,y) in polygon p)		// Col(p) Will get Polygon and Lighting sources
 //					m_zbuffer[x][y] = z
 
-	tbb::parallel_for(m_min_obj_y, m_max_obj_y, [&](int y)
-		{
+
+	//tbb::parallel_for(m_min_obj_y, m_max_obj_y, [&](int y)
+		/*{
 			for (auto P : polygons)
 			{
 				if (P.GetMinY() > y || P.GetMaxY() < y)
@@ -407,7 +407,7 @@ void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
 					}
 				}
 			}
-		});
+		});*/
 }
 
 void Renderer::PutColor(UINT x, UINT y, vec3& color)
@@ -831,7 +831,7 @@ void Renderer::sampleAntialias()
 		return;	// Do nothing if not supposed to be here
 
 	//for (int outer_x = 0; outer_x < m_width * 2; outer_x+=2)
-	tbb::parallel_for(0, true_width, [&](int outer_x)
+	/*tbb::parallel_for(0, true_width, [&](int outer_x)
 		{
 			int inner_x = outer_x / 2;
 			for (int outer_y = 0; outer_y < m_height * 2; outer_y += 2)
@@ -854,7 +854,7 @@ void Renderer::sampleAntialias()
 			}
 		});
 
-
+*/
 
 }
 
