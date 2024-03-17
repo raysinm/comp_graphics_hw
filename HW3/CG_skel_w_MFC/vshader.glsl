@@ -1,6 +1,5 @@
 #version 150
 
-#this is yonatan comment
 in  vec2 vTexCoord;
 in  vec2 vPosition;
 
