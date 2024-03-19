@@ -1,15 +1,11 @@
-
 #version 150
 
-in  vec2 texCoord;
+in vec3 color_debug;
 
-out vec4 fColor;
+out vec4 FragColor;
 
-uniform sampler2D texture;
-
-void main() 
+void main()
 { 
-   fColor = textureLod( texture, texCoord, 0 );
-   //fColor = vec4(0,0,1,1);
+	FragColor = vec4(color_debug, 1);
 } 
 

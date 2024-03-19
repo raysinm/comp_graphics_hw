@@ -1593,19 +1593,19 @@ void Scene::drawGUI()
 	//--------------------------------------------------------------
 	//------ Draw the ImGui::Image (Used for displaying our texture)
  	//--------------------------------------------------------------
-	ImVec2 imgPos = ImVec2(viewportX, viewportY);
-	ImVec2 imgSize = ImVec2(viewportWidth, viewportHeight);
+	//ImVec2 imgPos = ImVec2(viewportX, viewportY);
+	//ImVec2 imgSize = ImVec2(viewportWidth, viewportHeight);
 
-	ImGui::SetNextWindowPos (imgPos);
-	ImGui::SetNextWindowSize(imgSize);
+	//ImGui::SetNextWindowPos (imgPos);
+	//ImGui::SetNextWindowSize(imgSize);
 
-	if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove			 | \
-											ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
-											ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
-	{
-		ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), imgSize);
-		ImGui::End();
-	}
+	//if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove			 | \
+	//										ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
+	//										ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
+	//{
+	//	ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), imgSize);
+	//	ImGui::End();
+	//}
 
 }
 
@@ -1665,13 +1665,13 @@ void Scene::resize_callback_handle(int width, int height)
 
 	// Calculate viewport position to keep it centered
 	int xOffset = (abs(width - newWidth) / 2) + transormationWindowGap;
-	int yOffset = (abs(height - newHeight) / 2) + mainMenuBarHeight;
+	int yOffset = (abs(height - newHeight) / 2) + 3;
 
 	// Set viewport
 	glViewport(xOffset, yOffset, newWidth, newHeight);
 
 	//Update buffer
-	m_renderer->update(newWidth, newHeight);
+	//m_renderer->update(newWidth, newHeight);
 
 	//Update Scene
 	setViewPort(vec4(xOffset, yOffset, newWidth, newHeight));

@@ -53,12 +53,13 @@ private:
 	// openGL stuff. Don't touch.
 
 	GLuint gScreenTex;
-	GLuint gScreenVtc;
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
 	//////////////////////////////
 	
 public:
+	GLuint VAO_vertex_pos;
+	GLuint program;
 	GLuint m_textureID;
 	float bloom_filter_threshold = 1.0f;
 	float bloom_filter_factor = 0.5f;

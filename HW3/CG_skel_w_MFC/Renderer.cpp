@@ -15,7 +15,7 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 
 	true_width = ss_antialias ? m_width * 2 : m_width;
 	true_height = ss_antialias ? m_height * 2 : m_height;
-	//InitOpenGLRendering();	// Probably needed for later
+	InitOpenGLRendering();
 	CreateBuffers();
 	CreateTexture();
 
@@ -352,22 +352,22 @@ void Renderer::ComputePixels_Bresenhams(vec2 A, vec2 B, bool flipXY, int y_mul, 
 void Renderer::SwapBuffers()
 {
 
-	int a = glGetError();
-	glActiveTexture(GL_TEXTURE0);
-	a = glGetError();
-	glBindTexture(GL_TEXTURE_2D, gScreenTex);
+	//int a = glGetError();
+	//glActiveTexture(GL_TEXTURE0);
+	//a = glGetError();
+	//glBindTexture(GL_TEXTURE_2D, gScreenTex);
 
-	a = glGetError();
-	//glTexSubImage2D(/GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer_screen);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	a = glGetError();
+	//a = glGetError();
+	////glTexSubImage2D(/GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer_screen);
+	//glGenerateMipmap(GL_TEXTURE_2D);
+	//a = glGetError();
 
-	glBindVertexArray(gScreenVtc);
-	a = glGetError();
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	a = glGetError();
+	//glBindVertexArray(VAO_vertex_pos);
+	//a = glGetError();
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	//a = glGetError();
 	glfwSwapBuffers(m_window);
-	a = glGetError();
+	//a = glGetError();
 }
 
 void Renderer::ScanLineZ_Buffer(vector<Poly>& polygons)
@@ -430,6 +430,12 @@ void Renderer::CreateTexture()
 
 void Renderer::updateTexture()
 {
+	return;
+
+
+
+
+
 	// Delete the existing texture
 	glDeleteTextures(1, &m_textureID);
 
@@ -614,32 +620,38 @@ void Renderer::updateBuffer()
 
 void Renderer::clearBuffer()
 {
-	m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
 
-	true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
-	true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
+	glClearColor(DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (m_outBuffer_screen)
-	{
-		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer_screen[i] = DEFAULT_BACKGROUND_COLOR;
-	}
-	if (ss_antialias && m_outBuffer_antialiasing)
-	{
-		for (int i = 0; i < 3 * true_width * true_height; i++)
-			m_outBuffer_antialiasing[i] = DEFAULT_BACKGROUND_COLOR;
-	}
-	if (m_outBuffer_fsblur)
-	{
-		for (int i = 0; i < 3 * m_width * m_height; i++)
-			m_outBuffer_fsblur[i] = 0;
-	}
 
-	if (m_zbuffer)
-	{
-		for (UINT i = 0; i < true_width * true_height; i++)
-			m_zbuffer[i] = MAX_Z;
-	}
+	return;
+
+
+
+	//m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
+	//true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
+	//true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
+	//if (m_outBuffer_screen)
+	//{
+	//	for (int i = 0; i < 3 * m_width * m_height; i++)
+	//		m_outBuffer_screen[i] = DEFAULT_BACKGROUND_COLOR;
+	//}
+	//if (ss_antialias && m_outBuffer_antialiasing)
+	//{
+	//	for (int i = 0; i < 3 * true_width * true_height; i++)
+	//		m_outBuffer_antialiasing[i] = DEFAULT_BACKGROUND_COLOR;
+	//}
+	//if (m_outBuffer_fsblur)
+	//{
+	//	for (int i = 0; i < 3 * m_width * m_height; i++)
+	//		m_outBuffer_fsblur[i] = 0;
+	//}
+	//if (m_zbuffer)
+	//{
+	//	for (UINT i = 0; i < true_width * true_height; i++)
+	//		m_zbuffer[i] = MAX_Z;
+	//}
 
 
 }
@@ -862,58 +874,128 @@ void Renderer::sampleAntialias()
 //         OpenGL stuff. Don't touch.			   //
 /////////////////////////////////////////////////////
 
+GLfloat* vert_pos_for_wireframe(const GLfloat* vert, int len)
+{
+	GLfloat* res = new GLfloat[2 * len];
+
+	int k = 0;
+	int numoftrig = len / 9;
+	for (int i = 0; i < numoftrig; i++)
+	{
+		//A --> B
+		res[k++] = vert[9 * i + 3*0 + 0];//x
+		res[k++] = vert[9 * i + 3*0 + 1];//y
+		res[k++] = vert[9 * i + 3*0 + 2];//z
+		res[k++] = vert[9 * i + 3*1 + 0];//x
+		res[k++] = vert[9 * i + 3*1 + 1];//y
+		res[k++] = vert[9 * i + 3*1 + 2];//z
+
+		//A --> C
+		res[k++] = vert[9 * i + 3*0 + 0];//x
+		res[k++] = vert[9 * i + 3*0 + 1];//y
+		res[k++] = vert[9 * i + 3*0 + 2];//z
+		res[k++] = vert[9 * i + 3*2 + 0];//x
+		res[k++] = vert[9 * i + 3*2 + 1];//y
+		res[k++] = vert[9 * i + 3*2 + 2];//z
+
+		//B --> C
+		res[k++] = vert[9 * i + 3*1 + 0];//x
+		res[k++] = vert[9 * i + 3*1 + 1];//y
+		res[k++] = vert[9 * i + 3*1 + 2];//z
+		res[k++] = vert[9 * i + 3*2 + 0];//x
+		res[k++] = vert[9 * i + 3*2 + 1];//y
+		res[k++] = vert[9 * i + 3*2 + 2];//z
+	}
+
+	return res;
+}
+
 void Renderer::InitOpenGLRendering()
 {
-	GLenum a = glGetError();
-
-	a = glGetError();
-	glGenTextures(1, &gScreenTex);
-	a = glGetError();
-
-	glGenVertexArrays(1, &gScreenVtc);
-	GLuint buffer;
-	glBindVertexArray(gScreenVtc);
-	glGenBuffers(1, &buffer);
-	const GLfloat vtc[] = {
-		-1, -1,
-		1, -1,
-		-1, 1,
-		-1, 1,
-		1, -1,
-		1, 1
-	};
-	const GLfloat tex[] = {
-		0,0,
-		1,0,
-		0,1,
-		0,1,
-		1,0,
-		1,1 };
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vtc) + sizeof(tex), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vtc), vtc);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vtc), sizeof(tex), tex);
-
-	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
+	program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
-	GLint  vPosition = glGetAttribLocation(program, "vPosition");
+	//Enable Z-Buffer
+	glEnable(GL_DEPTH_TEST);
 
+
+	const GLfloat vert_pos[] =
+	{
+
+	    -1,    -1,    -0.5,  //RGB TRIANGLE  Parallel to "camera"
+		 1,    -1,	  -0.5,  //RGB TRIANGLE  Parallel to "camera"
+		 0,		1,    -0.5,  //RGB TRIANGLE  Parallel to "camera"
+
+
+	    -1,     1,    0,   //WHITE TRIANGLE coming through the RGB triangle
+		 1,     1,	  0,   //WHITE TRIANGLE	coming through the RGB triangle
+		 0,	   -1,   -0.55,   //WHITE TRIANGLE	coming through the RGB triangle
+
+	};
+
+
+	GLfloat* vert_wireframe = vert_pos_for_wireframe(vert_pos, sizeof(vert_pos) / sizeof(*vert_pos));
+	
+	const GLfloat vert_color[] =
+	{
+
+
+		 1,0,0,
+		 0,1,0,
+		 0,0,1,
+
+		 1,1,1,
+		 1,1,1,
+		 1,1,1,
+
+	};
+
+	GLuint VBO[2] = { 0 }; //vertex position vertex and colors
+
+	
+
+	//glGenTextures(1, &gScreenTex);
+
+	glGenVertexArrays(1, &VAO_vertex_pos);
+	glBindVertexArray(VAO_vertex_pos);
+	
+	glGenBuffers(2, VBO);
+
+	//VBO of vertex positions ------------- triangles --------------
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]); 
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos), vert_pos, GL_DYNAMIC_DRAW);
+	GLint vPosition = glGetAttribLocation(program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
-	glVertexAttribPointer(vPosition, 2, GL_FLOAT, GL_FALSE, 0,
-		0);
 
-	GLint  vTexCoord = glGetAttribLocation(program, "vTexCoord");
-	glEnableVertexAttribArray(vTexCoord);
-	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0,
-		(GLvoid*)sizeof(vtc));
-	glProgramUniform1i(program, glGetUniformLocation(program, "texture"), 0);
-	a = glGetError();
+	//VBO of vertex positions for --------------- WIREFRAME ------------------------
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos)*2, vert_wireframe, GL_STATIC_DRAW);
+	//GLint vPosition = glGetAttribLocation(program, "vPosition");
+	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(vPosition);
+
+	//VBO of vertex colors
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]); 
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_color), vert_color, GL_STATIC_DRAW);
+	GLint vColor = glGetAttribLocation(program, "vColor");
+	glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vColor);
+
+
+
+	//Unbind the VBO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	//Unbind the VAO
+	glBindVertexArray(0);
+
+	delete[] vert_wireframe;
+
 }
 
 void Renderer::CreateOpenGLBuffer()
 {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, gScreenTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
-	//glViewport(0, 0, m_width, m_height);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, gScreenTex);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, NULL);
 }
