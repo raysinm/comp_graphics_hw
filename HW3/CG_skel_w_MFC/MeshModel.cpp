@@ -318,9 +318,11 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	face_normals_viewspace.clear();
 	vertex_normals_viewspace.clear();
 
-	updateTransform();	
-	updateTransformWorld();
+	//updateTransform();
+	//updateTransformWorld();
 
+	//TODO:
+	//
 
 	//Apply all transformations and save in t_vertex_positions_normalized array
 	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
@@ -339,50 +341,25 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 
 		//Apply projection:
 		v_i = projection * v_i;
-		
+
 		// Save result in clip space
 		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z) / v_i.w;
 	}
 
 	// Clipping
-	num_vertices_to_draw = 0;
-	int buffer_i = 0;
-	for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
+
+	/* add the 3 points of the current face: */
+	if (atleast_one_vertex_in_bound || !allowClipping)
 	{
-		bool atleast_one_vertex_in_bound = false;
-		if (allowClipping)
+		for (unsigned int v = 0; v < 3; v++)
 		{
-			/*	Check if ATLEAST 1 vertex is in-bound. foreach dimension: -1<x<1
-				If yes: Add the face to buffer_vertrices
-				else: Don't add the face*/
-			for (unsigned int v = 0; v < 3; v++)
-			{
-				vec3 point = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + v]];
-
-				if (point.x >= -1 && point.x <= 1 &&
-					point.y >= -1 && point.y <= 1 &&
-					point.z >= -1 && point.z <= 1)
-				{
-					atleast_one_vertex_in_bound = true;
-					break;
-				}
-			}
+			UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
+			vec3 point = t_vertex_positions_normalized[vertIndex];
+			vec3 point_cameraspace = t_vertex_positions_cameraspace[vertIndex];
+			buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_cameraspace);
+			num_vertices_to_draw++;
 		}
-
-		/* add the 3 points of the current face: */
-		if (atleast_one_vertex_in_bound || !allowClipping)
-		{
-			for (unsigned int v = 0; v < 3; v++)
-			{
-				UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
-				vec3 point = t_vertex_positions_normalized[vertIndex];
-				vec3 point_cameraspace = t_vertex_positions_cameraspace[vertIndex];
-				buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_cameraspace);
-				num_vertices_to_draw++;
-			}
-			buffer_i++;
-		}
-
+		buffer_i++;
 	}
 
 	// Bounding box buffer
@@ -432,7 +409,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 			}
 		}
 	}
-	
+
 	// Face normals buffer
 	{
 		unsigned int buffer_i = 0;
@@ -484,6 +461,8 @@ void MeshModel::updateTransform()
 
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
+
+	//TODO: send the model-view matrix to GPU.
 }
 
 void MeshModel::updateTransformWorld()
@@ -497,6 +476,7 @@ void MeshModel::updateTransformWorld()
 	
 	_world_transform = scale_m * (rot_m_z * (rot_m_y * (rot_m_x * trnsl_m)));
 	_world_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
+	//TODO: send the model-view matrix to GPU.
 }
 
 vec4 MeshModel::getCenterOffMass()

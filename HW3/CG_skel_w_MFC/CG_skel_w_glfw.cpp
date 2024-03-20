@@ -207,33 +207,39 @@ int my_main(int argc, char** argv)
 		ImGui::NewFrame();
 
 
-		scene->draw();
-		//Render triangle here:
 		glUseProgram(renderer->program);
-		glBindVertexArray(renderer->VAO_vertex_pos);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		//glDrawArrays(GL_LINES, 0, 12);
-		glBindVertexArray(0);
-		glUseProgram(0);
-		scene->drawGUI();
-		/* Debug window (demo window with all the ImGui controls */
-		//ImGui::ShowDemoWindow();
-		ImGui::Render();
-
 		
+		scene->draw();
+							
 
 
+		/* ~~~~~~~~~~~~~~~~~~~~ Demo only ~~~~~~~~~~~~~~~~~~~~ */
+		//"foreach model" {
+		glBindVertexArray(renderer->VAO_vertex_pos);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_LINES, 0, 12);
+		glBindVertexArray(0);
+		//}
+		/* ~~~~~~~~~~~~~~~~~~~~ Demo only ~~~~~~~~~~~~~~~~~~~~ */
+
+
+
+		glUseProgram(0);
+
+		scene->drawGUI();
+		//ImGui::ShowDemoWindow();
+		
 		/* Render the scene */
+		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		/* Swap buffers */
 		renderer->SwapBuffers();
 	}
 	
 //----------------------------------------------------------------------------
 //------------------------------- Terminate ----------------------------------
 //----------------------------------------------------------------------------
-	glDeleteTextures(1, &(renderer->m_textureID));
+	//glDeleteTextures(1, &(renderer->m_textureID));
 	glfwDestroyWindow(window);
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

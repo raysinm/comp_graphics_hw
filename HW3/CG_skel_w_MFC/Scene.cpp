@@ -367,15 +367,16 @@ void Scene::ResetPopUpFlags()
 
 void Scene::draw()
 {
-	//1. Clear the pixel buffer before drawing new frame, reset y min/max pixel coordinates
+	//1. Clear the pixel buffer before drawing new frame.
 	m_renderer->clearBuffer();
 
+	// ------------------------------------------------ TODO:
 	//2. Update each light source position
-	for (auto l : lights)
-	{
-		l->updatePosCameraSpace(GetActiveCamera()->cTransform);
-		l->updateDirCameraSpace(GetActiveCamera()->cTransform);
-	}
+	//for (auto l : lights)
+	//{
+	//	l->updatePosCameraSpace(GetActiveCamera()->cTransform);
+	//	l->updateDirCameraSpace(GetActiveCamera()->cTransform);
+	//}
 
 	//3. draw each MeshModel
 	for (auto model : models)
@@ -384,93 +385,62 @@ void Scene::draw()
 		if (!model->GetUserInitFinished())
 			continue;
 
-		model->draw(cameras[activeCamera]->cTransform, 
-					cameras[activeCamera]->projection,
-					cameras[activeCamera]->allowClipping,
-					cameras[activeCamera]->rotationMat_normals);
+		//model->draw(cameras[activeCamera]->cTransform, 
+		//			cameras[activeCamera]->projection,
+		//			cameras[activeCamera]->allowClipping,
+		//			cameras[activeCamera]->rotationMat_normals);
 
-		unsigned int len = 0;
-		if (draw_algo == WIRE_FRAME) {
-				//values: [-1, 1]
-				auto vertices = ((MeshModel*)model)->GetBuffer();
-				len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-				if (vertices)
-					m_renderer->Rasterize_WireFrame(vertices, len);
-		}
-		else {
-			m_renderer->Rasterize((const MeshModel*)model);
-		}
+//		m_renderer->drawModel(draw_algo, model, activeCamera);
 
-
-			
-
+		//unsigned int len = 0;
+		//if (draw_algo == WIRE_FRAME) {
+		//		//values: [-1, 1]
+		//		auto vertices = ((MeshModel*)model)->GetBuffer();
+		//		len = ((MeshModel*)model)->GetBuffer_len(MODEL);
+		//		if (vertices)
+		//			m_renderer->Rasterize_WireFrame(vertices, len);
+		//}
+		//else {
+		//	m_renderer->Rasterize((const MeshModel*)model);
+		//}
 
 		// Bounding Box
 		if (((MeshModel*)model)->showBoundingBox)
 		{
-			vec2* bbox_vertices = ((MeshModel*)model)->GetBuffer(BBOX);
-			len = ((MeshModel*)model)->GetBuffer_len(BBOX);
-			if (bbox_vertices)
-				m_renderer->SetBufferLines(bbox_vertices, len, vec4(0, 1, 0, 1));
+//			m_renderer->drawBBox(model, activeCamera);
 		}
 
 		// Vertex Normals
 		if (((MeshModel*)model)->showVertexNormals)
 		{
-			vec2* v_norm_vertices = ((MeshModel*)model)->GetBuffer(V_NORMAL);
-			len = ((MeshModel*)model)->GetBuffer_len(V_NORMAL);
-			if (v_norm_vertices)
-				m_renderer->SetBufferLines(v_norm_vertices, len, vec4(1, 0, 0));
-
+//			m_renderer->drawVertNormals(model, activeCamera);
 		}
 
 		// Face normals
 		if (((MeshModel*)model)->showFaceNormals)
 		{
-			vec2* f_norm_vertices = ((MeshModel*)model)->GetBuffer(F_NORMAL);
-			len = ((MeshModel*)model)->GetBuffer_len(F_NORMAL);
-			if (f_norm_vertices)
-				m_renderer->SetBufferLines(f_norm_vertices, len, vec4(0, 0, 1));
+//			m_renderer->drawFaceNormals(model, activeCamera);
 		}
 	}
 
-	// ANTIALISING
+	//4. Render cameras as 3D plus signs
+	//for (auto camera : cameras)
+	//{
+	//	if (camera->renderCamera && camera != cameras[activeCamera])
+	//	{
+	//		if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
+	//		{
+	//			vec2* icon_vertices = camera->getIconBuffer();
+	//			unsigned int len = camera->getIconBufferSize();
+	//			if (icon_vertices)
+	//			{
+	//				m_renderer->SetBufferLines(icon_vertices, len-2, vec4(0.75, 0, 0.8));
+	//				m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 0.8, 0.15));
+	//			}
+	//		}
+	//	}
+	//}
 
-	m_renderer->sampleAntialias();	// Won't do anything if not needed
-
-
-	//4. Apply bloom filter
-	if (applyBloom)
-	{
-		m_renderer->ApplyBloomFilter();
-	}
-
-	if (applyFullScreenBlur)
-	{
-		m_renderer->ApplyFullScreenBlur();
-	}
-
-	//5. Render cameras as 3D plus signs
-	for (auto camera : cameras)
-	{
-		if (camera->renderCamera && camera != cameras[activeCamera])
-		{
-			if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
-			{
-				vec2* icon_vertices = camera->getIconBuffer();
-				unsigned int len = camera->getIconBufferSize();
-				if (icon_vertices)
-				{
-					m_renderer->SetBufferLines(icon_vertices, len-2, vec4(0.75, 0, 0.8));
-					m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 0.8, 0.15));
-				}
-			}
-		}
-	}
-
-	//5. Update the texture. (OpenGL stuff)
-	m_renderer->updateTexture();
-  
 }
 
 void colorPicker(ImVec4* color, std::string button_label, std::string id)
