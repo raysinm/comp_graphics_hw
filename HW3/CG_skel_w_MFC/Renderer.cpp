@@ -211,18 +211,18 @@ void Renderer::InitOpenGLRendering()
 	glGenBuffers(2, VBO);
 
 	//VBO of vertex positions ------------- triangles --------------
-	//glBindBuffer(GL_ARRAY_BUFFER, VBO[0]); 
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos), vert_pos, GL_DYNAMIC_DRAW);
-	//GLint vPosition = glGetAttribLocation(program, "vPosition");
-	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(vPosition);
-
-	//VBO of vertex positions for --------------- WIREFRAME ------------------------
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos) * 2, vert_wireframe, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]); 
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos), vert_pos, GL_DYNAMIC_DRAW);
 	GLint vPosition = glGetAttribLocation(program, "vPosition");
 	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
+
+	//VBO of vertex positions for --------------- WIREFRAME ------------------------
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos) * 2, vert_wireframe, GL_STATIC_DRAW);
+	//GLint vPosition = glGetAttribLocation(program, "vPosition");
+	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(vPosition);
 
 	//VBO of vertex colors
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);

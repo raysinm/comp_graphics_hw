@@ -11,19 +11,6 @@
 using namespace std;
 
 
-#define NOT_SELECTED -1
-#define ADD_INPUT_POPUP_TITLE "Object Properties"
-#define CAMERA_DEFAULT_NAME "Camera"
-#define MODEL_DEFAULT_NAME "Model"
-
-#define DEF_PARAM_RANGE 20;
-#define DEF_PARAM 10;
-#define DEF_ZNEAR 1;
-#define DEF_ZFAR 20;
-#define DEF_FOV 45
-#define DEF_ASPECT 1
-#define DEF_MAX_FOG_EFFECT 100
-
 
 class Model
 {
@@ -31,15 +18,16 @@ protected:
 	virtual ~Model() {}
 	string name = MODEL_DEFAULT_NAME;
 	bool userInitFinished = false;
+	GLuint VAO = 0;
+	GLuint VBOs[VBO_COUNT] = { 0 };
 public:
 	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot) = 0;
-
-
 	void setName(std::string newName) { name = newName; }
 	void SetUserInitFinished() { userInitFinished = true; }
 	bool GetUserInitFinished() { return userInitFinished; }
-
+	bool GetVAO() { return VAO; }
 	std::string& getName() { return name; }
+	
 	bool selected = false;
 
 };
@@ -178,7 +166,7 @@ private:
 	void drawCameraTab();
 	void drawModelTab();
 	void drawLightTab();
-	void drawEffectsTab();
+	//void drawEffectsTab();
 
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;

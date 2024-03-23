@@ -336,7 +336,7 @@ void Scene::AddLight()
 
 void Scene::loadOBJModel(string fileName)
 {
-	MeshModel* model = new MeshModel(fileName);
+	MeshModel* model = new MeshModel(fileName, m_renderer);
 
 	/* Get the filename as the default name */
 	string extractedName = MODEL_DEFAULT_NAME;
@@ -946,65 +946,65 @@ void Scene::drawLightTab()
 	}
 }
 
-void Scene::drawEffectsTab()
-{
-	ImGui::SeparatorText("Fog");
-	ImGui::Checkbox("Fog##fog_bool", &applyFog);
-	if (applyFog)
-	{
-		//Color
-		vec3& color = fog->getColor();
-
-		ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
-
-		colorPicker(&color_local, "Color", "##FogColor");
-
-		color.x = color_local.x;
-		color.y = color_local.y;
-		color.z = color_local.z;
-
-		Camera* activeCam = cameras[activeCamera];
-
-		ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 0.1f, 0, DEF_MAX_FOG_EFFECT, "%.1f"); ImGui::SameLine();
-		ImGui::Text("Fog effect");
-	}
-	
-	
-	ImGui::SeparatorText("Bloom Filter");
-	ImGui::Checkbox("Bloom Filter##bloom_bool", &applyBloom);
-	if (applyBloom)
-	{
-		ImGui::Text("Threshold [0 - 3]"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##BolomThresh", &(m_renderer->bloom_filter_threshold), 0.001f, 0, 3, "%.3f"); 
-
-		ImGui::Text("Multiply factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f");
-
-		ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragInt("##bloomkernelsize", &(m_renderer->kernelbloomFilterSize), 0.01f, 0, 100);
-
-		ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##bloomkernelsigma", &(m_renderer->kernelbloomFilterSigma), 0.001f, 0.1, 100);
-	}
-
-
-	ImGui::SeparatorText("Full screen blur");
-	ImGui::Checkbox("Full Screen Blur##bfs_blur", &applyFullScreenBlur);
-	if (applyFullScreenBlur)
-	{
-		ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragInt("##Blurkernelsize", &(m_renderer->kernelFSBlurSize), 0.01f, 0, 100);
-
-		ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-		ImGui::DragFloat("##Blurkernelsigma", &(m_renderer->FSblurSigma),0.001f, 0.1, 100);
-	}
-
-
-	ImGui::SeparatorText("Anti-Aliasing");
-	ImGui::Checkbox("Super Sampling Anti-Aliasing##aass", &m_renderer->ss_antialias);
-
-	
-}
+//void Scene::drawEffectsTab()
+//{
+//	//ImGui::SeparatorText("Fog");
+//	//ImGui::Checkbox("Fog##fog_bool", &applyFog);
+//	//if (applyFog)
+//	//{
+//	//	//Color
+//	//	vec3& color = fog->getColor();
+//
+//	//	ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
+//
+//	//	colorPicker(&color_local, "Color", "##FogColor");
+//
+//	//	color.x = color_local.x;
+//	//	color.y = color_local.y;
+//	//	color.z = color_local.z;
+//
+//	//	Camera* activeCam = cameras[activeCamera];
+//
+//	//	ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 0.1f, 0, DEF_MAX_FOG_EFFECT, "%.1f"); ImGui::SameLine();
+//	//	ImGui::Text("Fog effect");
+//	//}
+//	//
+//	//
+//	//ImGui::SeparatorText("Bloom Filter");
+//	//ImGui::Checkbox("Bloom Filter##bloom_bool", &applyBloom);
+//	//if (applyBloom)
+//	//{
+//	//	ImGui::Text("Threshold [0 - 3]"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragFloat("##BolomThresh", &(m_renderer->bloom_filter_threshold), 0.001f, 0, 3, "%.3f"); 
+//
+//	//	ImGui::Text("Multiply factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f");
+//
+//	//	ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragInt("##bloomkernelsize", &(m_renderer->kernelbloomFilterSize), 0.01f, 0, 100);
+//
+//	//	ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragFloat("##bloomkernelsigma", &(m_renderer->kernelbloomFilterSigma), 0.001f, 0.1, 100);
+//	//}
+//
+//
+//	//ImGui::SeparatorText("Full screen blur");
+//	//ImGui::Checkbox("Full Screen Blur##bfs_blur", &applyFullScreenBlur);
+//	//if (applyFullScreenBlur)
+//	//{
+//	//	ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragInt("##Blurkernelsize", &(m_renderer->kernelFSBlurSize), 0.01f, 0, 100);
+//
+//	//	ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+//	//	ImGui::DragFloat("##Blurkernelsigma", &(m_renderer->FSblurSigma),0.001f, 0.1, 100);
+//	//}
+//
+//
+//	//ImGui::SeparatorText("Anti-Aliasing");
+//	//ImGui::Checkbox("Super Sampling Anti-Aliasing##aass", &m_renderer->ss_antialias);
+//
+//	
+//}
 
 void Scene::drawGUI()
 {
@@ -1063,7 +1063,7 @@ void Scene::drawGUI()
 			{
 				if (ImGui::MenuItem("Cube"))
 				{
-					Cube* cube = new Cube();
+					Cube* cube = new Cube(m_renderer);
 					models.push_back(cube);
 
 					strcpy(nameBuffer, cube->getName().c_str());
@@ -1073,7 +1073,7 @@ void Scene::drawGUI()
 
 				if (ImGui::MenuItem("Pyramid (square)"))
 				{
-					Pyramid* pyr = new Pyramid();
+					Pyramid* pyr = new Pyramid(m_renderer);
 					models.push_back(pyr);
 
 					strcpy(nameBuffer, pyr->getName().c_str());
@@ -1083,7 +1083,7 @@ void Scene::drawGUI()
 
 				if (ImGui::MenuItem("Pyramid (triangular)"))
 				{
-					TriPyramid* tri_pyr = new TriPyramid();
+					TriPyramid* tri_pyr = new TriPyramid(m_renderer);
 					models.push_back(tri_pyr);
 
 					strcpy(nameBuffer, tri_pyr->getName().c_str());
@@ -1278,15 +1278,14 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu();	// End Shading algo menu
 		}
-		if (ImGui::BeginMenu("Visual Effects"))
-		{
-			ImGui::MenuItem("Fog", NULL, &applyFog);
-			ImGui::MenuItem("Bloom Filter", NULL, &applyBloom);
-			ImGui::MenuItem("Full screen blur", NULL, &applyFullScreenBlur);
-			ImGui::MenuItem("Supersampling Antialiasing", NULL, &(m_renderer->ss_antialias));
-			ImGui::EndMenu();	// End Effects menu
-
-		}
+		//if (ImGui::BeginMenu("Visual Effects"))
+		//{
+		//	ImGui::MenuItem("Fog", NULL, &applyFog);
+		//	ImGui::MenuItem("Bloom Filter", NULL, &applyBloom);
+		//	ImGui::MenuItem("Full screen blur", NULL, &applyFullScreenBlur);
+		//	ImGui::MenuItem("Supersampling Antialiasing", NULL, &(m_renderer->ss_antialias));
+		//	ImGui::EndMenu();	// End Effects menu
+		//}
 		if (ImGui::BeginMenu("Options"))
 		{
 			if (ImGui::MenuItem("Render all cameras"))
@@ -1341,11 +1340,11 @@ void Scene::drawGUI()
 				resize_callback_handle(m_renderer->GetWindowSize().x, m_renderer->GetWindowSize().y);
 			}
 
-			const char* names[4] = { 0 };
+			const char* names[3] = { 0 };
 			names[MODEL_TAB_INDEX]   = "Model";
 			names[CAMERA_TAB_INDEX]  = "Camera";
 			names[LIGHT_TAB_INDEX]   = "Light";
-			names[EFFECTS_TAB_INDEX] = "Effects";
+			//names[EFFECTS_TAB_INDEX] = "Effects";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 			if (ImGui::BeginTabBar("TransBar", tab_bar_flags))
@@ -1370,10 +1369,10 @@ void Scene::drawGUI()
 						{
 							drawLightTab();
 						}
-						else if (n == EFFECTS_TAB_INDEX)
-						{
-							drawEffectsTab();
-						}
+						//else if (n == EFFECTS_TAB_INDEX)
+						//{
+						//	drawEffectsTab();
+						//}
 						
 						ImGui::EndTabItem();
 					}

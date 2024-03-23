@@ -99,15 +99,14 @@ unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 	}
 }
 
-MeshModel::MeshModel()
+MeshModel::MeshModel(Renderer* rend)
 {
+	this->renderer = rend;
 	ResetAllUserTransforms();
 }
 
-MeshModel::MeshModel(string fileName) : MeshModel()
+MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 {
-	ResetAllUserTransforms();
-	
 	loadFile(fileName);
 	
 	initBoundingBox();
@@ -115,6 +114,45 @@ MeshModel::MeshModel(string fileName) : MeshModel()
 	buffer_vertrices = new Vertex[num_vertices];
 	GenerateMaterials();
 
+
+	//Genereate VAO and VBOs in GPU:
+	glUseProgram(renderer->program);
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glGenBuffers(VBO_COUNT, VBOs);
+
+	//Vertex Positions
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VBO_VERTEX_POS]);
+	glBufferData(GL_ARRAY_BUFFER, num_vertices_raw * sizeof(float),\
+				vertex_positions_raw.data(), GL_STATIC_DRAW);
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+
+
+	//Vertex Color -- TODO -- only for non-uniform
+	
+	//glBindBuffer(GL_ARRAY_BUFFER, VBOs[VBO_VERTEX_COLOR]);
+	//glBufferData(GL_ARRAY_BUFFER, num_vertices_raw * sizeof(float),\
+	//			vertex_positions_raw.data(), GL_STATIC_DRAW);
+	//GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(vPosition);
+
+	/* Bind the uniform colors */
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1,\
+				 &(userDefinedMaterial.c_emissive[0]));
+	
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1,\
+				 &(userDefinedMaterial.c_diffuse[0]));
+
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1,\
+				 &(userDefinedMaterial.c_specular[0]));
+
+
+
+	glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 MeshModel::~MeshModel(void)
@@ -209,8 +247,6 @@ void MeshModel::loadFile(string fileName)
 			for (int i = 0; i < 3; i++)
 				vertex_normals[face.v[i] - 1] = verticesNormals[face.vn[i] - 1];
 	}
-
-
 
 }
 
@@ -312,142 +348,142 @@ void MeshModel::estimateVertexNormals()
 
 void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
 {
-	if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
-		return;
+	//if (!userInitFinished) //Dont start to draw before user clicked 'OK' in the popup window...
+	//	return;
 
-	face_normals_viewspace.clear();
-	vertex_normals_viewspace.clear();
+	//face_normals_viewspace.clear();
+	//vertex_normals_viewspace.clear();
 
-	//updateTransform();
-	//updateTransformWorld();
+	////updateTransform();
+	////updateTransformWorld();
 
-	//TODO:
-	//
+	////TODO:
+	////
 
-	//Apply all transformations and save in t_vertex_positions_normalized array
-	for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
-	{
-		vec4 v_i(vertex_positions_raw[i]);
+	////Apply all transformations and save in t_vertex_positions_normalized array
+	//for (unsigned int i = 0; i < vertex_positions_raw.size(); i++)
+	//{
+	//	vec4 v_i(vertex_positions_raw[i]);
 
-		//Apply model-view transformation
-		v_i = (_world_transform * (_model_transform * v_i));
+	//	//Apply model-view transformation
+	//	v_i = (_world_transform * (_model_transform * v_i));
 
-		//Apply camera transform matrix
-		v_i = cTransform * v_i;
+	//	//Apply camera transform matrix
+	//	v_i = cTransform * v_i;
 
-		//Save vertex in camera space for shading algorithms
-		t_vertex_positions_cameraspace[i] = vec3(v_i.x, v_i.y, v_i.z);
-
-
-		//Apply projection:
-		v_i = projection * v_i;
-
-		// Save result in clip space
-		t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z) / v_i.w;
-	}
-
-	// Clipping
-
-	/* add the 3 points of the current face: */
-	if (atleast_one_vertex_in_bound || !allowClipping)
-	{
-		for (unsigned int v = 0; v < 3; v++)
-		{
-			UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
-			vec3 point = t_vertex_positions_normalized[vertIndex];
-			vec3 point_cameraspace = t_vertex_positions_cameraspace[vertIndex];
-			buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_cameraspace);
-			num_vertices_to_draw++;
-		}
-		buffer_i++;
-	}
-
-	// Bounding box buffer
-	if (showBoundingBox)
-	{
-		for (unsigned int j = 0; j < num_bbox_vertices; j++)
-		{
-			vec4 v_j(b_box_vertices[j]);
-
-			//Apply model-view transformations:
-			v_j = cTransform * (_world_transform * (_model_transform * v_j));
-
-			//Project:
-			v_j = projection * v_j;
-
-			//Add to 2d buffer: 
-			buffer2d_bbox[j] = vec2(v_j.x, v_j.y) / v_j.w;
-		}
-	}
-
-	// Vertex normals buffer
-	{
-		for (unsigned int j = 0; j < num_vertices_raw; j++)
-		{
-			vec4 v_j(vertex_normals[j]);
-
-			//Transform the normal vector:
-			v_j = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_j));
-
-			//Add it before projection
-			vec4 v_j_J = normalize(v_j);
-			vertex_normals_viewspace.push_back(vec3(v_j_J.x, v_j_J.y, v_j_J.z));
-
-			if (showVertexNormals)
-			{
-				//Project the vector:
-				v_j = projection * v_j;
-
-				//Make sure it is still normalized:
-				v_j = normalize(v_j);
-
-				vec4 start_point = t_vertex_positions_normalized[j];
-				vec4 end_point = start_point + (v_j * length_vertex_normals);
-
-				buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
-				buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
-			}
-		}
-	}
-
-	// Face normals buffer
-	{
-		unsigned int buffer_i = 0;
-		for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
-		{
-			vec4 v_n(face_normals[face_indx]);
-
-			//Transform the normal vector:
-			v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
-
-			//Add it before projection
-			vec4 v_n_N = normalize(v_n);
-			face_normals_viewspace.push_back(vec3(v_n_N.x, v_n_N.y, v_n_N.z));
-
-			// Face normals buffer
-			if (showFaceNormals)
-			{
-				//Project the vector:
-				v_n = projection * v_n;
-
-				//Make sure it is still normalized:
-				v_n = normalize(v_n);
+	//	//Save vertex in camera space for shading algorithms
+	//	t_vertex_positions_cameraspace[i] = vec3(v_i.x, v_i.y, v_i.z);
 
 
-				// Cacluate center of face as the start point:
-				vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
-				vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
-				vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
+	//	//Apply projection:
+	//	v_i = projection * v_i;
 
-				vec3 start_point = vec3(v0 + v1 + v2) / 3;
-				vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
+	//	// Save result in clip space
+	//	t_vertex_positions_normalized[i] = vec3(v_i.x, v_i.y, v_i.z) / v_i.w;
+	//}
 
-				buffer2d_f_normals[(buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
-				buffer2d_f_normals[(buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
-				++buffer_i;
-			}
-		}
-	}
+	//// Clipping
+
+	///* add the 3 points of the current face: */
+	//if (atleast_one_vertex_in_bound || !allowClipping)
+	//{
+	//	for (unsigned int v = 0; v < 3; v++)
+	//	{
+	//		UINT vertIndex = faces_v_indices[(face_indx * 3) + v];
+	//		vec3 point = t_vertex_positions_normalized[vertIndex];
+	//		vec3 point_cameraspace = t_vertex_positions_cameraspace[vertIndex];
+	//		buffer_vertrices[(buffer_i * 3) + v] = Vertex(point, vertIndex, face_indx, point_cameraspace);
+	//		num_vertices_to_draw++;
+	//	}
+	//	buffer_i++;
+	//}
+
+	//// Bounding box buffer
+	//if (showBoundingBox)
+	//{
+	//	for (unsigned int j = 0; j < num_bbox_vertices; j++)
+	//	{
+	//		vec4 v_j(b_box_vertices[j]);
+
+	//		//Apply model-view transformations:
+	//		v_j = cTransform * (_world_transform * (_model_transform * v_j));
+
+	//		//Project:
+	//		v_j = projection * v_j;
+
+	//		//Add to 2d buffer: 
+	//		buffer2d_bbox[j] = vec2(v_j.x, v_j.y) / v_j.w;
+	//	}
+	//}
+
+	//// Vertex normals buffer
+	//{
+	//	for (unsigned int j = 0; j < num_vertices_raw; j++)
+	//	{
+	//		vec4 v_j(vertex_normals[j]);
+
+	//		//Transform the normal vector:
+	//		v_j = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_j));
+
+	//		//Add it before projection
+	//		vec4 v_j_J = normalize(v_j);
+	//		vertex_normals_viewspace.push_back(vec3(v_j_J.x, v_j_J.y, v_j_J.z));
+
+	//		if (showVertexNormals)
+	//		{
+	//			//Project the vector:
+	//			v_j = projection * v_j;
+
+	//			//Make sure it is still normalized:
+	//			v_j = normalize(v_j);
+
+	//			vec4 start_point = t_vertex_positions_normalized[j];
+	//			vec4 end_point = start_point + (v_j * length_vertex_normals);
+
+	//			buffer2d_v_normals[j * 2 + 0] = vec2(start_point.x, start_point.y);
+	//			buffer2d_v_normals[j * 2 + 1] = vec2(end_point.x, end_point.y);
+	//		}
+	//	}
+	//}
+
+	//// Face normals buffer
+	//{
+	//	unsigned int buffer_i = 0;
+	//	for (unsigned int face_indx = 0; face_indx < num_faces; face_indx++)
+	//	{
+	//		vec4 v_n(face_normals[face_indx]);
+
+	//		//Transform the normal vector:
+	//		v_n = cameraRot * (_world_transform_for_normals * (_model_transform_for_normals * v_n));
+
+	//		//Add it before projection
+	//		vec4 v_n_N = normalize(v_n);
+	//		face_normals_viewspace.push_back(vec3(v_n_N.x, v_n_N.y, v_n_N.z));
+
+	//		// Face normals buffer
+	//		if (showFaceNormals)
+	//		{
+	//			//Project the vector:
+	//			v_n = projection * v_n;
+
+	//			//Make sure it is still normalized:
+	//			v_n = normalize(v_n);
+
+
+	//			// Cacluate center of face as the start point:
+	//			vec3 v0 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 0]];
+	//			vec3 v1 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 1]];
+	//			vec3 v2 = t_vertex_positions_normalized[faces_v_indices[(face_indx * 3) + 2]];
+
+	//			vec3 start_point = vec3(v0 + v1 + v2) / 3;
+	//			vec3 end_point = start_point + (vec3(v_n.x, v_n.y, v_n.z) * length_face_normals);
+
+	//			buffer2d_f_normals[(buffer_i * 2) + 0] = vec2(start_point.x, start_point.y);
+	//			buffer2d_f_normals[(buffer_i * 2) + 1] = vec2(end_point.x, end_point.y);
+	//			++buffer_i;
+	//		}
+	//	}
+	//}
 }
 
 void MeshModel::updateTransform()
@@ -462,7 +498,7 @@ void MeshModel::updateTransform()
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 
-	//TODO: send the model-view matrix to GPU.
+	updateTransformWorld();
 }
 
 void MeshModel::updateTransformWorld()
@@ -476,7 +512,8 @@ void MeshModel::updateTransformWorld()
 	
 	_world_transform = scale_m * (rot_m_z * (rot_m_y * (rot_m_x * trnsl_m)));
 	_world_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
-	//TODO: send the model-view matrix to GPU.
+	
+	UpdateModelViewInGPU();
 }
 
 vec4 MeshModel::getCenterOffMass()
@@ -606,4 +643,39 @@ void MeshModel::GenerateMaterials()
 
 		materials.push_back(current);
 	}
+}
+
+void MeshModel::UpdateModelViewInGPU()
+{
+	// Calculate model-view matrix:
+	model_view_mat = (_world_transform * _model_transform);
+
+	glBindVertexArray(this->VAO);
+
+	/* Bind the model-view matrix*/
+	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
+	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, &(model_view_mat[0][0]));
+
+
+	glBindVertexArray(0);
+}
+
+void MeshModel::UpdateColorsInGPU()
+{
+	glUseProgram(renderer->program);
+	glBindVertexArray(VAO);
+
+	/* Bind the uniform colors */
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
+		& (userDefinedMaterial.c_emissive[0]));
+
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
+		& (userDefinedMaterial.c_diffuse[0]));
+
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
+		& (userDefinedMaterial.c_specular[0]));
+
+
+	glBindVertexArray(0);
+	glUseProgram(0);
 }

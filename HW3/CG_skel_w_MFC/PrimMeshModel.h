@@ -9,8 +9,9 @@ class PrimMeshModel : public MeshModel
 {
 
 protected:
-	PrimMeshModel(int num_vertex_raw, int num_faces)
+	PrimMeshModel(int num_vertex_raw, int num_faces, Renderer* rend)
 	{
+		this->renderer					= rend;
 		this->num_vertices_raw			= num_vertex_raw;
 		this->num_faces					= num_faces;
 		this->num_vertices				= num_faces * 3;
@@ -39,7 +40,7 @@ protected:
 class Cube : public PrimMeshModel
 {
 public:
-	Cube() : PrimMeshModel(8, 12)
+	Cube(Renderer* rend) : PrimMeshModel(8, 12, rend)
 	{
 		name = "Cube";
 		
@@ -91,7 +92,7 @@ public:
 class Pyramid : public PrimMeshModel
 {
 public:
-	Pyramid() : PrimMeshModel(5, 6)
+	Pyramid(Renderer* rend) : PrimMeshModel(5, 6, rend)
 	{
 		name = "Pyramid";
 
@@ -144,7 +145,7 @@ public:
 class TriPyramid : public PrimMeshModel
 {
 public:
-	TriPyramid() : PrimMeshModel(4, 4)
+	TriPyramid(Renderer* rend) : PrimMeshModel(4, 4, rend)
 	{
 		name = "Triangular Pyramid";
 

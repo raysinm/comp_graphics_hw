@@ -1,11 +1,11 @@
 #version 150
 
-in vec3 color_debug;
+in vec3 colorOfVertex;
 
 out vec4 FragColor;
 
 void main()
 { 
-	FragColor = vec4(color_debug, 1);
+	FragColor = vec4(colorOfVertex, 1);
 } 
 

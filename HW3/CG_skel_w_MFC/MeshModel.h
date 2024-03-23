@@ -7,19 +7,14 @@
 
 using namespace std;
 
-enum MODEL_OBJECT{
-	MODEL,
-	BBOX,
-	V_NORMAL,
-	F_NORMAL
-};
+
 
 class MeshModel : public Model
 {
 protected:
 	friend class Scene;
 
-	MeshModel();
+	MeshModel(Renderer* rend = nullptr);
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
 	vector<vec3> t_vertex_positions_cameraspace;	//In camera space
@@ -55,9 +50,13 @@ protected:
 	mat4 _world_transform_for_normals;
 	mat4 _model_transform_for_normals;
 
+	mat4 model_view_mat;
+
 	void initBoundingBox();
 	void calculateFaceNormals();
 	void estimateVertexNormals();
+
+	Renderer* renderer;
 
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
@@ -69,7 +68,7 @@ public:
 	bool isUniformMaterial  = true;
 
 
-	MeshModel(string fileName);
+	MeshModel(string fileName, Renderer* rend = nullptr);
 	~MeshModel(void);
 
 	vector<vec3>* getVertexNormals() { return &vertex_normals; }
@@ -112,5 +111,8 @@ public:
 	void GenerateMaterials();
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
+
+	void UpdateModelViewInGPU();
+	void UpdateColorsInGPU();
 
 };

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "mat.h"
-//#include <stdexcept>
 
-typedef unsigned int UINT;
 #define RED   0
 #define GREEN 1
 #define BLUE  2
@@ -20,11 +18,39 @@ typedef unsigned int UINT;
 #define DEFUALT_LIGHT_LS_VALUE 0
 #define DEFUALT_LIGHT_ALPHA 1
 #define DEF_SUPERSAMPLE_SCALE 2
+#define NOT_SELECTED -1
+#define ADD_INPUT_POPUP_TITLE "Object Properties"
+#define CAMERA_DEFAULT_NAME "Camera"
+#define MODEL_DEFAULT_NAME "Model"
+#define DEF_PARAM_RANGE 20;
+#define DEF_PARAM 10;
+#define DEF_ZNEAR 1;
+#define DEF_ZFAR 20;
+#define DEF_FOV 45
+#define DEF_ASPECT 1
+#define DEF_MAX_FOG_EFFECT 100
 
 
+typedef unsigned int UINT;
 
 inline int Index(int width, int x, int y, int c) { return (x + y * width) * 3 + c; }
 inline int Z_Index(int width, int x, int y) { return x + (y * width); }
+
+
+enum MODEL_OBJECT {
+	MODEL,
+	BBOX,
+	V_NORMAL,
+	F_NORMAL
+};
+
+
+enum VBO_INDICES {
+	VBO_VERTEX_POS		= 0,
+	VBO_VERTEX_COLOR	= 1,
+	VBO_COUNT,
+};
+
 
 enum DrawAlgo {
 	WIRE_FRAME,

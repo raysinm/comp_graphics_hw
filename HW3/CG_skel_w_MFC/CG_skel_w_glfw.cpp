@@ -216,8 +216,8 @@ int my_main(int argc, char** argv)
 		/* ~~~~~~~~~~~~~~~~~~~~ Demo only ~~~~~~~~~~~~~~~~~~~~ */
 		//"foreach model" {
 		glBindVertexArray(renderer->VAO_vertex_pos);
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
-		glDrawArrays(GL_LINES, 0, 12);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//glDrawArrays(GL_LINES, 0, 12);
 		glBindVertexArray(0);
 		//}
 		/* ~~~~~~~~~~~~~~~~~~~~ Demo only ~~~~~~~~~~~~~~~~~~~~ */
