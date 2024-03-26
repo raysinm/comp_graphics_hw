@@ -19,6 +19,7 @@ void main()
 {
     vec4 pos = vec4(vPosition, 1.0);
     vec4 res = projection * (modelview * pos);
+    
     gl_Position = res;
 
     if(algo_shading == 0)

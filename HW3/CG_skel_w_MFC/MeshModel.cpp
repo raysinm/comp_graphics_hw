@@ -106,32 +106,17 @@ void MeshModel::GenerateVBO_WireFrame()
 {
 	glBindVertexArray(VAOs[VAO_VERTEX_WIREFRAME]);
 	glGenBuffers(1, VBOs[VAO_VERTEX_WIREFRAME]);
-	int len = vertex_positions_wireframe_gpu.size();
-
-	float* tmpData = new float[len*3];
-	int k = 0;
-	for (auto value : vertex_positions_wireframe_gpu)
-	{
-		tmpData[k++] = value.x;
-		tmpData[k++] = value.y;
-		tmpData[k++] = value.z;
-	}
-
-
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_WIREFRAME][VBO_VERTEX_POS]);
-	//glBufferData(GL_ARRAY_BUFFER, len * sizeof(float), \
-	//	(float*) vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
 
-	glBufferData(GL_ARRAY_BUFFER, len * sizeof(float), \
-		tmpData, GL_STATIC_DRAW);
-	
-	
+
+	//Multiply len by 3 because each vertex is holding 3-floats
+	int lenInBytes = vertex_positions_wireframe_gpu.size() * 3 * sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
+
 	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
 	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
-
-	delete[] tmpData;
+	glBindVertexArray(0);
 }
 
 void MeshModel::GenerateAllGPU_Stuff()
@@ -143,18 +128,18 @@ void MeshModel::GenerateAllGPU_Stuff()
 
 
 	/* Bind the uniform colors */
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
-		& (userDefinedMaterial.c_emissive[0]));
+	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
+	//	& (userDefinedMaterial.c_emissive[0]));
 
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
-		& (userDefinedMaterial.c_diffuse[0]));
+	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
+	//	& (userDefinedMaterial.c_diffuse[0]));
 
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
-		& (userDefinedMaterial.c_specular[0]));
+	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
+	//	& (userDefinedMaterial.c_specular[0]));
 
 
 
-	glBindVertexArray(0);
+	//glBindVertexArray(0);
 }
 
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
@@ -360,12 +345,13 @@ void MeshModel::estimateVertexNormals()
 
 void MeshModel::CreateVertexVectorForGPU()
 {
-	for (int f = 0; f < num_faces; f++)
+	UINT k = 0;
+	for (UINT f = 0; f < num_faces; f++)
 	{
-		for (int i = 0; i < 3; i++)
+		for (UINT i = 0; i < 3; i++)
 		{
-			int vertIndex = (f * 3) + i;
-			vertex_positions_triangle_gpu.push_back(vertex_positions_raw[faces_v_indices[vertIndex]]);
+			UINT vertIndex = faces_v_indices[k++];
+			vertex_positions_triangle_gpu.push_back(vertex_positions_raw[vertIndex]);
 		}
 
 		int vertIndex_A = faces_v_indices[(f * 3) + 0];
@@ -373,15 +359,15 @@ void MeshModel::CreateVertexVectorForGPU()
 		int vertIndex_C = faces_v_indices[(f * 3) + 2];
 
 
-		/* A + B*/
+		/* A --> B*/
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_A]);
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_B]);
 
-		/* A + C*/
+		/* A --> C*/
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_A]);
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_C]);
 
-		/* B + C*/
+		/* B --> C*/
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_B]);
 		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_C]);
 	}

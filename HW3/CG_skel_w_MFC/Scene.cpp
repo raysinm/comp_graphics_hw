@@ -394,6 +394,7 @@ void Scene::draw()
 		//Don't draw new model before user clicked 'OK'.
 		if (!model->GetUserInitFinished())
 			continue;
+
 		MeshModel* p = (MeshModel*)model;
 		p->updateTransform();
 		p->updateTransformWorld();
