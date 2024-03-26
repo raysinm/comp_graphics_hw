@@ -16,6 +16,7 @@ protected:
 
 	MeshModel(Renderer* rend = nullptr);
 	void GenerateVBO_WireFrame();
+	void GenerateAllGPU_Stuff();
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
 	vector<vec3> vertex_positions_triangle_gpu;		//Vertex positions data in triangle form

@@ -25,7 +25,7 @@ protected:
 		buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
 		buffer2d_f_normals				= new vec2[num_faces * 2];
 		GenerateMaterials();
-		CreateVertexVectorForGPU();
+
 	}
 
 	void initNeighbors()
@@ -86,6 +86,8 @@ public:
 		 initBoundingBox();
 		 calculateFaceNormals();
 		 estimateVertexNormals();
+		 CreateVertexVectorForGPU();
+		 GenerateAllGPU_Stuff();
 	}
 };
 
@@ -139,6 +141,8 @@ public:
 		initBoundingBox();
 		calculateFaceNormals();
 		estimateVertexNormals();
+		CreateVertexVectorForGPU();
+		GenerateAllGPU_Stuff();
 	}
 };
 
@@ -176,6 +180,8 @@ public:
 		initBoundingBox();
 		calculateFaceNormals();
 		estimateVertexNormals();
+		CreateVertexVectorForGPU();
+		GenerateAllGPU_Stuff();
 	}
 };
 

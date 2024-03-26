@@ -118,33 +118,36 @@ void MeshModel::GenerateVBO_WireFrame()
 	glEnableVertexAttribArray(vPosition);
 }
 
-MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
-{
-	loadFile(fileName);
-	CreateVertexVectorForGPU();
-	initBoundingBox();
-	GenerateMaterials();
-
-
+void MeshModel::GenerateAllGPU_Stuff()
+{	
 	//Genereate VAO and VBOs in GPU:
 	glGenVertexArrays(VAO_COUNT, this->VAOs);
-	
+
 	GenerateVBO_WireFrame();
 
 
 	/* Bind the uniform colors */
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1,\
-				 &(userDefinedMaterial.c_emissive[0]));
-	
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1,\
-				 &(userDefinedMaterial.c_diffuse[0]));
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
+		& (userDefinedMaterial.c_emissive[0]));
 
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1,\
-				 &(userDefinedMaterial.c_specular[0]));
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
+		& (userDefinedMaterial.c_diffuse[0]));
+
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
+		& (userDefinedMaterial.c_specular[0]));
 
 
 
 	glBindVertexArray(0);
+}
+
+MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
+{
+	loadFile(fileName);
+	initBoundingBox();
+	GenerateMaterials();
+	CreateVertexVectorForGPU();
+	GenerateAllGPU_Stuff();
 }
 
 MeshModel::~MeshModel(void)
