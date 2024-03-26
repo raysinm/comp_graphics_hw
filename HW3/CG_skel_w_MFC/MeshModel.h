@@ -17,6 +17,7 @@ protected:
 	MeshModel(Renderer* rend = nullptr);
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
+	vector<vec3> vertex_positions;					//Vertex positions data in triangle form
 	vector<vec3> t_vertex_positions_cameraspace;	//In camera space
 	vector<vec3> t_vertex_positions_normalized;		//In Clip space, normalized to [-1, 1]
 

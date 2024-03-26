@@ -18,7 +18,13 @@ protected:
 	virtual ~Model() {}
 	string name = MODEL_DEFAULT_NAME;
 	bool userInitFinished = false;
-	GLuint VAO = 0;
+	GLuint VAO_Vertex = 0;
+	GLuint VAO_VertexWireframe = 1;
+	GLuint VAO_BBox = 2;
+	GLuint VAO_VNormal = 3;
+	GLuint VAO_FNormal = 4;
+
+
 	GLuint VBOs[VBO_COUNT] = { 0 };
 public:
 	void virtual draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot) = 0;
