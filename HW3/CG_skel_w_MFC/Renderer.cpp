@@ -105,9 +105,11 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	pModel->UpdateColorsInGPU();
 
 	if (draw_algo == WIRE_FRAME) {
-		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
 		int len = pModel->GetBuffer_len(MODEL_WIREFRAME);
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
+		glDisable(GL_DEPTH_TEST);
 		glDrawArrays(GL_LINES, 0, len);
+		glEnable(GL_DEPTH_TEST);
 	}
 	else if (draw_algo == FLAT) {
 		//todo...

@@ -81,9 +81,9 @@ unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 	switch (obj)
 	{
 	case MODEL_WIREFRAME:
-		return num_faces * 3 * 2;
+		return vertex_positions_wireframe_gpu.size();
 	case MODEL_TRIANGLES:
-		return num_faces * 3;
+		return vertex_positions_triangle_gpu.size();
 	case BBOX:
 		return num_bbox_vertices;
 	case V_NORMAL:
@@ -105,16 +105,33 @@ MeshModel::MeshModel(Renderer* rend)
 void MeshModel::GenerateVBO_WireFrame()
 {
 	glBindVertexArray(VAOs[VAO_VERTEX_WIREFRAME]);
-	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_WIREFRAME]);
+	glGenBuffers(1, VBOs[VAO_VERTEX_WIREFRAME]);
+	int len = vertex_positions_wireframe_gpu.size();
+
+	float* tmpData = new float[len*3];
+	int k = 0;
+	for (auto value : vertex_positions_wireframe_gpu)
+	{
+		tmpData[k++] = value.x;
+		tmpData[k++] = value.y;
+		tmpData[k++] = value.z;
+	}
+
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_WIREFRAME][VBO_VERTEX_POS]);
-	glBufferData(GL_ARRAY_BUFFER, vertex_positions_wireframe_gpu.size() * sizeof(float), \
-		vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
+	//glBufferData(GL_ARRAY_BUFFER, len * sizeof(float), \
+	//	(float*) vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
+
+	glBufferData(GL_ARRAY_BUFFER, len * sizeof(float), \
+		tmpData, GL_STATIC_DRAW);
 	
 	
 	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
 	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
+
+	delete[] tmpData;
 }
 
 void MeshModel::GenerateAllGPU_Stuff()
