@@ -15,16 +15,11 @@ uniform vec3 wireframeColor;
 //Output
 out vec3 colorOfVertex;
 
-
-//Local variables:
-vec4 pos;
-
-
 void main()
 {
-    pos = vec4(vPosition, 1.0);
-    
-    gl_Position = projection * (modelview * pos);
+    vec4 pos = vec4(vPosition, 1.0);
+    vec4 res = projection * (modelview * pos);
+    gl_Position = res;
 
     if(algo_shading == 0)
     {

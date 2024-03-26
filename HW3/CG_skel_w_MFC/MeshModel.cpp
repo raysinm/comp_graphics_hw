@@ -105,9 +105,8 @@ MeshModel::MeshModel(Renderer* rend)
 void MeshModel::GenerateVBO_WireFrame()
 {
 	glBindVertexArray(VAOs[VAO_VERTEX_WIREFRAME]);
-	
 	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_WIREFRAME]);
-	//WireFrame - Vertex Positions
+
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_WIREFRAME][VBO_VERTEX_POS]);
 	glBufferData(GL_ARRAY_BUFFER, vertex_positions_wireframe_gpu.size() * sizeof(float), \
 		vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
@@ -675,7 +674,7 @@ void MeshModel::UpdateModelViewInGPU(mat4& Tc)
 
 	/* Bind the model-view matrix*/
 	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
-	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, &(model_view_mat[0][0]));
+	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat[0][0]));
 }
 
 void MeshModel::UpdateColorsInGPU()

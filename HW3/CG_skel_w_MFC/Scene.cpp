@@ -230,7 +230,7 @@ void Camera::setPerspectiveByParams()
 void Camera::UpdateProjectionMatInGPU()
 {
 	/* Bind the projection matrix*/
-	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_FALSE, &(projection[0][0]));
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(projection[0][0]));
 }
 
 void Camera::resetProjection()

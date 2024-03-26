@@ -106,7 +106,8 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 
 	if (draw_algo == WIRE_FRAME) {
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
-		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
+		int len = pModel->GetBuffer_len(MODEL_WIREFRAME);
+		glDrawArrays(GL_LINES, 0, len);
 	}
 	else if (draw_algo == FLAT) {
 		//todo...
