@@ -123,6 +123,7 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 	//Vertex Positions
 	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VBO_VERTEX_POS]);
+	//Dont use num_vertices_raw, instead calculate how many vertex are to drawn
 	glBufferData(GL_ARRAY_BUFFER, num_vertices_raw * sizeof(float),\
 				vertex_positions_raw.data(), GL_STATIC_DRAW);
 	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
@@ -497,8 +498,8 @@ void MeshModel::updateTransform()
 
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
-
-	updateTransformWorld();
+	
+	UpdateModelViewInGPU();
 }
 
 void MeshModel::updateTransformWorld()
@@ -647,10 +648,12 @@ void MeshModel::GenerateMaterials()
 
 void MeshModel::UpdateModelViewInGPU()
 {
+	glUseProgram(renderer->program); //maybe don't need this
+
 	// Calculate model-view matrix:
 	model_view_mat = (_world_transform * _model_transform);
 
-	glBindVertexArray(this->VAO);
+	glBindVertexArray(this->VAO);//maybe don't need this
 
 	/* Bind the model-view matrix*/
 	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
@@ -658,11 +661,12 @@ void MeshModel::UpdateModelViewInGPU()
 
 
 	glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 void MeshModel::UpdateColorsInGPU()
 {
-	glUseProgram(renderer->program);
+	glUseProgram(renderer->program); //maybe don't need this
 	glBindVertexArray(VAO);
 
 	/* Bind the uniform colors */

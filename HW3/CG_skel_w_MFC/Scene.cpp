@@ -370,7 +370,8 @@ void Scene::draw()
 	//1. Clear the pixel buffer before drawing new frame.
 	m_renderer->clearBuffer();
 
-	// ------------------------------------------------ TODO:
+	// ------------------------------------------------ TODO: ------------------------------------------------
+	
 	//2. Update each light source position
 	//for (auto l : lights)
 	//{
@@ -378,51 +379,37 @@ void Scene::draw()
 	//	l->updateDirCameraSpace(GetActiveCamera()->cTransform);
 	//}
 
-	//3. draw each MeshModel
+	//3. draw each Model
 	for (auto model : models)
 	{
 		//Don't draw new model before user clicked 'OK'.
 		if (!model->GetUserInitFinished())
 			continue;
 
-		//model->draw(cameras[activeCamera]->cTransform, 
-		//			cameras[activeCamera]->projection,
-		//			cameras[activeCamera]->allowClipping,
-		//			cameras[activeCamera]->rotationMat_normals);
+		//At This Point, the model matrix, model VAO, and all other model data is updated & ready in the GPU.
+		m_renderer->drawModel(draw_algo, model, activeCamera);
 
-//		m_renderer->drawModel(draw_algo, model, activeCamera);
 
-		//unsigned int len = 0;
-		//if (draw_algo == WIRE_FRAME) {
-		//		//values: [-1, 1]
-		//		auto vertices = ((MeshModel*)model)->GetBuffer();
-		//		len = ((MeshModel*)model)->GetBuffer_len(MODEL);
-		//		if (vertices)
-		//			m_renderer->Rasterize_WireFrame(vertices, len);
+		//Put all this code in the m_renderer->drawModel(draw_algo, model, activeCamera) function.
+		//// Bounding Box
+		//if (((MeshModel*)model)->showBoundingBox)
+		//{
+		//	m_renderer->drawBBox(model, activeCamera);
 		//}
-		//else {
-		//	m_renderer->Rasterize((const MeshModel*)model);
+		//// Vertex Normals
+		//if (((MeshModel*)model)->showVertexNormals)
+		//{
+		//	m_renderer->drawVertNormals(model, activeCamera);
 		//}
-
-		// Bounding Box
-		if (((MeshModel*)model)->showBoundingBox)
-		{
-//			m_renderer->drawBBox(model, activeCamera);
-		}
-
-		// Vertex Normals
-		if (((MeshModel*)model)->showVertexNormals)
-		{
-//			m_renderer->drawVertNormals(model, activeCamera);
-		}
-
-		// Face normals
-		if (((MeshModel*)model)->showFaceNormals)
-		{
-//			m_renderer->drawFaceNormals(model, activeCamera);
-		}
+		//// Face normals
+		//if (((MeshModel*)model)->showFaceNormals)
+		//{
+		//	m_renderer->drawFaceNormals(model, activeCamera);
+		//}
 	}
 
+	// ------------------------------------------------ TODO:
+	
 	//4. Render cameras as 3D plus signs
 	//for (auto camera : cameras)
 	//{

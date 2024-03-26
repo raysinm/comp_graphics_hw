@@ -223,10 +223,10 @@ int my_main(int argc, char** argv)
 		/* ~~~~~~~~~~~~~~~~~~~~ Demo only ~~~~~~~~~~~~~~~~~~~~ */
 
 
+		scene->drawGUI();
 
 		glUseProgram(0);
 
-		scene->drawGUI();
 		//ImGui::ShowDemoWindow();
 		
 		/* Render the scene */

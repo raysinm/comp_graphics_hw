@@ -95,8 +95,8 @@ void Renderer::clearBuffer()
 
 	return;
 
-
-
+	// ------------ HW2: ------------
+	
 	//m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
 	//true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
 	//true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
@@ -120,8 +120,6 @@ void Renderer::clearBuffer()
 	//	for (UINT i = 0; i < true_width * true_height; i++)
 	//		m_zbuffer[i] = MAX_Z;
 	//}
-
-
 }
 
 GLfloat* vert_pos_for_wireframe(const GLfloat* vert, int len)
