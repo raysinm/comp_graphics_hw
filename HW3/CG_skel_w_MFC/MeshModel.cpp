@@ -127,7 +127,6 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 
 	//Genereate VAO and VBOs in GPU:
-	glUseProgram(renderer->program);
 	glGenVertexArrays(VAO_COUNT, this->VAOs);
 	
 	GenerateVBO_WireFrame();
@@ -146,7 +145,6 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 
 	glBindVertexArray(0);
-	glUseProgram(0);
 }
 
 MeshModel::~MeshModel(void)
@@ -669,23 +667,16 @@ void MeshModel::GenerateMaterials()
 
 void MeshModel::UpdateModelViewInGPU(mat4& Tc)
 {
-	glUseProgram(renderer->program); //maybe don't need this
-
 	// Calculate model-view matrix:
 	model_view_mat = Tc * _world_transform * _model_transform;
 
 	/* Bind the model-view matrix*/
 	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
 	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, &(model_view_mat[0][0]));
-
-
-	glUseProgram(0);
 }
 
 void MeshModel::UpdateColorsInGPU()
 {
-	glUseProgram(renderer->program); //maybe don't need this
-
 	/* Bind the uniform colors */
 	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
 		& (userDefinedMaterial.c_emissive[0]));
@@ -695,7 +686,4 @@ void MeshModel::UpdateColorsInGPU()
 
 	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
 		& (userDefinedMaterial.c_specular[0]));
-
-
-	glUseProgram(0);
 }

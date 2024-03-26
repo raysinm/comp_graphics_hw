@@ -94,34 +94,6 @@ void Renderer::clearBuffer()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	float wireFrameColor = 1 - DEFAULT_BACKGROUND_COLOR;
 	glUniform3f(glGetUniformLocation(program, "wireframeColor"), wireFrameColor, wireFrameColor, wireFrameColor);
-
-	return;
-
-	// ------------ HW2: ------------
-	
-	//m_outBuffer = ss_antialias ? m_outBuffer_antialiasing : m_outBuffer_screen;
-	//true_width = ss_antialias ? m_width * DEF_SUPERSAMPLE_SCALE : m_width;
-	//true_height = ss_antialias ? m_height * DEF_SUPERSAMPLE_SCALE : m_height;
-	//if (m_outBuffer_screen)
-	//{
-	//	for (int i = 0; i < 3 * m_width * m_height; i++)
-	//		m_outBuffer_screen[i] = DEFAULT_BACKGROUND_COLOR;
-	//}
-	//if (ss_antialias && m_outBuffer_antialiasing)
-	//{
-	//	for (int i = 0; i < 3 * true_width * true_height; i++)
-	//		m_outBuffer_antialiasing[i] = DEFAULT_BACKGROUND_COLOR;
-	//}
-	//if (m_outBuffer_fsblur)
-	//{
-	//	for (int i = 0; i < 3 * m_width * m_height; i++)
-	//		m_outBuffer_fsblur[i] = 0;
-	//}
-	//if (m_zbuffer)
-	//{
-	//	for (UINT i = 0; i < true_width * true_height; i++)
-	//		m_zbuffer[i] = MAX_Z;
-	//}
 }
 
 void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
@@ -160,125 +132,15 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 
 
 	glBindVertexArray(0);
-}
 
-GLfloat* vert_pos_for_wireframe(const GLfloat* vert, int len)
-{
-	GLfloat* res = new GLfloat[2 * len];
-
-	int k = 0;
-	int numoftrig = len / 9;
-	for (int i = 0; i < numoftrig; i++)
-	{
-		//A --> B
-		res[k++] = vert[9 * i + 3 * 0 + 0];//x
-		res[k++] = vert[9 * i + 3 * 0 + 1];//y
-		res[k++] = vert[9 * i + 3 * 0 + 2];//z
-		res[k++] = vert[9 * i + 3 * 1 + 0];//x
-		res[k++] = vert[9 * i + 3 * 1 + 1];//y
-		res[k++] = vert[9 * i + 3 * 1 + 2];//z
-
-		//A --> C
-		res[k++] = vert[9 * i + 3 * 0 + 0];//x
-		res[k++] = vert[9 * i + 3 * 0 + 1];//y
-		res[k++] = vert[9 * i + 3 * 0 + 2];//z
-		res[k++] = vert[9 * i + 3 * 2 + 0];//x
-		res[k++] = vert[9 * i + 3 * 2 + 1];//y
-		res[k++] = vert[9 * i + 3 * 2 + 2];//z
-
-		//B --> C
-		res[k++] = vert[9 * i + 3 * 1 + 0];//x
-		res[k++] = vert[9 * i + 3 * 1 + 1];//y
-		res[k++] = vert[9 * i + 3 * 1 + 2];//z
-		res[k++] = vert[9 * i + 3 * 2 + 0];//x
-		res[k++] = vert[9 * i + 3 * 2 + 1];//y
-		res[k++] = vert[9 * i + 3 * 2 + 2];//z
-	}
-
-	return res;
 }
 
 void Renderer::InitOpenGLRendering()
 {
 	program = InitShader("vshader.glsl", "fshader.glsl");
-	glUseProgram(program);
+
 	//Enable Z-Buffer
 	glEnable(GL_DEPTH_TEST);
-
-
-	const GLfloat vert_pos[] =
-	{
-
-		-1,    -1,    -0.5,  //RGB TRIANGLE  Parallel to "camera"
-		 1,    -1,	  -0.5,  //RGB TRIANGLE  Parallel to "camera"
-		 0,		1,    -0.5,  //RGB TRIANGLE  Parallel to "camera"
-
-
-		-1,     1,    0,      //WHITE TRIANGLE coming through the RGB triangle
-		 1,     1,	  0,      //WHITE TRIANGLE	coming through the RGB triangle
-		 0,	   -1,   -1,   //WHITE TRIANGLE	coming through the RGB triangle
-
-	};
-
-
-	GLfloat* vert_wireframe = vert_pos_for_wireframe(vert_pos, sizeof(vert_pos) / sizeof(*vert_pos));
-
-	const GLfloat vert_color[] =
-	{
-
-
-		 1,0,0,
-		 0,1,0,
-		 0,0,1,
-
-		 1,1,1,
-		 1,1,1,
-		 1,1,1,
-
-	};
-
-	GLuint VBO[2] = { 0 }; //vertex position vertex and colors
-
-
-
-	//glGenTextures(1, &gScreenTex);
-
-	glGenVertexArrays(1, &VAO_vertex_pos);
-	glBindVertexArray(VAO_vertex_pos);
-
-	glGenBuffers(2, VBO);
-
-	//VBO of vertex positions ------------- triangles --------------
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]); 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos), vert_pos, GL_DYNAMIC_DRAW);
-	GLint vPosition = glGetAttribLocation(program, "vPosition");
-	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(vPosition);
-
-	//VBO of vertex positions for --------------- WIREFRAME ------------------------
-	//glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vert_pos) * 2, vert_wireframe, GL_STATIC_DRAW);
-	//GLint vPosition = glGetAttribLocation(program, "vPosition");
-	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(vPosition);
-
-	//VBO of vertex colors
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vert_color), vert_color, GL_STATIC_DRAW);
-	GLint vColor = glGetAttribLocation(program, "vColor");
-	glVertexAttribPointer(vColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(vColor);
-
-
-
-	//Unbind the VBO
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//Unbind the VAO
-	glBindVertexArray(0);
-
-	delete[] vert_wireframe;
-
 }
 
 //void Renderer::update(int width, int height)

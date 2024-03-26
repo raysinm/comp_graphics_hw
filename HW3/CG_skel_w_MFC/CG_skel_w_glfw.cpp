@@ -208,14 +208,8 @@ int my_main(int argc, char** argv)
 
 
 		glUseProgram(renderer->program);
-		
 		scene->draw();
-
-
 		scene->drawGUI();
-
-		glUseProgram(0);
-
 		//ImGui::ShowDemoWindow();
 		
 		/* Render the scene */
