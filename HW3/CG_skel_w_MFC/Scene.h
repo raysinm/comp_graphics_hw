@@ -163,7 +163,7 @@ private:
 	void AddCamera();
 	void AddLight();
 	void UpdateModelSelection();
-
+	void UpdateGeneralUniformInGPU();
 	void ResetPopUpFlags();
 	void drawCameraTab();
 	void drawModelTab();

@@ -376,9 +376,8 @@ void Scene::draw()
 	//1. Clear the pixel buffer before drawing new frame.
 	m_renderer->clearBuffer();
 
-	//1.5 Update general uniforms in GPU:
-	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
-	GetActiveCamera()->UpdateProjectionMatInGPU();
+	//2 Update general uniforms in GPU:
+	UpdateGeneralUniformInGPU();
 	// ------------------------------------------------ TODO: ------------------------------------------------
 	
 	//2. Update each light source position
@@ -1583,6 +1582,12 @@ void Scene::UpdateModelSelection()
 		models[i]->selected = false;
 	}
 	models[activeModel]->selected = true;
+}
+
+void Scene::UpdateGeneralUniformInGPU()
+{
+	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
+	GetActiveCamera()->UpdateProjectionMatInGPU();
 }
 
 void Scene::setViewPort(vec4& vp)

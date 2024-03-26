@@ -110,25 +110,40 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
 		glEnable(GL_DEPTH_TEST);
 	}
-	else if (draw_algo == FLAT) {
-		//todo...
-		//glDrawArrays(GL_TRIANGLES, 0, 6);
+	else {
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_TRIANGLE]);
+		glDrawArrays(GL_TRIANGLES, 0, pModel->GetBuffer_len(MODEL_TRIANGLES));
 	}
 
 	// Bounding Box
 	if (pModel->showBoundingBox)
 	{
-		//m_renderer->drawBBox(model, activeCamera);
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_BBOX]);
+		glDisable(GL_DEPTH_TEST);
+		glUniform1i(glGetUniformLocation(program, "displayBBox"), 1);
+		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(BBOX));
+		glUniform1i(glGetUniformLocation(program, "displayBBox"), 0);
+		glEnable(GL_DEPTH_TEST);
 	}
 	// Vertex Normals
 	if (pModel->showVertexNormals)
 	{
-		//m_renderer->drawVertNormals(model, activeCamera);
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_VNORMAL]);
+		//glDisable(GL_DEPTH_TEST);
+		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 1);
+		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(V_NORMAL));
+		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 0);
+		//glEnable(GL_DEPTH_TEST);
 	}
 	// Face normals
 	if (pModel->showFaceNormals)
 	{
-		//m_renderer->drawFaceNormals(model, activeCamera);
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_FNORMAL]);
+		//glDisable(GL_DEPTH_TEST);
+		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 1);
+		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(F_NORMAL));
+		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 0);
+		//glEnable(GL_DEPTH_TEST);
 	}
 
 

@@ -67,8 +67,6 @@ vec2* MeshModel::GetBuffer(MODEL_OBJECT obj)
 {
 	switch (obj)
 	{
-	case BBOX:
-		return buffer2d_bbox;
 	case V_NORMAL:
 		return buffer2d_v_normals;
 	case F_NORMAL:
@@ -85,7 +83,7 @@ unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 	case MODEL_TRIANGLES:
 		return vertex_positions_triangle_gpu.size();
 	case BBOX:
-		return num_bbox_vertices;
+		return vertex_positions_bbox_gpu.size();
 	case V_NORMAL:
 		return num_vertices_raw*2;
 	case F_NORMAL:
@@ -119,12 +117,84 @@ void MeshModel::GenerateVBO_WireFrame()
 	glBindVertexArray(0);
 }
 
+void MeshModel::GenerateVBO_Triangles()
+{
+	glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
+	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_TRIANGLE]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_POS]);
+	//Multiply len by 3 because each vertex is holding 3-floats
+	int lenInBytes = vertex_positions_triangle_gpu.size() * 3 * sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+	glBindVertexArray(0);
+}
+
+void MeshModel::GenerateVBO_BBox()
+{
+	glBindVertexArray(VAOs[VAO_VERTEX_BBOX]);
+	glGenBuffers(1, VBOs[VAO_VERTEX_BBOX]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_BBOX][VBO_VERTEX_POS]);
+	//Multiply len by 3 because each vertex is holding 3-floats
+	int lenInBytes = vertex_positions_bbox_gpu.size() * 3 * sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_bbox_gpu.data(), GL_STATIC_DRAW);
+
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+	glBindVertexArray(0);
+}
+
+void MeshModel::GenerateVBO_vNormals()
+{
+	return;
+	//todo ~~~~~~~~~~~~~~~~
+	glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
+	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_TRIANGLE]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_POS]);
+	//Multiply len by 3 because each vertex is holding 3-floats
+	int lenInBytes = vertex_positions_triangle_gpu.size() * 3 * sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+	glBindVertexArray(0);
+}
+
+void MeshModel::GenerateVBO_fNormals()
+{
+	return;
+	//todo ~~~~~~~~~~~~~~~~
+	glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
+	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_TRIANGLE]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_POS]);
+	//Multiply len by 3 because each vertex is holding 3-floats
+	int lenInBytes = vertex_positions_triangle_gpu.size() * 3 * sizeof(float);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+	glBindVertexArray(0);
+}
+
 void MeshModel::GenerateAllGPU_Stuff()
 {	
 	//Genereate VAO and VBOs in GPU:
 	glGenVertexArrays(VAO_COUNT, this->VAOs);
 
 	GenerateVBO_WireFrame();
+	GenerateVBO_Triangles();
+	GenerateVBO_BBox();
+	GenerateVBO_fNormals();
+	GenerateVBO_vNormals();
 
 
 	/* Bind the uniform colors */
@@ -153,8 +223,6 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 MeshModel::~MeshModel(void)
 {
-	if (buffer2d_bbox)
-		delete[] buffer2d_bbox;
 	if (buffer2d_v_normals)
 		delete[] buffer2d_v_normals;
 	if (buffer2d_f_normals)
@@ -204,10 +272,7 @@ void MeshModel::loadFile(string fileName)
 	
 	num_vertices_raw = vertex_positions_raw.size();
 	num_faces = faces.size();
-	num_vertices = 3 * num_faces;			//Each face is made from 3 vertices
 
-	t_vertex_positions_normalized	= vector<vec3> (num_vertices_raw);
-	t_vertex_positions_cameraspace	= vector<vec3> (num_vertices_raw);
 	vertex_normals					= vector<vec3> (num_vertices_raw);
 	vertex_faces_neighbors			= vector<vector<int>> (num_vertices_raw);
 	buffer2d_v_normals				= new vec2[num_vertices_raw * 2];
@@ -252,8 +317,7 @@ void MeshModel::initBoundingBox()
 	if (vertex_positions_raw.empty()) return;
 	
 	// Bounding box init
-	b_box_vertices = vector<vec3> (num_bbox_vertices);
-	buffer2d_bbox = new vec2      [num_bbox_vertices];
+	vertex_positions_bbox_gpu = vector<vec3> (num_bbox_vertices);
 
 	float min_x, min_y, min_z, max_x, max_y, max_z;
 	min_x = max_x = vertex_positions_raw[0].x;
@@ -279,7 +343,7 @@ void MeshModel::initBoundingBox()
 						   vec3(max_x, max_y, min_z),
 						   vec3(max_x, max_y, max_z),
 
-						   vec3(min_x, min_y, max_z),	
+						   vec3(min_x, min_y, max_z),
 						   vec3(min_x, min_y, min_z),
 
 						   vec3(max_x, min_y, min_z),
@@ -310,7 +374,7 @@ void MeshModel::initBoundingBox()
 	};
 
 	for (unsigned int i = 0; i < num_bbox_vertices; i++)
-		b_box_vertices[i] = v[indices[i]];
+		vertex_positions_bbox_gpu[i] = v[indices[i]];
 }
 
 void MeshModel::calculateFaceNormals()
@@ -430,7 +494,7 @@ void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat
 	//{
 	//	for (unsigned int j = 0; j < num_bbox_vertices; j++)
 	//	{
-	//		vec4 v_j(b_box_vertices[j]);
+	//		vec4 v_j(vertex_positions_bbox_gpu[j]);
 
 	//		//Apply model-view transformations:
 	//		v_j = cTransform * (_world_transform * (_model_transform * v_j));

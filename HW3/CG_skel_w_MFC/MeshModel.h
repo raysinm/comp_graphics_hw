@@ -16,13 +16,15 @@ protected:
 
 	MeshModel(Renderer* rend = nullptr);
 	void GenerateVBO_WireFrame();
+	void GenerateVBO_Triangles();
+	void GenerateVBO_BBox();
+	void GenerateVBO_vNormals();
+	void GenerateVBO_fNormals();
 	void GenerateAllGPU_Stuff();
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
 	vector<vec3> vertex_positions_triangle_gpu;		//Vertex positions data in triangle form
 	vector<vec3> vertex_positions_wireframe_gpu;	//Vertex positions data in wireframe form
-	vector<vec3> t_vertex_positions_cameraspace;	//In camera space
-	vector<vec3> t_vertex_positions_normalized;		//In Clip space, normalized to [-1, 1]
 
 	vector<int> faces_v_indices;					//Each 3 indices makes a face. (triangle)
 	vector<vector<int>> vertex_faces_neighbors;		//Used for calculating the vertex normals.
@@ -31,12 +33,11 @@ protected:
 	vector<vec3> vertex_normals_viewspace;			// size: Num of faces
 	vector<vec3> face_normals;						// size: Num of faces
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
-	vector<vec3> b_box_vertices;
+	vector<vec3> vertex_positions_bbox_gpu;
 
 	vector<Material> materials;
 	Material userDefinedMaterial;
 
-	unsigned int num_vertices;
 	unsigned int num_vertices_raw;
 	unsigned int num_faces;
 	unsigned int num_vertices_to_draw;
@@ -44,7 +45,6 @@ protected:
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
 	
-	vec2*   buffer2d_bbox      = nullptr;		
 	vec2*   buffer2d_v_normals = nullptr;	
 	vec2*   buffer2d_f_normals = nullptr;	
 
