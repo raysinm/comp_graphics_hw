@@ -38,12 +38,22 @@ inline int Z_Index(int width, int x, int y) { return x + (y * width); }
 
 
 enum MODEL_OBJECT {
-	MODEL,
+	MODEL_WIREFRAME,
+	MODEL_TRIANGLES,
 	BBOX,
 	V_NORMAL,
 	F_NORMAL
 };
 
+
+enum VAO_INDICES {
+	VAO_VERTEX_WIREFRAME = 0,
+	VAO_VERTEX_TRIANGLE	 = 1,
+	VAO_VERTEX_BBOX 	 = 2,
+	VAO_VERTEX_VNORMAL 	 = 3,
+	VAO_VERTEX_FNORMAL 	 = 4,
+	VAO_COUNT,
+};
 
 enum VBO_INDICES {
 	VBO_VERTEX_POS		= 0,
@@ -53,7 +63,7 @@ enum VBO_INDICES {
 
 
 enum DrawAlgo {
-	WIRE_FRAME,
+	WIRE_FRAME = 0,
 	FLAT,
 	GOURAUD,
 	PHONG,

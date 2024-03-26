@@ -76,17 +76,14 @@ vec2* MeshModel::GetBuffer(MODEL_OBJECT obj)
 	}
 }
 
-Vertex* MeshModel::GetBuffer()
-{
-	return buffer_vertrices;	
-}
-
 unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
 {
 	switch (obj)
 	{
-	case MODEL:
-		return num_vertices_to_draw;
+	case MODEL_WIREFRAME:
+		return num_faces * 3 * 2;
+	case MODEL_TRIANGLES:
+		return num_faces * 3;
 	case BBOX:
 		return num_bbox_vertices;
 	case V_NORMAL:
@@ -105,40 +102,36 @@ MeshModel::MeshModel(Renderer* rend)
 	ResetAllUserTransforms();
 }
 
+void MeshModel::GenerateVBO_WireFrame()
+{
+	glBindVertexArray(VAOs[VAO_VERTEX_WIREFRAME]);
+	
+	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_WIREFRAME]);
+	//WireFrame - Vertex Positions
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_WIREFRAME][VBO_VERTEX_POS]);
+	glBufferData(GL_ARRAY_BUFFER, vertex_positions_wireframe_gpu.size() * sizeof(float), \
+		vertex_positions_wireframe_gpu.data(), GL_STATIC_DRAW);
+	
+	
+	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(vPosition);
+}
+
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 {
 	loadFile(fileName);
-	
+	CreateVertexVectorForGPU();
 	initBoundingBox();
-
-	buffer_vertrices = new Vertex[num_vertices];
 	GenerateMaterials();
 
 
 	//Genereate VAO and VBOs in GPU:
 	glUseProgram(renderer->program);
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glGenBuffers(VBO_COUNT, VBOs);
-
-	//Vertex Positions
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VBO_VERTEX_POS]);
-	//Dont use num_vertices_raw, instead calculate how many vertex are to drawn
-	glBufferData(GL_ARRAY_BUFFER, num_vertices_raw * sizeof(float),\
-				vertex_positions_raw.data(), GL_STATIC_DRAW);
-	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
-	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(vPosition);
-
-
-	//Vertex Color -- TODO -- only for non-uniform
+	glGenVertexArrays(VAO_COUNT, this->VAOs);
 	
-	//glBindBuffer(GL_ARRAY_BUFFER, VBOs[VBO_VERTEX_COLOR]);
-	//glBufferData(GL_ARRAY_BUFFER, num_vertices_raw * sizeof(float),\
-	//			vertex_positions_raw.data(), GL_STATIC_DRAW);
-	//GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
-	//glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	//glEnableVertexAttribArray(vPosition);
+	GenerateVBO_WireFrame();
+
 
 	/* Bind the uniform colors */
 	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1,\
@@ -158,8 +151,6 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 MeshModel::~MeshModel(void)
 {
-	if (buffer_vertrices)
-		delete[] buffer_vertrices;
 	if (buffer2d_bbox)
 		delete[] buffer2d_bbox;
 	if (buffer2d_v_normals)
@@ -229,11 +220,14 @@ void MeshModel::loadFile(string fileName)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			faces_v_indices.push_back(face.v[i] - 1);
-			vertex_faces_neighbors[face.v[i] - 1].push_back(face_id);
+			int vertIndex = face.v[i] - 1;
+			faces_v_indices.push_back(vertIndex);
+			vertex_faces_neighbors[vertIndex].push_back(face_id);
 		}
+
 		face_id++;
 	}
+
 
 		
 	calculateFaceNormals();
@@ -344,6 +338,35 @@ void MeshModel::estimateVertexNormals()
 			v_normal += face_normals[neighbor_i];
 		
 		vertex_normals[i] = normalize(v_normal);
+	}
+}
+
+void MeshModel::CreateVertexVectorForGPU()
+{
+	for (int f = 0; f < num_faces; f++)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			int vertIndex = (f * 3) + i;
+			vertex_positions_triangle_gpu.push_back(vertex_positions_raw[faces_v_indices[vertIndex]]);
+		}
+
+		int vertIndex_A = faces_v_indices[(f * 3) + 0];
+		int vertIndex_B = faces_v_indices[(f * 3) + 1];
+		int vertIndex_C = faces_v_indices[(f * 3) + 2];
+
+
+		/* A + B*/
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_A]);
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_B]);
+
+		/* A + C*/
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_A]);
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_C]);
+
+		/* B + C*/
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_B]);
+		vertex_positions_wireframe_gpu.push_back(vertex_positions_raw[vertIndex_C]);
 	}
 }
 
@@ -499,7 +522,6 @@ void MeshModel::updateTransform()
 	_model_transform = scale_m * (trnsl_m * (rot_m_z * (rot_m_y * rot_m_x)));
 	_model_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 	
-	UpdateModelViewInGPU();
 }
 
 void MeshModel::updateTransformWorld()
@@ -514,7 +536,6 @@ void MeshModel::updateTransformWorld()
 	_world_transform = scale_m * (rot_m_z * (rot_m_y * (rot_m_x * trnsl_m)));
 	_world_transform_for_normals = scale_inverse_m * (rot_m_z * (rot_m_y * rot_m_x));
 	
-	UpdateModelViewInGPU();
 }
 
 vec4 MeshModel::getCenterOffMass()
@@ -646,28 +667,24 @@ void MeshModel::GenerateMaterials()
 	}
 }
 
-void MeshModel::UpdateModelViewInGPU()
+void MeshModel::UpdateModelViewInGPU(mat4& Tc)
 {
 	glUseProgram(renderer->program); //maybe don't need this
 
 	// Calculate model-view matrix:
-	model_view_mat = (_world_transform * _model_transform);
-
-	glBindVertexArray(this->VAO);//maybe don't need this
+	model_view_mat = Tc * _world_transform * _model_transform;
 
 	/* Bind the model-view matrix*/
 	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
 	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, &(model_view_mat[0][0]));
 
 
-	glBindVertexArray(0);
 	glUseProgram(0);
 }
 
 void MeshModel::UpdateColorsInGPU()
 {
 	glUseProgram(renderer->program); //maybe don't need this
-	glBindVertexArray(VAO);
 
 	/* Bind the uniform colors */
 	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
@@ -680,6 +697,5 @@ void MeshModel::UpdateColorsInGPU()
 		& (userDefinedMaterial.c_specular[0]));
 
 
-	glBindVertexArray(0);
 	glUseProgram(0);
 }

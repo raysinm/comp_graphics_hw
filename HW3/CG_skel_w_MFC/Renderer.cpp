@@ -92,6 +92,8 @@ void Renderer::clearBuffer()
 {
 	glClearColor(DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, DEFAULT_BACKGROUND_COLOR, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	float wireFrameColor = 1 - DEFAULT_BACKGROUND_COLOR;
+	glUniform3f(glGetUniformLocation(program, "wireframeColor"), wireFrameColor, wireFrameColor, wireFrameColor);
 
 	return;
 
@@ -120,6 +122,44 @@ void Renderer::clearBuffer()
 	//	for (UINT i = 0; i < true_width * true_height; i++)
 	//		m_zbuffer[i] = MAX_Z;
 	//}
+}
+
+void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
+{
+	if (!model ) return;
+	MeshModel* pModel = (MeshModel*)model;
+
+	pModel->UpdateModelViewInGPU( cTransform );
+	pModel->UpdateColorsInGPU();
+
+	if (draw_algo == WIRE_FRAME) {
+		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
+		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME) );
+	}
+	else if (draw_algo == FLAT) {
+		//todo...
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+
+	//Put all this code in the m_renderer->drawModel(draw_algo, model, activeCamera) function.
+	//// Bounding Box
+	//if (((MeshModel*)model)->showBoundingBox)
+	//{
+	//	m_renderer->drawBBox(model, activeCamera);
+	//}
+	//// Vertex Normals
+	//if (((MeshModel*)model)->showVertexNormals)
+	//{
+	//	m_renderer->drawVertNormals(model, activeCamera);
+	//}
+	//// Face normals
+	//if (((MeshModel*)model)->showFaceNormals)
+	//{
+	//	m_renderer->drawFaceNormals(model, activeCamera);
+	//}
+
+
+	glBindVertexArray(0);
 }
 
 GLfloat* vert_pos_for_wireframe(const GLfloat* vert, int len)

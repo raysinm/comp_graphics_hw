@@ -14,6 +14,7 @@
 
 using namespace std;
 class MeshModel;
+class Model;
 
 class Renderer
 {
@@ -21,7 +22,7 @@ private:
 	GLFWwindow* m_window;
 	int m_width, m_height;
 	int DEFAULT_BACKGROUND_COLOR = 0;
-	vec4 DEFAULT_WIREFRAME_COLOR = vec4(1.0, 1.0, 1.0);
+	vec3 DEFAULT_WIREFRAME_COLOR = vec3(1.0, 1.0, 1.0);
 
 	//unordered_map<vec2, vec3, vec2Hash> highlightPixels;
 	//float* m_outBuffer_screen;			// 3*width*height
@@ -84,9 +85,9 @@ public:
 	void clearBuffer();
 	void invertSceneColors()
 	{
-		DEFAULT_WIREFRAME_COLOR = vec4(1) - DEFAULT_WIREFRAME_COLOR;
+		DEFAULT_WIREFRAME_COLOR = vec3(1) - DEFAULT_WIREFRAME_COLOR;
 		DEFAULT_BACKGROUND_COLOR = 1 - DEFAULT_BACKGROUND_COLOR;
 	}
-
+	void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform);
 
 };

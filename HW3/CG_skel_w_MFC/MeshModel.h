@@ -15,9 +15,11 @@ protected:
 	friend class Scene;
 
 	MeshModel(Renderer* rend = nullptr);
+	void GenerateVBO_WireFrame();
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
-	vector<vec3> vertex_positions;					//Vertex positions data in triangle form
+	vector<vec3> vertex_positions_triangle_gpu;		//Vertex positions data in triangle form
+	vector<vec3> vertex_positions_wireframe_gpu;	//Vertex positions data in wireframe form
 	vector<vec3> t_vertex_positions_cameraspace;	//In camera space
 	vector<vec3> t_vertex_positions_normalized;		//In Clip space, normalized to [-1, 1]
 
@@ -41,7 +43,6 @@ protected:
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
 	
-	Vertex* buffer_vertrices   = nullptr;			
 	vec2*   buffer2d_bbox      = nullptr;		
 	vec2*   buffer2d_v_normals = nullptr;	
 	vec2*   buffer2d_f_normals = nullptr;	
@@ -56,6 +57,7 @@ protected:
 	void initBoundingBox();
 	void calculateFaceNormals();
 	void estimateVertexNormals();
+	void CreateVertexVectorForGPU();
 
 	Renderer* renderer;
 
@@ -113,7 +115,7 @@ public:
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
 
-	void UpdateModelViewInGPU();
+	void UpdateModelViewInGPU(mat4& Tc);
 	void UpdateColorsInGPU();
 
 };

@@ -14,6 +14,7 @@
 #define EFFECTS_TAB_INDEX  3
 
 using namespace std;
+extern Renderer* renderer;
 
 static char nameBuffer[64] = { 0 };
 static float posBuffer[3] = { 0 };
@@ -169,7 +170,6 @@ void Camera::LookAt(const Model* target)
 	updateTransform();
 }
 
-
 void Camera::setOrtho()
 {
 	GLfloat x = c_right - c_left;
@@ -225,6 +225,12 @@ void Camera::setPerspectiveByParams()
 	}
 	
 
+}
+
+void Camera::UpdateProjectionMatInGPU()
+{
+	/* Bind the projection matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_FALSE, &(projection[0][0]));
 }
 
 void Camera::resetProjection()
@@ -370,6 +376,9 @@ void Scene::draw()
 	//1. Clear the pixel buffer before drawing new frame.
 	m_renderer->clearBuffer();
 
+	//1.5 Update general uniforms in GPU:
+	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
+	GetActiveCamera()->UpdateProjectionMatInGPU();
 	// ------------------------------------------------ TODO: ------------------------------------------------
 	
 	//2. Update each light source position
@@ -385,27 +394,12 @@ void Scene::draw()
 		//Don't draw new model before user clicked 'OK'.
 		if (!model->GetUserInitFinished())
 			continue;
+		MeshModel* p = (MeshModel*)model;
+		p->updateTransform();
+		p->updateTransformWorld();
 
 		//At This Point, the model matrix, model VAO, and all other model data is updated & ready in the GPU.
-		m_renderer->drawModel(draw_algo, model, activeCamera);
-
-
-		//Put all this code in the m_renderer->drawModel(draw_algo, model, activeCamera) function.
-		//// Bounding Box
-		//if (((MeshModel*)model)->showBoundingBox)
-		//{
-		//	m_renderer->drawBBox(model, activeCamera);
-		//}
-		//// Vertex Normals
-		//if (((MeshModel*)model)->showVertexNormals)
-		//{
-		//	m_renderer->drawVertNormals(model, activeCamera);
-		//}
-		//// Face normals
-		//if (((MeshModel*)model)->showFaceNormals)
-		//{
-		//	m_renderer->drawFaceNormals(model, activeCamera);
-		//}
+		m_renderer->drawModel(draw_algo, model, GetActiveCamera()->cTransform);
 	}
 
 	// ------------------------------------------------ TODO:

@@ -3,10 +3,14 @@
 //Input
 in vec3 vPosition;
 in vec3 vColor;     //for non-uniform material
+
+uniform int algo_shading;
 uniform mat4 modelview;
+uniform mat4 projection;
 uniform vec3 uniformColor_emissive;
 uniform vec3 uniformColor_diffuse;
 uniform vec3 uniformColor_specular;
+uniform vec3 wireframeColor;
 
 //Output
 out vec3 colorOfVertex;
@@ -20,9 +24,11 @@ void main()
 {
     pos = vec4(vPosition, 1.0);
     
-//    gl_Position = modelview * pos;
-    gl_Position =  pos;
+    gl_Position = projection * (modelview * pos);
 
-//    colorOfVertex = uniformColor_diffuse;
-    colorOfVertex = vColor;
+    if(algo_shading == 0)
+    {
+        colorOfVertex = wireframeColor;
+    }
+    
 }
