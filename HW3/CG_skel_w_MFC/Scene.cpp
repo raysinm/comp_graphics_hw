@@ -231,6 +231,9 @@ void Camera::UpdateProjectionMatInGPU()
 {
 	/* Bind the projection matrix*/
 	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(projection[0][0]));
+
+	/* Bind the projection_normals matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection_normals"), 1, GL_TRUE, &(rotationMat_normals[0][0]));
 }
 
 void Camera::resetProjection()

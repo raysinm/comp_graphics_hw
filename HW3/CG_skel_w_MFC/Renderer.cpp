@@ -101,7 +101,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	if (!model ) return;
 	MeshModel* pModel = (MeshModel*)model;
 
-	pModel->UpdateModelViewInGPU( cTransform );
+	pModel->UpdateModelViewInGPU( cTransform, scene->GetActiveCamera()->rotationMat_normals);
 	pModel->UpdateColorsInGPU();
 
 	if (draw_algo == WIRE_FRAME) {
@@ -131,7 +131,10 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_VNORMAL]);
 		//glDisable(GL_DEPTH_TEST);
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 1);
+		glUniform1f(glGetUniformLocation(program, "vnFactor"), *pModel->getLengthVertexNormal());
+		
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(V_NORMAL));
+		
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 0);
 		//glEnable(GL_DEPTH_TEST);
 	}
@@ -141,7 +144,10 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_FNORMAL]);
 		//glDisable(GL_DEPTH_TEST);
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 1);
+		glUniform1f(glGetUniformLocation(program, "fnFactor"), *pModel->getLengthFaceNormal());
+
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(F_NORMAL));
+
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 0);
 		//glEnable(GL_DEPTH_TEST);
 	}

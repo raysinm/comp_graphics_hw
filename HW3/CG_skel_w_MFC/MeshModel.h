@@ -21,10 +21,16 @@ protected:
 	void GenerateVBO_vNormals();
 	void GenerateVBO_fNormals();
 	void GenerateAllGPU_Stuff();
+	vector<vec3> duplicateEachElement(const vector<vec3>& v);
 	
 	vector<vec3> vertex_positions_raw;				//Raw data from .obj file.
 	vector<vec3> vertex_positions_triangle_gpu;		//Vertex positions data in triangle form
 	vector<vec3> vertex_positions_wireframe_gpu;	//Vertex positions data in wireframe form
+	vector<vec3> vertex_positions_bbox_gpu;
+	vector<vec3> vertex_positions_Vnormals_gpu;
+	vector<vec3> vertex_directions_Vnormals_gpu;
+	vector<vec3> vertex_positions_Fnormals_gpu;
+	vector<vec3> vertex_directions_Fnormals_gpu;
 
 	vector<int> faces_v_indices;					//Each 3 indices makes a face. (triangle)
 	vector<vector<int>> vertex_faces_neighbors;		//Used for calculating the vertex normals.
@@ -33,7 +39,6 @@ protected:
 	vector<vec3> vertex_normals_viewspace;			// size: Num of faces
 	vector<vec3> face_normals;						// size: Num of faces
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
-	vector<vec3> vertex_positions_bbox_gpu;
 
 	vector<Material> materials;
 	Material userDefinedMaterial;
@@ -44,9 +49,7 @@ protected:
 	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
-	
-	vec2*   buffer2d_v_normals = nullptr;	
-	vec2*   buffer2d_f_normals = nullptr;	
+		
 
 	mat4 _world_transform;
 	mat4 _model_transform;
@@ -54,6 +57,7 @@ protected:
 	mat4 _model_transform_for_normals;
 
 	mat4 model_view_mat;
+	mat4 model_view_mat_for_normals;
 
 	void initBoundingBox();
 	void calculateFaceNormals();
@@ -116,7 +120,7 @@ public:
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
 
-	void UpdateModelViewInGPU(mat4& Tc);
+	void UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals);
 	void UpdateColorsInGPU();
 
 };
