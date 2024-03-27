@@ -157,13 +157,59 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 
 }
 
+void Renderer::UpdateLightsUBO(bool reallocate_ubo)
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO_lights);
+	if (reallocate_ubo)
+	{
+		// Calculate size of the buffer
+		size_t bufferSize = sizeof(LightProperties) * scene->lights.size();
+
+		// Allocate memory for the buffer
+		glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_STATIC_DRAW);
+	}
+
+	// Bind the buffer to a binding point
+	GLuint bindingPoint_Lights = 0; // Choose a binding point
+	glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint_Lights, UBO_lights);
+
+	// Map the buffer to client memory
+	LightProperties* lightData = (LightProperties*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+
+	// Populate the buffer with light properties
+	for (UINT i = 0; i < scene->lights.size(); i++)
+	{
+		scene->lights[i]->updateDirCameraSpace(scene->GetActiveCamera()->cTransform);
+		scene->lights[i]->updatePosCameraSpace(scene->GetActiveCamera()->cTransform);
+
+		lightData[i].position	= scene->lights[i]->getPositionCameraSpace();
+		lightData[i].dir		= scene->lights[i]->getDirectionCameraSpace();
+		lightData[i].color		= scene->lights[i]->getColor();
+		lightData[i].La			= scene->lights[i]->La;
+		lightData[i].Ld			= scene->lights[i]->Ld;
+		lightData[i].Ls			= scene->lights[i]->Ls;
+		lightData[i].type		= scene->lights[i]->getLightType();
+	}
+
+	// Unmap the buffer to actually write into the GPU.
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
+}
+
 void Renderer::InitOpenGLRendering()
 {
 	program = InitShader("vshader.glsl", "fshader.glsl");
 
 	//Enable Z-Buffer
 	glEnable(GL_DEPTH_TEST);
+
+	
+	// Create and bind a uniform buffer object
+	glGenBuffers(1, &UBO_lights);
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO_lights);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(LightProperties), NULL, GL_STATIC_DRAW);
+
 }
+
 
 //void Renderer::update(int width, int height)
 //{

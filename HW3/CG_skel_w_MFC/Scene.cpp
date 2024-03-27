@@ -337,7 +337,6 @@ void Scene::AddLight()
 {
 	Light* lightSource = new Light();
 	lights.push_back(lightSource);
-
 	string s = lightSource->getName();
 	s += " " + std::to_string(lights.size());
 	lightSource->setName(s); //Light 1, Light 2, Light 3 ...
@@ -379,16 +378,9 @@ void Scene::draw()
 	//1. Clear the pixel buffer before drawing new frame.
 	m_renderer->clearBuffer();
 
-	//2 Update general uniforms in GPU:
+	//2. Update general uniforms in GPU:
 	UpdateGeneralUniformInGPU();
-	// ------------------------------------------------ TODO: ------------------------------------------------
 	
-	//2. Update each light source position
-	//for (auto l : lights)
-	//{
-	//	l->updatePosCameraSpace(GetActiveCamera()->cTransform);
-	//	l->updateDirCameraSpace(GetActiveCamera()->cTransform);
-	//}
 
 	//3. draw each Model
 	for (auto model : models)
@@ -846,6 +838,7 @@ void Scene::drawLightTab()
 	Light* currentLight = (Light*)lights[activeLight];
 	string name(currentLight->getName());
 	ImGui::SeparatorText(name.c_str());
+	bool somethingChanged = false;
 
 	vec3* light_pos = currentLight->getPositionPtr();
 	vec3* light_dir = currentLight->getDirectionPtr();
@@ -854,6 +847,9 @@ void Scene::drawLightTab()
 	ImGui::RadioButton("Ambient",  &light_type_radio_button, AMBIENT_LIGHT);
 	ImGui::RadioButton("Point",    &light_type_radio_button, POINT_LIGHT);  
 	ImGui::RadioButton("Parallel", &light_type_radio_button, PARALLEL_LIGHT);
+
+	if ((int)currentLight->getLightType() != light_type_radio_button)
+		somethingChanged = true;
 
 	currentLight->setLightType(light_type_radio_button);
 
@@ -864,6 +860,9 @@ void Scene::drawLightTab()
 
 	colorPicker(&color_local, "Color", "##LightColor");
 
+	if (color != vec3(color_local.x, color_local.y, color_local.z))
+		somethingChanged = true;
+
 	color.x = color_local.x;
 	color.y = color_local.y;
 	color.z = color_local.z;
@@ -873,7 +872,7 @@ void Scene::drawLightTab()
 		ImGui::SeparatorText("Position");
 
 		vec3* pos = currentLight->getPositionPtr();
-
+		vec3 prevPos = *pos;
 		ImGui::Text("Position (X Y Z)");
 		ImGui::DragFloat("##X_WPL", &(pos->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
 		ImGui::DragFloat("##Y_WPL", &(pos->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
@@ -882,6 +881,8 @@ void Scene::drawLightTab()
 		{
 			currentLight->resetPosition();
 		}
+		if(*pos != prevPos)
+			somethingChanged = true;
 	}
 
 	if (currentLight->getLightType() == PARALLEL_LIGHT)
@@ -889,7 +890,7 @@ void Scene::drawLightTab()
 		ImGui::SeparatorText("Direction");
 
 		vec3* dir = currentLight->getDirectionPtr();
-
+		vec3 prevDir = *dir;
 		ImGui::Text("Direction (X Y Z)");
 		ImGui::DragFloat("##X_WDL", &(dir->x), 0.1f, 0, 0, "%.1f"); ImGui::SameLine();
 		ImGui::DragFloat("##Y_WDL", &(dir->y), 0.1f, 0, 0, "%.1f"); ImGui::SameLine();
@@ -898,6 +899,8 @@ void Scene::drawLightTab()
 		{
 			currentLight->resetDirection();
 		}
+		if (*dir != prevDir)
+			somethingChanged = true;
 	}
 
 	ImGui::SeparatorText("Light Intensity");
@@ -905,6 +908,10 @@ void Scene::drawLightTab()
 	float* la = &(currentLight->La);
 	float* ld = &(currentLight->Ld);
 	float* ls = &(currentLight->Ls);
+
+	float prevLa = *la;
+	float prevLd = *ld;
+	float prevLs = *ls;
 
 	if (currentLight->getLightType() == AMBIENT_LIGHT)
 	{
@@ -928,7 +935,13 @@ void Scene::drawLightTab()
 		*ld = DEFUALT_LIGHT_LD_VALUE;
 		*ls = DEFUALT_LIGHT_LS_VALUE;
 	}
+	if (prevLa != *la || prevLd != *ld || prevLs != *ls)
+		somethingChanged = true;
+
+	if (somethingChanged)
+		m_renderer->UpdateLightsUBO(false);
 }
+
 
 //void Scene::drawEffectsTab()
 //{
@@ -1228,7 +1241,7 @@ void Scene::drawGUI()
 						{
 							if (ImGui::MenuItem(lights[c]->getName().c_str(), NULL))
 							{
-								/* Delete current camera */
+								/* Delete current light */
 								lights.erase(lights.begin() + c);
 
 								if (c == activeLight)
@@ -1240,6 +1253,8 @@ void Scene::drawGUI()
 									--activeLight;	// index changed
 								}
 								lights[activeLight]->selected = true;
+
+								m_renderer->UpdateLightsUBO(true);
 
 							}
 						}
@@ -1532,13 +1547,15 @@ void Scene::drawGUI()
 			currLight->setName(nameBuffer);			
 			currLight->setPosition(vec3(posBuffer[0], posBuffer[1], posBuffer[2]));
 			ResetPopUpFlags();
+			m_renderer->UpdateLightsUBO(true);
 		}
 		else if (GUI_popup_pressedCANCEL)
 		{
 			delete lights[lights.size() - 1];
 			lights.pop_back();
-
 			ResetPopUpFlags();
+			m_renderer->UpdateLightsUBO(true);
+
 		}
 	}
 
@@ -1590,6 +1607,7 @@ void Scene::UpdateModelSelection()
 void Scene::UpdateGeneralUniformInGPU()
 {
 	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
+	glUniform1i(glGetUniformLocation(m_renderer->program, "numLights"), lights.size());
 	GetActiveCamera()->UpdateProjectionMatInGPU();
 }
 

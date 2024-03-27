@@ -190,3 +190,17 @@ typedef enum LIGHT_TYPE
 }LIGHT_TYPE;
 
 
+struct LightProperties
+{
+	vec3 position;  // 0, 1, 2
+	float padding1; // 3
+	vec3 dir;		// 4, 5, 6
+	float padding2; // 7
+	vec3 color;		// 8, 9, 10
+	float padding3; // 11
+
+	float La;
+	float Ld;
+	float Ls;
+	int type;  // Ambient / Point / Parallel
+};

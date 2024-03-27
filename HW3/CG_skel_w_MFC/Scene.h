@@ -234,6 +234,7 @@ public:
 	bool applyBloom = false;
 	bool applyFullScreenBlur = false;
 
+
 };
 
 

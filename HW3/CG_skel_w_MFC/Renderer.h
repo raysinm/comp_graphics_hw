@@ -57,8 +57,8 @@ private:
 	//////////////////////////////
 	
 public:
-	GLuint VAO_vertex_pos = 0;
-	GLuint program		  = 0;
+	GLuint program	  = -1;
+	GLuint UBO_lights = -1;
 	
 	Renderer(int width, int height, GLFWwindow* window);
 	~Renderer(void);
@@ -88,6 +88,7 @@ public:
 		DEFAULT_WIREFRAME_COLOR = vec3(1) - DEFAULT_WIREFRAME_COLOR;
 		DEFAULT_BACKGROUND_COLOR = 1 - DEFAULT_BACKGROUND_COLOR;
 	}
-	void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform);
+	void drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform);
+	void UpdateLightsUBO(bool reallocate_ubo);
 
 };

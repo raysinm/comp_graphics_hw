@@ -1,5 +1,26 @@
 #version 150
 
+struct LightProperties
+{
+    vec3 position;
+    vec3 dir;
+    vec3 color;
+    float La;
+    float Ld;
+    float Ls;
+    int type;  // Ambient=0 / Point=1 / parallel=2
+};
+
+// Declare a uniform block for the light properties
+layout(std140) uniform Lights
+{
+    LightProperties lights[10]; // Maximum number of lights
+};
+
+
+
+
+
 //Input
 in vec3 vPosition;
 in vec3 vColor;     //for non-uniform material
@@ -11,19 +32,19 @@ uniform int algo_shading;
 uniform int displayBBox;
 uniform int displayVnormal;
 uniform int displayFnormal;
+uniform int numLights;
 uniform float vnFactor;
 uniform float fnFactor;
 uniform mat4 modelview;
 uniform mat4 modelview_normals;
 uniform mat4 projection;
+uniform vec3 wireframeColor;
 uniform vec3 uniformColor_emissive;
 uniform vec3 uniformColor_diffuse;
 uniform vec3 uniformColor_specular;
-uniform vec3 wireframeColor;
 
 //Output
 out vec3 colorOfVertex;
-
 
 //Local:
 vec4 pos;
@@ -32,11 +53,10 @@ int vertexIndex;
 
 void main()
 {
-    pos = vec4(vPosition, 1.0);
+    pos = vec4(vPosition, 1);
     vertexIndex = gl_VertexID;
     
     res = projection * (modelview * pos);
-
     if(displayBBox == 1)
     {
         colorOfVertex = vec3(0, 1, 0);
@@ -65,14 +85,13 @@ void main()
     }
     else
     {
-        if(algo_shading == 0)
+        if(algo_shading == 0) //wireframe
         {
             colorOfVertex = wireframeColor;
         }
-        else
+        else if(algo_shading == 1) //flat shading
         {
-            //Debug: Default color for now...
-            colorOfVertex = vec3(0.5, 0.7, 1);
+            colorOfVertex = wireframeColor;
         }
     }
 

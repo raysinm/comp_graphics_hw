@@ -177,7 +177,8 @@ int my_main(int argc, char** argv)
 //----------------------------------------------------------------------------
 	renderer = new Renderer(START_WIDTH, START_HEIGHT, window);
 	scene = new Scene(renderer);
-	
+	renderer->UpdateLightsUBO(true);
+
 
 
 //----------------------------------------------------------------------------

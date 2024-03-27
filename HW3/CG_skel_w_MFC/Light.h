@@ -9,7 +9,7 @@ class Light
 {
 private:
 	vec3 _position, _direction;	// World space
-	vec3 _color;
+	vec3 _color = vec3(1,1,1);
 
 	vec4 _positionCameraSpace;
 	vec3 _directionCameraSpace;
