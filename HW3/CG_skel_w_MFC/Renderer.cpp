@@ -112,7 +112,6 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	else {
 
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_TRIANGLE]);
-		glUniform1i(glGetUniformLocation(program, "algo_shading"), int(draw_algo));
 		glDrawArrays(GL_TRIANGLES, 0, pModel->GetBuffer_len(MODEL_TRIANGLES));
 
 	}
@@ -181,9 +180,9 @@ void Renderer::UpdateLightsUBO(bool reallocate_ubo)
 		scene->lights[i]->updateDirCameraSpace(scene->GetActiveCamera()->cTransform);
 		scene->lights[i]->updatePosCameraSpace(scene->GetActiveCamera()->cTransform);
 
-		lightData[i].position	= scene->lights[i]->getPositionCameraSpace();
-		lightData[i].dir		= scene->lights[i]->getDirectionCameraSpace();
-		lightData[i].color		= scene->lights[i]->getColor();
+		lightData[i].position	= vec4(scene->lights[i]->getPositionCameraSpace() , 1);
+		lightData[i].dir		= vec4(scene->lights[i]->getDirectionCameraSpace(), 1);
+		lightData[i].color		= vec4(scene->lights[i]->getColor()				  , 1);
 		lightData[i].La			= scene->lights[i]->La;
 		lightData[i].Ld			= scene->lights[i]->Ld;
 		lightData[i].Ls			= scene->lights[i]->Ls;

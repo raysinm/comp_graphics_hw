@@ -1607,7 +1607,7 @@ void Scene::UpdateModelSelection()
 void Scene::UpdateGeneralUniformInGPU()
 {
 	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
-	glUniform1i(glGetUniformLocation(m_renderer->program, "numLights"), lights.size());
+	glUniform1i(glGetUniformLocation(m_renderer->program, "numLights"), (int)lights.size());
 	GetActiveCamera()->UpdateProjectionMatInGPU();
 }
 

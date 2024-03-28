@@ -2,9 +2,9 @@
 
 struct LightProperties
 {
-    vec3 position;
-    vec3 dir;
-    vec3 color;
+    vec4 position;
+    vec4 dir;
+    vec4 color;
     float La;
     float Ld;
     float Ls;
@@ -16,6 +16,7 @@ layout(std140) uniform Lights
 {
     LightProperties lights[10]; // Maximum number of lights
 };
+
 
 
 
