@@ -11,17 +11,14 @@ struct LightProperties
     int type;  // Ambient=0 / Point=1 / parallel=2
 };
 
-// Declare a uniform block for the light properties
+/* UBO */
 layout(std140) uniform Lights
 {
     LightProperties lights[10]; // Maximum number of lights
 };
 
 
-
-
-
-//Input
+/* Input */
 in vec3 vPosition;
 in vec3 fPosition;
 in vec3 vn;
@@ -29,7 +26,7 @@ in vec3 fn;
 in vec3 non_uniformColor_diffuse_FLAT;  //every 3 is duplicated to be the average of the face (to make a uniform same color for FLAT shading)
 in vec3 non_uniformColor_diffuse;       //simple 1to1 mapping for every vertex - it's color
 
-
+/* Uniforms */
 uniform int algo_shading;
 uniform int displayBBox;
 uniform int displayVnormal;
@@ -42,6 +39,7 @@ uniform mat4 modelview_normals;
 uniform mat4 projection;
 uniform vec3 wireframeColor;
 
+/* Material */
 uniform vec3 uniformColor_emissive;
 uniform vec3 uniformColor_diffuse;
 uniform vec3 uniformColor_specular;
@@ -52,11 +50,21 @@ uniform float EmissiveFactor;
 uniform int COS_ALPHA;
 uniform bool isUniformMaterial;
 
-//Output
-out vec3 outputColor;
+/* Output */
 flat out vec3 flat_outputColor;
+out vec3  outputColor;
+out vec4  interpolated_normal;
+out vec4  interpolated_position;
+out vec3  interpolated_emissive;
+out vec3  interpolated_diffuse;
+out vec3  interpolated_specular;
+flat out float interpolated_Ka;
+flat out float interpolated_Kd;
+flat out float interpolated_Ks;
+flat out float interpolated_EmissiveFactor;
+flat out int   interpolated_COS_ALPHA;
 
-//Local:
+/* Locals */
 vec4 vPos;
 vec4 vPos_Cameraspace;
 vec4 fPos;
@@ -68,6 +76,8 @@ vec3  current_Color_specular;
 float current_Ka;
 float current_Kd;
 float current_Ks;
+float current_EmissiveFactor;
+int current_COS_ALPHA;
 
 vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
 {
@@ -110,7 +120,7 @@ vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
         else if(typeOfColor == 2) //specular
         {
         	/* Calcualte specular */
-		    float dotProduct_RV = pow( max(0, dot(R, V)), COS_ALPHA);
+		    float dotProduct_RV = pow( max(0, dot(R, V)), current_COS_ALPHA);
 		    return vec3( (lights[i].Ls * current_Ks * dotProduct_RV) * (lightSourceColor * current_Color_specular) );
         }
     }
@@ -127,11 +137,6 @@ vec3 getColor(vec4 point, vec4 normal)
     vec3 P = vec3(point.x, point.y, point.z) / point.w;
     vec3 N = vec3(normal.x, normal.y, normal.z) / normal.w;
 
-    if(isUniformMaterial == false)
-    {
-        current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
-    }
-
     for(int i = 0; i < numLights; i++)
     {
         Ia_total += calcIntensity(i, P, N, 0);
@@ -140,7 +145,7 @@ vec3 getColor(vec4 point, vec4 normal)
     }
 
     /* Add emissive light INDEPENDENT to any light source*/
-    Ia_total += EmissiveFactor * current_Color_emissive;
+    Ia_total += current_EmissiveFactor * current_Color_emissive;
     
     /* Add all 3 together and return the clamped color */
     vec3 result = Ia_total + Id_total + Is_total;
@@ -158,6 +163,8 @@ void main()
     current_Ka = Ka;
     current_Kd = Kd;
     current_Ks = Ks;
+    current_EmissiveFactor = EmissiveFactor;
+    current_COS_ALPHA = COS_ALPHA;
 
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
@@ -202,21 +209,35 @@ void main()
             {
                 vec4 P = modelview * vec4(fPosition, 1);
                 vec4 N = modelview_normals * vec4(fn, 1);
-    	       
-        		flat_outputColor = getColor(P, N);
+    	        
+                if(isUniformMaterial == false)
+                    current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
+        		
+                flat_outputColor = getColor(P, N);
             }
             else if(algo_shading == 2) //Gouraud shading
             {
                 vec4 P = vPos_Cameraspace;                //Vertex Position in CameraSpace
                 vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
 
+                if(isUniformMaterial == false)
+                    current_Color_diffuse  = non_uniformColor_diffuse;
+
         		outputColor = getColor(P, N);
             }
             else if(algo_shading == 3) //Phong shading
             {
-                //test
-                outputColor = vec3(0,0,1);
+                interpolated_normal = modelview_normals * vec4(vn, 1);
+                interpolated_position = vPos_Cameraspace;
 
+                interpolated_emissive = current_Color_emissive;
+                interpolated_diffuse  = current_Color_diffuse;
+                interpolated_specular = current_Color_specular;
+                interpolated_Ka = current_Ka;
+                interpolated_Kd = current_Kd;
+                interpolated_Ks = current_Ks;
+                interpolated_EmissiveFactor = current_EmissiveFactor;
+                interpolated_COS_ALPHA = current_COS_ALPHA;
             }
         }
     }
