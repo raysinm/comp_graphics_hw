@@ -133,7 +133,7 @@ vec3 getColor(vec4 point, vec4 normal)
 /* Main */
 void main()
 {
-    if(algo_shading == 0) //WireFrame
+    if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1) //WireFrame
     {
 	    FragColor = vec4(outputColor, 1);
     }
