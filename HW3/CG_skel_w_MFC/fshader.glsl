@@ -18,9 +18,8 @@ layout(std140) uniform Lights
 };
 
 
-
-
-in vec3 colorOfVertex;
+in vec3 outputColor;
+flat in vec3 flat_outputColor;
 
 uniform vec3 wireframeColor;
 uniform int algo_shading;
@@ -33,21 +32,21 @@ out vec4 FragColor;
 
 void main()
 {
-    if(algo_shading == 0)
+    if(algo_shading == 0) //WireFrame
     {
-	    FragColor = vec4(colorOfVertex, 1);
+	    FragColor = vec4(outputColor, 1);
     }
 	else
     {
-        if(algo_shading == 1) // flat shading
+        if(algo_shading == 1)       // flat shading
         {
-            FragColor = vec4(colorOfVertex, 1);
+            FragColor = vec4(flat_outputColor, 1);
         }
-        else if(algo_shading == 2) // gououord shading
+        else if(algo_shading == 2)  // gououord shading
         {
-            FragColor = vec4(1,0,0,1);
+            FragColor = vec4(outputColor, 1);
         }
-        else if(algo_shading == 3) // Phong shading
+        else if(algo_shading == 3)  // Phong shading
         {
             FragColor = vec4(0,1,0,1);
         }

@@ -53,10 +53,12 @@ uniform int COS_ALPHA;
 uniform bool isUniformMaterial;
 
 //Output
-out vec3 colorOfVertex;
+out vec3 outputColor;
+flat out vec3 flat_outputColor;
 
 //Local:
 vec4 vPos;
+vec4 vPos_Cameraspace;
 vec4 fPos;
 vec4 resultPosition;
 int vertexIndex;
@@ -69,9 +71,9 @@ float current_Ks;
 
 vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
 {
-	vec3 I = vec3(lights[i].dir);                         // Light source direction to P (Assume Parallel light source)
+	vec3 I = vec3(lights[i].dir);                   // Light source direction to P (Assume Parallel light source)
 	vec3 R = normalize((2 * dot(I, N) * N) - I);	// Direction of reflected light
-	vec3 V = normalize(-P);							// Direction to COP (center of projection === camera)
+	vec3 V = normalize(-P);							// Direction to COP (center of projection is the camera)
     vec3 lightSourceColor = vec3(lights[i].color);
 
     if(typeOfColor == 0)
@@ -116,6 +118,36 @@ vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
     return vec3(1,0,0);
 }
 
+vec3 getColor(vec4 point, vec4 normal)
+{ 
+    vec3 Ia_total   = vec3(0,0,0);
+    vec3 Id_total   = vec3(0,0,0);
+    vec3 Is_total   = vec3(0,0,0);
+
+    vec3 P = vec3(point.x, point.y, point.z) / point.w;
+    vec3 N = vec3(normal.x, normal.y, normal.z) / normal.w;
+
+    if(isUniformMaterial == false)
+    {
+        current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
+    }
+
+    for(int i = 0; i < numLights; i++)
+    {
+        Ia_total += calcIntensity(i, P, N, 0);
+        Id_total += calcIntensity(i, P, N, 1);
+        Is_total += calcIntensity(i, P, N, 2);
+    }
+
+    /* Add emissive light INDEPENDENT to any light source*/
+    Ia_total += EmissiveFactor * current_Color_emissive;
+    
+    /* Add all 3 together and return the clamped color */
+    vec3 result = Ia_total + Id_total + Is_total;
+
+    return clamp(result, vec3(0), vec3(1));
+}
+
 void main()
 {
     vPos = vec4(vPosition, 1);
@@ -128,18 +160,17 @@ void main()
     current_Ks = Ks;
 
     vertexIndex = gl_VertexID;
-    resultPosition = modelview * vPos;
+    vPos_Cameraspace = modelview * vPos;
+    resultPosition = projection * vPos_Cameraspace;
 
 
     if(displayBBox == 1)
     {
-        colorOfVertex = vec3(0, 1, 0);  // green
-        resultPosition = projection * resultPosition;
+        outputColor = vec3(0, 1, 0);  // green
     }
     else if (displayFnormal == 1)
     {
-        colorOfVertex = vec3(0, 0, 1);  // blue
-        resultPosition = projection * resultPosition;
+        outputColor = vec3(0, 0, 1);  // blue
         if(vertexIndex % 2 == 1) 
         {
             vec4 normalDir = normalize(projection * normalize(modelview_normals * vec4(fn,1)));
@@ -150,8 +181,7 @@ void main()
     }
     else if (displayVnormal == 1)
     {
-        colorOfVertex = vec3(1, 0, 0);
-        resultPosition = projection * resultPosition;
+        outputColor = vec3(1, 0, 0);
         if(vertexIndex % 2 == 1) 
         {
             vec4 normalDir = normalize(projection * normalize(modelview_normals * vec4(vn,1)));
@@ -164,61 +194,28 @@ void main()
     {
         if(algo_shading == 0) //wireframe
         {
-            colorOfVertex = wireframeColor;
-            resultPosition = projection * resultPosition;
+            outputColor = wireframeColor;
         }
         else //  FLAT / GOUROUD / PHONG
         {
-            vec3 P          = vec3(0,0,0); // Point in camera space
-            vec3 N          = vec3(0,0,0); // Normal in camera space
-            vec3 Ia_total   = vec3(0,0,0);
-            vec3 Id_total   = vec3(0,0,0);
-            vec3 Is_total   = vec3(0,0,0);
-
             if(algo_shading == 1) //flat shading
             {
-                vec4 tempP = modelview * vec4(fPosition, 1);
-                vec4 temp_fn = modelview_normals * vec4(fn, 1);
-    	        P = vec3(tempP.x, tempP.y, tempP.z) / tempP.w;
-    		    N = vec3(temp_fn.x, temp_fn.y, temp_fn.z) / temp_fn.w;
-
-                if(isUniformMaterial == false)
-                {
-                    current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
-                }
-
-                for(int i = 0; i < numLights; i++)
-                {
-                    Ia_total += calcIntensity(i, P, N, 0);
-                    Id_total += calcIntensity(i, P, N, 1);
-                    Is_total += calcIntensity(i, P, N, 2);
-
-                }
-
-        		/* Add emissive light INDEPENDENT to any light source*/
-        		Ia_total += EmissiveFactor * current_Color_emissive;
-                
-                Ia_total = clamp(Ia_total, vec3(0), vec3(1));
-                Id_total = clamp(Id_total, vec3(0), vec3(1));
-                Is_total = clamp(Is_total, vec3(0), vec3(1));
-
-        		colorOfVertex = Ia_total + Id_total + Is_total;
-        		colorOfVertex = clamp( colorOfVertex, vec3(0), vec3(1) );
-
-                resultPosition = projection * resultPosition;
+                vec4 P = modelview * vec4(fPosition, 1);
+                vec4 N = modelview_normals * vec4(fn, 1);
+    	       
+        		flat_outputColor = getColor(P, N);
             }
             else if(algo_shading == 2) //Gouraud shading
             {
-                //test
-                colorOfVertex = vec3(0,1,0);
-                                resultPosition = projection * resultPosition;
+                vec4 P = vPos_Cameraspace;                //Vertex Position in CameraSpace
+                vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
 
+        		outputColor = getColor(P, N);
             }
             else if(algo_shading == 3) //Phong shading
             {
                 //test
-                colorOfVertex = vec3(0,0,1);
-                                resultPosition = projection * resultPosition;
+                outputColor = vec3(0,0,1);
 
             }
         }
