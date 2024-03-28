@@ -104,15 +104,22 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	pModel->UpdateModelViewInGPU( cTransform, scene->GetActiveCamera()->rotationMat_normals);
 	pModel->UpdateColorsInGPU();
 
+	GLint uniformLocation = glGetUniformLocation(program, "algo_shading");
+	if (uniformLocation == -1) {
+		// Handle error: Uniform variable not found
+	}
 	if (draw_algo == WIRE_FRAME) {
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
-		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_DEPTH_TEST);	//?
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
 		glEnable(GL_DEPTH_TEST);
 	}
 	else {
+
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_TRIANGLE]);
+		glUniform1i(glGetUniformLocation(program, "algo_shading"), int(draw_algo));
 		glDrawArrays(GL_TRIANGLES, 0, pModel->GetBuffer_len(MODEL_TRIANGLES));
+
 	}
 
 	// Bounding Box

@@ -19,7 +19,7 @@ layout(std140) uniform Lights
 
 in vec3 colorOfVertex;
 
-uniform int algo_shading;
+uniform int algo_shading;   // isnt it already global?
 uniform vec3 wireframeColor;
 
 out vec4 FragColor;

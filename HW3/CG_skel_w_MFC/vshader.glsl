@@ -59,11 +59,11 @@ void main()
     res = projection * (modelview * pos);
     if(displayBBox == 1)
     {
-        colorOfVertex = vec3(0, 1, 0);
+        colorOfVertex = vec3(0, 1, 0);  // green
     }
     else if (displayFnormal == 1)
     {
-        colorOfVertex = vec3(0, 0, 1);
+        colorOfVertex = vec3(0, 0, 1);  // blue
         if(vertexIndex % 2 == 1) 
         {
             vec4 normalDir = normalize(projection * normalize(modelview_normals * vec4(fn,1)));
@@ -91,8 +91,20 @@ void main()
         }
         else if(algo_shading == 1) //flat shading
         {
-            colorOfVertex = wireframeColor;
+            //test
+            colorOfVertex = vec3(1,0,0);
         }
+        else if(algo_shading == 2) //Gouraud shading
+        {
+            //test
+            colorOfVertex = vec3(0,1,0);
+        }
+        else if(algo_shading == 3) //Phong shading
+        {
+            //test
+            colorOfVertex = vec3(0,0,1);
+        }
+
     }
 
     gl_Position = res;
