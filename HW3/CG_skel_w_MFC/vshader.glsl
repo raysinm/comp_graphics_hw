@@ -165,6 +165,8 @@ void main()
     current_Ks = Ks;
     current_EmissiveFactor = EmissiveFactor;
     current_COS_ALPHA = COS_ALPHA;
+    if(isUniformMaterial == false)
+        current_Color_diffuse  = non_uniformColor_diffuse;
 
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
@@ -219,9 +221,6 @@ void main()
             {
                 vec4 P = vPos_Cameraspace;                //Vertex Position in CameraSpace
                 vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
-
-                if(isUniformMaterial == false)
-                    current_Color_diffuse  = non_uniformColor_diffuse;
 
         		outputColor = getColor(P, N);
             }

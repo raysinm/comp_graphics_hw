@@ -133,7 +133,6 @@ void MeshModel::GenerateVBO_Triangles()
 		glEnableVertexAttribArray(vPosition);
 	}
 
-
 	/* fPosition */
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_FACE_POS]);
@@ -164,6 +163,25 @@ void MeshModel::GenerateVBO_Triangles()
 		glEnableVertexAttribArray(fn);
 	}
 
+	/* DIFFUSE_COLOR_FLAT */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_DIFFUSE_COLOR_FLAT]);
+		int lenInBytes = vertex_diffuse_color_flat_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_diffuse_color_flat_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint non_uniformColor_diffuse_FLAT = glGetAttribLocation(renderer->program, "non_uniformColor_diffuse_FLAT");
+		glVertexAttribPointer(non_uniformColor_diffuse_FLAT, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(non_uniformColor_diffuse_FLAT);
+	}
+
+	/* DIFFUSE_COLOR_FLAT */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_DIFFUSE_COLOR]);
+		int lenInBytes = vertex_diffuse_color_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_diffuse_color_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint non_uniformColor_diffuse = glGetAttribLocation(renderer->program, "non_uniformColor_diffuse");
+		glVertexAttribPointer(non_uniformColor_diffuse, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(non_uniformColor_diffuse);
+	}
 
 	glBindVertexArray(0);
 }
@@ -499,6 +517,30 @@ void MeshModel::CreateVertexVectorForGPU()
 	/* Generate face positions and directions vector */
 	vertex_face_positions_triangle_gpu	= duplicateEachElement(tmpFacePositions , 3);
 	vertex_fn_triangle_gpu				= duplicateEachElement(tmpFaceDirections, 3);
+
+	PopulateNonUniformColorVectorForGPU();
+}
+
+void MeshModel::PopulateNonUniformColorVectorForGPU()
+{
+	vertex_diffuse_color_flat_triangle_gpu.clear();
+	vertex_diffuse_color_triangle_gpu.clear();
+	UINT k = 0;
+
+	for (UINT f = 0; f < num_faces; f++)
+	{
+		vec3 avgColorOfFace = vec3(0);
+		for (UINT i = 0; i < 3; i++)
+		{
+			UINT vertIndex = faces_v_indices[k++];
+			vertex_diffuse_color_triangle_gpu.push_back(materials[vertIndex].c_diffuse);
+			avgColorOfFace += materials[vertIndex].c_diffuse;
+		}
+		avgColorOfFace /= 3;
+
+		for (UINT i = 0; i < 3; i++)
+			vertex_diffuse_color_flat_triangle_gpu.push_back(avgColorOfFace);
+	}
 }
 
 void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
@@ -772,7 +814,7 @@ void MeshModel::ResetUserTransform_scale_world()
 void MeshModel::GenerateMaterials()
 {
 	materials.clear();
-
+	
 	for (int i = 0; i < num_vertices_raw; i++)
 	{
 		Material current = Material();
@@ -796,6 +838,8 @@ void MeshModel::GenerateMaterials()
 
 		materials.push_back(current);
 	}
+
+	nonUniformDataUpdated = false;
 }
 
 void MeshModel::UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals)
@@ -835,4 +879,33 @@ void MeshModel::UpdateMaterialinGPU()
 
 	/* Bind the isUniformMaterial */
 	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), isUniformMaterial);
+
+	if (!isUniformMaterial && !nonUniformDataUpdated)
+	{
+		glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
+
+		nonUniformDataUpdated = true;
+		PopulateNonUniformColorVectorForGPU();
+		/* DIFFUSE_COLOR_FLAT */
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_DIFFUSE_COLOR_FLAT]);
+			int lenInBytes = vertex_diffuse_color_flat_triangle_gpu.size() * 3 * sizeof(float);
+			glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_diffuse_color_flat_triangle_gpu.data(), GL_STATIC_DRAW);
+			GLint non_uniformColor_diffuse_FLAT = glGetAttribLocation(renderer->program, "non_uniformColor_diffuse_FLAT");
+			glVertexAttribPointer(non_uniformColor_diffuse_FLAT, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(non_uniformColor_diffuse_FLAT);
+		}
+
+		/* DIFFUSE_COLOR_FLAT */
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_DIFFUSE_COLOR]);
+			int lenInBytes = vertex_diffuse_color_triangle_gpu.size() * 3 * sizeof(float);
+			glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_diffuse_color_triangle_gpu.data(), GL_STATIC_DRAW);
+			GLint non_uniformColor_diffuse = glGetAttribLocation(renderer->program, "non_uniformColor_diffuse");
+			glVertexAttribPointer(non_uniformColor_diffuse, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(non_uniformColor_diffuse);
+		}
+
+		glBindVertexArray(0);
+	}
 }

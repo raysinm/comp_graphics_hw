@@ -23,12 +23,14 @@ protected:
 	void GenerateAllGPU_Stuff();
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 	
-	vector<vec3> vertex_positions_raw;					// Raw data from .obj file.
-	vector<vec3> vertex_positions_triangle_gpu;			// Vertex positions data in triangle form
-	vector<vec3> vertex_face_positions_triangle_gpu;	// Face positions data in triangle form
-	vector<vec3> vertex_vn_triangle_gpu;				// Vertex Normal direction in triangle form
-	vector<vec3> vertex_fn_triangle_gpu;				// Face Normal direction in triangle form
-	vector<vec3> vertex_positions_wireframe_gpu;		// Vertex positions data in wireframe form
+	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
+	vector<vec3> vertex_positions_triangle_gpu;			 // Vertex positions data in triangle form
+	vector<vec3> vertex_face_positions_triangle_gpu;	 // Face positions data in triangle form
+	vector<vec3> vertex_vn_triangle_gpu;				 // Vertex Normal direction in triangle form
+	vector<vec3> vertex_fn_triangle_gpu;				 // Face Normal direction in triangle form
+	vector<vec3> vertex_diffuse_color_flat_triangle_gpu; // Non-Uniform color in triangle form
+	vector<vec3> vertex_diffuse_color_triangle_gpu;		 // Non-Uniform color in triangle form
+	vector<vec3> vertex_positions_wireframe_gpu;		 // Vertex positions data in wireframe form
 	vector<vec3> vertex_positions_bbox_gpu;
 	vector<vec3> vertex_positions_Vnormals_gpu;
 	vector<vec3> vertex_directions_Vnormals_gpu;
@@ -72,10 +74,11 @@ public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
 
-	bool showVertexNormals	= false;
-	bool showFaceNormals	= false;
-	bool showBoundingBox    = false;
-	bool isUniformMaterial  = true;
+	bool showVertexNormals		= false;
+	bool showFaceNormals		= false;
+	bool showBoundingBox		= false;
+	bool nonUniformDataUpdated	= false;
+	bool isUniformMaterial		= true;
 
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
@@ -88,7 +91,7 @@ public:
 	Vertex* GetBuffer();
 	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);
-
+	void PopulateNonUniformColorVectorForGPU();
 	void loadFile(string fileName);
 	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);
 
