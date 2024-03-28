@@ -102,17 +102,12 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	MeshModel* pModel = (MeshModel*)model;
 
 	pModel->UpdateModelViewInGPU( cTransform, scene->GetActiveCamera()->rotationMat_normals);
-	pModel->UpdateColorsInGPU();
+	pModel->UpdateMaterialinGPU();
 
-	GLint uniformLocation = glGetUniformLocation(program, "algo_shading");
-	if (uniformLocation == -1) {
-		// Handle error: Uniform variable not found
-	}
+
 	if (draw_algo == WIRE_FRAME) {
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
-		glDisable(GL_DEPTH_TEST);	//?
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
-		glEnable(GL_DEPTH_TEST);
 	}
 	else {
 
@@ -126,37 +121,34 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	if (pModel->showBoundingBox)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_BBOX]);
-		glDisable(GL_DEPTH_TEST);
 		glUniform1i(glGetUniformLocation(program, "displayBBox"), 1);
+		glDisable(GL_DEPTH_TEST);
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(BBOX));
-		glUniform1i(glGetUniformLocation(program, "displayBBox"), 0);
 		glEnable(GL_DEPTH_TEST);
+
+		glUniform1i(glGetUniformLocation(program, "displayBBox"), 0);
 	}
 	// Vertex Normals
 	if (pModel->showVertexNormals)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_VNORMAL]);
-		//glDisable(GL_DEPTH_TEST);
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 1);
 		glUniform1f(glGetUniformLocation(program, "vnFactor"), *pModel->getLengthVertexNormal());
 		
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(V_NORMAL));
 		
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 0);
-		//glEnable(GL_DEPTH_TEST);
 	}
 	// Face normals
 	if (pModel->showFaceNormals)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_FNORMAL]);
-		//glDisable(GL_DEPTH_TEST);
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 1);
 		glUniform1f(glGetUniformLocation(program, "fnFactor"), *pModel->getLengthFaceNormal());
 
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(F_NORMAL));
 
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 0);
-		//glEnable(GL_DEPTH_TEST);
 	}
 
 

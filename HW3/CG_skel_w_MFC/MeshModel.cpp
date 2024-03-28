@@ -123,14 +123,48 @@ void MeshModel::GenerateVBO_Triangles()
 	glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
 	glGenBuffers(VBO_COUNT, VBOs[VAO_VERTEX_TRIANGLE]);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_POS]);
-	//Multiply len by 3 because each vertex is holding 3-floats
-	int lenInBytes = vertex_positions_triangle_gpu.size() * 3 * sizeof(float);
-	glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+	/* vPosition */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_POS]);
+		int lenInBytes = vertex_positions_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+		glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(vPosition);
+	}
 
-	GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
-	glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(vPosition);
+
+	/* fPosition */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_FACE_POS]);
+		int lenInBytes = vertex_face_positions_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_face_positions_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint fPosition = glGetAttribLocation(renderer->program, "fPosition");
+		glVertexAttribPointer(fPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(fPosition);
+	}
+
+	/* vn */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_VN]);
+		int lenInBytes = vertex_vn_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_vn_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint vn = glGetAttribLocation(renderer->program, "vn");
+		glVertexAttribPointer(vn, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(vn);
+	}
+	
+	/* fn */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_FN]);
+		int lenInBytes = vertex_fn_triangle_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, vertex_fn_triangle_gpu.data(), GL_STATIC_DRAW);
+		GLint fn = glGetAttribLocation(renderer->program, "fn");
+		glVertexAttribPointer(fn, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(fn);
+	}
+
+
 	glBindVertexArray(0);
 }
 
@@ -211,20 +245,6 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_fNormals();
 	GenerateVBO_vNormals();
 
-
-	/* Bind the uniform colors */
-	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
-	//	& (userDefinedMaterial.c_emissive[0]));
-
-	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
-	//	& (userDefinedMaterial.c_diffuse[0]));
-
-	//glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
-	//	& (userDefinedMaterial.c_specular[0]));
-
-
-
-	//glBindVertexArray(0);
 }
 
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
@@ -241,14 +261,13 @@ MeshModel::~MeshModel(void)
 
 }
 
-vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v)
+vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int duplicateNumber)
 {
 	vector<vec3> temp;
 	for (auto elemnt : v)
-	{
-		temp.push_back(elemnt);
-		temp.push_back(elemnt);
-	}
+		for (int i = 0; i < duplicateNumber; i++)
+			temp.push_back(elemnt);
+		
 	return temp;
 }
 
@@ -430,6 +449,7 @@ void MeshModel::estimateVertexNormals()
 void MeshModel::CreateVertexVectorForGPU()
 {
 	vector<vec3> tmpFacePositions;
+	vector<vec3> tmpFaceDirections;
 
 	/* Generate positions vector */
 	UINT k = 0;
@@ -439,6 +459,7 @@ void MeshModel::CreateVertexVectorForGPU()
 		{
 			UINT vertIndex = faces_v_indices[k++];
 			vertex_positions_triangle_gpu.push_back(vertex_positions_raw[vertIndex]);
+			vertex_vn_triangle_gpu.push_back(vertex_normals[vertIndex]);
 		}
 		
 		//Add center of face:
@@ -446,6 +467,7 @@ void MeshModel::CreateVertexVectorForGPU()
 		vec3 v_j = vertex_positions_raw[faces_v_indices[(f * 3) + 1]];
 		vec3 v_k = vertex_positions_raw[faces_v_indices[(f * 3) + 2]];
 		tmpFacePositions.push_back((v_i + v_j + v_k) / 3);
+		tmpFaceDirections.push_back(normalize(cross(v_j - v_i, v_k - v_i)));
 
 		//Add 3 lines for wireframe:
 		int vertIndex_A = faces_v_indices[(f * 3) + 0];
@@ -473,6 +495,10 @@ void MeshModel::CreateVertexVectorForGPU()
 	/* Generate fNormal vector */
 	vertex_positions_Fnormals_gpu  = duplicateEachElement(tmpFacePositions);
 	vertex_directions_Fnormals_gpu = duplicateEachElement(face_normals);
+
+	/* Generate face positions and directions vector */
+	vertex_face_positions_triangle_gpu	= duplicateEachElement(tmpFacePositions , 3);
+	vertex_fn_triangle_gpu				= duplicateEachElement(tmpFaceDirections, 3);
 }
 
 void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
@@ -789,15 +815,24 @@ void MeshModel::UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals)
 	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat_for_normals[0][0]));
 }
 
-void MeshModel::UpdateColorsInGPU()
+void MeshModel::UpdateMaterialinGPU()
 {
 	/* Bind the uniform colors */
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, \
-		& (userDefinedMaterial.c_emissive[0]));
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_emissive"), 1, &userDefinedMaterial.c_emissive[0]);
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse") , 1, &userDefinedMaterial.c_diffuse[0]);
+	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, &userDefinedMaterial.c_specular[0]);
+	
+	/* Bind the Ka/Kd/Ks */
+	glUniform1f(glGetUniformLocation(renderer->program, "Ka"), userDefinedMaterial.Ka);
+	glUniform1f(glGetUniformLocation(renderer->program, "Kd"), userDefinedMaterial.Kd);
+	glUniform1f(glGetUniformLocation(renderer->program, "Ks"), userDefinedMaterial.Ks);
+	
+	/* Bind the EmissiveFactor */
+	glUniform1f(glGetUniformLocation(renderer->program, "EmissiveFactor"), userDefinedMaterial.EmissiveFactor);	
 
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_diffuse"), 1, \
-		& (userDefinedMaterial.c_diffuse[0]));
+	/* Bind the COS_ALPHA */
+	glUniform1i(glGetUniformLocation(renderer->program, "COS_ALPHA"), userDefinedMaterial.COS_ALPHA);
 
-	glUniform3fv(glGetUniformLocation(renderer->program, "uniformColor_specular"), 1, \
-		& (userDefinedMaterial.c_specular[0]));
+	/* Bind the isUniformMaterial */
+	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), isUniformMaterial);
 }
