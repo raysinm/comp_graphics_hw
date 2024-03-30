@@ -3,6 +3,7 @@
 #include <vector>
 #include "GLFW/glfw3.h"
 #include "imgui.h"
+#include "CImg.h"
 
 #define START_WIDTH 1024
 #define START_HEIGHT 712

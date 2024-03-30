@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "scene.h"
 #include "MeshModel.h"
 #include "vec.h"
@@ -9,13 +10,12 @@
 #include <ctime>
 #include <random>
 
-using namespace std;
 
 struct FaceIdcs
 {
 	int v[4];   //vertex index
 	int vn[4];  //vertex index from vertex normals array
-	int vt[4];  //vertex texture i guess?...
+	int vt[4];  //vertex texture
 
 	FaceIdcs()
 	{
@@ -183,6 +183,19 @@ void MeshModel::GenerateVBO_Triangles()
 		glEnableVertexAttribArray(non_uniformColor_diffuse);
 	}
 
+	/* TEXTURE_MAP */
+	{
+		if (verticesTextures_gpu.size() > 0)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_TEXTURE_MAP]);
+			int lenInBytes = verticesTextures_gpu.size() * 2 * sizeof(float);
+			glBufferData(GL_ARRAY_BUFFER, lenInBytes, verticesTextures_gpu.data(), GL_STATIC_DRAW);
+			GLint texcoord = glGetAttribLocation(renderer->program, "texcoord");
+			glVertexAttribPointer(texcoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(texcoord);
+		}
+	}
+
 	glBindVertexArray(0);
 }
 
@@ -262,6 +275,8 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_BBox();
 	GenerateVBO_fNormals();
 	GenerateVBO_vNormals();
+	GenerateTextures();
+
 
 }
 
@@ -289,11 +304,20 @@ vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int du
 	return temp;
 }
 
+void MeshModel::GenerateTextures()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texels);
+}
+
 void MeshModel::loadFile(string fileName)
 {
 	ifstream ifile(fileName.c_str());
 	vector<FaceIdcs> faces;
 	vector<vec3> verticesNormals;
+	vector<vec2> verticesTextures_raw;
 
 	while (!ifile.eof())
 	{
@@ -319,6 +343,10 @@ void MeshModel::loadFile(string fileName)
 		else if (lineType == "vn") //Vertex Normal
 		{
 			verticesNormals.push_back(vec3fFromStream(issLine));
+		}
+		else if (lineType == "vt") //Vertex Texture
+		{
+			verticesTextures_raw.push_back(vec2fFromStream(issLine));
 		}
 		else if (lineType == "#" || lineType == "")
 		{
@@ -347,6 +375,8 @@ void MeshModel::loadFile(string fileName)
 			int vertIndex = face.v[i] - 1;
 			faces_v_indices.push_back(vertIndex);
 			vertex_faces_neighbors[vertIndex].push_back(face_id);
+			if(verticesTextures_raw.size() > 0)
+				verticesTextures_gpu.push_back(verticesTextures_raw[vertIndex]);
 		}
 
 		face_id++;
@@ -367,6 +397,16 @@ void MeshModel::loadFile(string fileName)
 				vertex_normals[face.v[i] - 1] = verticesNormals[face.vn[i] - 1];
 	}
 
+	if (verticesTextures_gpu.size() > 0)
+	{
+		CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
+		if (dlg.DoModal() == IDOK)
+		{
+			std::string filePath((LPCTSTR)dlg.GetPathName());
+			textureImage = CImg<unsigned char>(filePath.c_str());
+		}
+		int t = 0;
+	}
 }
 
 void MeshModel::initBoundingBox()
@@ -826,15 +866,6 @@ void MeshModel::GenerateMaterials()
 		float randomValue2 = dis(gen);
 		float randomValue3 = dis(gen);
 		current.c_diffuse = vec3(randomValue, randomValue2, randomValue3);
-		//if (i % 3 == randomValue) {
-		//	current.c_diffuse = vec3(1, 0, 0);
-		//}
-		//else if (i % 3 == (randomValue + 1)%3) {
-		//	current.c_diffuse = vec3(0, 1, 0);
-		//}
-		//else {
-		//	current.c_diffuse = vec3(0, 0, 1);
-		//}
 
 		materials.push_back(current);
 	}

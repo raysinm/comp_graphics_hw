@@ -25,6 +25,7 @@ in vec3 vn;
 in vec3 fn;
 in vec3 non_uniformColor_diffuse_FLAT;  //every 3 is duplicated to be the average of the face (to make a uniform same color for FLAT shading)
 in vec3 non_uniformColor_diffuse;       //simple 1to1 mapping for every vertex - it's color
+in vec2 texcoord;
 
 /* Uniforms */
 uniform int algo_shading;
@@ -63,6 +64,7 @@ flat out float interpolated_Kd;
 flat out float interpolated_Ks;
 flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
+out vec2 st;
 
 /* Locals */
 vec4 vPos;
@@ -155,6 +157,7 @@ vec3 getColor(vec4 point, vec4 normal)
 
 void main()
 {
+    st = texcoord;
     vPos = vec4(vPosition, 1);
     fPos = vec4(fPosition, 1);
     current_Color_emissive = uniformColor_emissive;

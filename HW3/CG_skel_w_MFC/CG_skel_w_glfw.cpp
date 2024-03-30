@@ -7,14 +7,16 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
-
 #include "vec.h"
 #include "mat.h"
 #include "InitShader.h"
 #include "Scene.h"
 #include "Renderer.h"
 #include <string>
+#include <png.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 
 using namespace std;
 

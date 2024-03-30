@@ -20,9 +20,10 @@ layout(std140) uniform Lights
 
 /* Input */
 flat in vec3 flat_outputColor;
-in vec3  outputColor;
-in vec4  interpolated_normal;
-in vec4  interpolated_position;
+in vec3      outputColor;
+in vec4      interpolated_normal;
+in vec4      interpolated_position;
+in vec2      st;
 
 /* Material */
 in vec3  interpolated_emissive;
@@ -33,6 +34,10 @@ flat in float interpolated_Kd;
 flat in float interpolated_Ks;
 flat in float interpolated_EmissiveFactor;
 flat in int   interpolated_COS_ALPHA;
+
+/* Textures*/
+uniform sampler2D texMap;
+uniform bool usingTexture;
 
 /* Uniforms */
 uniform vec3 wireframeColor;
@@ -133,6 +138,8 @@ vec3 getColor(vec4 point, vec4 normal)
 /* Main */
 void main()
 {
+    vec4 textureColor = texture2D(texMap, st);
+
     if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1) //WireFrame
     {
 	    FragColor = vec4(outputColor, 1);
@@ -163,6 +170,12 @@ void main()
 
         	FragColor = vec4(getColor(P, N), 1);
         }
+    }
+    
+
+    if(usingTexture == true)
+    {
+        FragColor *= textureColor;
     }
 } 
 

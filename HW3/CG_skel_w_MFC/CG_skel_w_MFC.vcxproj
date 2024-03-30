@@ -65,7 +65,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../Cimg;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;../Cimg;../pngLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLFW_STATIC;FREEGLUT_STATIC;GLEW_STATIC;_USE_STATIC_TBB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -80,14 +80,15 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../glew/lib/glew.lib;../freeglut/lib/freeglut_static.lib;../glfw/lib-vc2019/glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../glew/lib/glew.lib;../freeglut/lib/freeglut_static.lib;../glfw/lib-vc2019/glfw3.lib;../pngLib/libpng.lib;../pngLib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;../pngLib</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerbose</ShowProgress>
       <PerUserRedirection>true</PerUserRedirection>
+      <AdditionalOptions>-lz -lpng %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

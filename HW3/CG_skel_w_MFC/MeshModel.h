@@ -1,4 +1,5 @@
 #pragma once
+#include "CG_skel_w_glfw.h"
 #include "Scene.h"
 #include "vec.h"
 #include "mat.h"
@@ -6,6 +7,7 @@
 #include "Material.h"
 
 using namespace std;
+using namespace cimg_library;
 
 
 
@@ -21,8 +23,9 @@ protected:
 	void GenerateVBO_vNormals();
 	void GenerateVBO_fNormals();
 	void GenerateAllGPU_Stuff();
+	void GenerateTextures();
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
-	
+
 	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
 	vector<vec3> vertex_positions_triangle_gpu;			 // Vertex positions data in triangle form
 	vector<vec3> vertex_face_positions_triangle_gpu;	 // Face positions data in triangle form
@@ -36,6 +39,7 @@ protected:
 	vector<vec3> vertex_directions_Vnormals_gpu;
 	vector<vec3> vertex_positions_Fnormals_gpu;
 	vector<vec3> vertex_directions_Fnormals_gpu;
+	vector<vec2> verticesTextures_gpu;
 
 	vector<int> faces_v_indices;					//Each 3 indices makes a face. (triangle)
 	vector<vector<int>> vertex_faces_neighbors;		//Used for calculating the vertex normals.
@@ -43,6 +47,9 @@ protected:
 	vector<vec3> vertex_normals_viewspace;			// size: Num of faces
 	vector<vec3> face_normals;						// size: Num of faces
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
+
+
+
 
 	vector<Material> materials;
 	Material userDefinedMaterial;
@@ -53,7 +60,8 @@ protected:
 	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
-		
+	CImg<unsigned char> textureImage;
+	
 
 	mat4 _world_transform;
 	mat4 _model_transform;
@@ -73,6 +81,7 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
+	GLuint tex;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
