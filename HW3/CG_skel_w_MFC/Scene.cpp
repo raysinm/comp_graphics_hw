@@ -827,11 +827,12 @@ void Scene::drawModelTab()
 	if (ImGui::CollapsingHeader("Animation"))
 	{
 		int* colorAnimType = (int*) (&activeMesh->colorAnimationType);
+		float* animFrequency = (float*)(&activeMesh->animationFrequency);
 		ImGui::SeparatorText("Colors Animation");
 		ImGui::RadioButton("No Color Animation", colorAnimType, COLOR_ANIMATION_STATIC);
 		ImGui::RadioButton("Color Animation 1",  colorAnimType, COLOR_ANIMATION_1);
 		ImGui::RadioButton("Color Animation 2",  colorAnimType, COLOR_ANIMATION_2);
-
+		ImGui::DragFloat("Animation Speed", animFrequency, 0.001f, 0, 10, "%.3f");
 		ImGui::SeparatorText("Vertex Animation");
 		ImGui::Checkbox("Vertex Animation##vertexAnim", &activeMesh->vertexAnimationEnable);
 

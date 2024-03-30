@@ -11,6 +11,7 @@ Renderer::Renderer(int width, int height, GLFWwindow* window) :
 {
 	m_window = window;
 	InitOpenGLRendering();
+
 }
 
 Renderer::~Renderer(void)
@@ -104,7 +105,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	pModel->UpdateModelViewInGPU( cTransform, scene->GetActiveCamera()->rotationMat_normals);
 	pModel->UpdateMaterialinGPU();
 	pModel->UpdateTextureInGPU();
-
+	pModel->UpdateAnimationInGPU();
 
 	if (draw_algo == WIRE_FRAME) {
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
@@ -184,6 +185,8 @@ void Renderer::UpdateLightsUBO(bool reallocate_ubo)
 	// Unmap the buffer to actually write into the GPU.
 	glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
+
+
 
 void Renderer::InitOpenGLRendering()
 {

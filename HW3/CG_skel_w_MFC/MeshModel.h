@@ -4,6 +4,7 @@
 #include "vec.h"
 #include "mat.h"
 #include <string>
+#include <chrono>
 #include "Material.h"
 
 using namespace std;
@@ -49,7 +50,7 @@ protected:
 	vector<vec3> face_normals_viewspace;			// size: Num of faces
 
 
-
+	chrono::high_resolution_clock::time_point start_time;
 
 	vector<Material> materials;
 	Material userDefinedMaterial;
@@ -84,6 +85,7 @@ public:
 	GLuint tex = 0;
 	STB_Image textureMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
+	float animationFrequency = 1;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
@@ -140,5 +142,7 @@ public:
 	void UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals);
 	void UpdateMaterialinGPU();
 	void UpdateTextureInGPU();
+	void UpdateAnimationInGPU();
+
 
 };

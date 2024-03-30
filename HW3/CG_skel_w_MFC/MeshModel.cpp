@@ -103,6 +103,8 @@ MeshModel::MeshModel(Renderer* rend)
 {
 	this->renderer = rend;
 	ResetAllUserTransforms();
+	start_time = chrono::high_resolution_clock::now();
+
 }
 
 void MeshModel::GenerateVBO_WireFrame()
@@ -963,4 +965,20 @@ void MeshModel::UpdateTextureInGPU()
 
 	if (usingTexture && tex > 0)
 		glBindTexture(GL_TEXTURE_2D, tex);
+}
+
+void MeshModel::UpdateAnimationInGPU()
+{
+	if (colorAnimationType != 0)
+	{
+		auto end_time = chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+		float durationInSecondsFloat = std::chrono::duration<float>(duration).count();
+		cout << durationInSecondsFloat << endl;
+
+		float res = (1 + sin(durationInSecondsFloat* animationFrequency))/2;
+
+		glUniform1f(glGetUniformLocation(renderer->program, "time"), res);
+	}
+	glUniform1i(glGetUniformLocation(renderer->program, "colorAnimateType"), colorAnimationType);
 }

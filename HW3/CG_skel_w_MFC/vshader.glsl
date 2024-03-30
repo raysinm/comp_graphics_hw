@@ -39,7 +39,7 @@ uniform mat4 modelview;
 uniform mat4 modelview_normals;
 uniform mat4 projection;
 uniform vec3 wireframeColor;
-uniform bool colorAnimate;
+uniform int colorAnimateType;
 uniform float animFactor;
 uniform float time;
 
@@ -199,13 +199,13 @@ void main()
     current_COS_ALPHA = COS_ALPHA;
     if(isUniformMaterial == false)
         current_Color_diffuse  = non_uniformColor_diffuse;
-    if(colorAnimate == true)
+    if(colorAnimateType != 0)
     {
         // Calculate diffuse color based on current stage of animation
         vec3 hsvColor = vec3(time, 1.0, 1.0); // Fixed saturation and value for full intensity rainbow
     
         // Convert HSV to RGB
-        vec3 current_Color_diffuse = hsvToRgb(hsvColor);
+        current_Color_diffuse = hsvToRgb(hsvColor);
     }
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
@@ -253,10 +253,10 @@ void main()
     	        
                 if(isUniformMaterial == false)
                     current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
-        		if(colorAnimate == true)
+        		if(colorAnimateType != 0)
                 {
                     vec3 hsvColor = vec3(time, 1.0, 1.0); 
-                    vec3 current_Color_diffuse = hsvToRgb(hsvColor);
+                    current_Color_diffuse = hsvToRgb(hsvColor);
                 }
                 flat_outputColor = getColor(P, N);
             }
