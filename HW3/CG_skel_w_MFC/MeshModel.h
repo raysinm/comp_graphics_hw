@@ -7,7 +7,7 @@
 #include "Material.h"
 
 using namespace std;
-using namespace cimg_library;
+//using namespace cimg_library;
 
 
 
@@ -60,7 +60,7 @@ protected:
 	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
-	CImg<unsigned char> textureImage;
+	//CImg<unsigned char> textureImage;
 	
 
 	mat4 _world_transform;

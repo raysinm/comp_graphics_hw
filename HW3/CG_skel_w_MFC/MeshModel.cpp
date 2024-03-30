@@ -11,6 +11,10 @@
 #include <random>
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+
 struct FaceIdcs
 {
 	int v[4];   //vertex index
@@ -403,7 +407,13 @@ void MeshModel::loadFile(string fileName)
 		if (dlg.DoModal() == IDOK)
 		{
 			std::string filePath((LPCTSTR)dlg.GetPathName());
-			textureImage = CImg<unsigned char>(filePath.c_str());
+			//stb test
+			int width, height, channels;
+			unsigned char* image_data = stbi_load(filePath.c_str(), &width, &height, &channels, 0);
+			if (image_data == NULL) {
+				cout << "error in stb load image" << endl;
+			}
+					
 		}
 		int t = 0;
 	}

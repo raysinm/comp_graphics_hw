@@ -13,7 +13,6 @@
 #include "Scene.h"
 #include "Renderer.h"
 #include <string>
-#include <png.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -119,7 +118,8 @@ void resize_callback(GLFWwindow* window, int width, int height)
 
 int my_main(int argc, char** argv)
 {
-	
+
+	// 
 //----------------------------------------------------------------------------
 // ---------------------- glfw init ------------------------------------------
 //----------------------------------------------------------------------------
