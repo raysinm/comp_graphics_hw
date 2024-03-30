@@ -138,7 +138,8 @@ vec3 getColor(vec4 point, vec4 normal)
 /* Main */
 void main()
 {
-    vec4 textureColor = texture2D(texMap, st);
+    vec4 textureColor;
+    bool drawingTriangles = false;
 
     if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1) //WireFrame
     {
@@ -146,6 +147,9 @@ void main()
     }
 	else
     {
+        drawingTriangles = true;
+        textureColor = texture2D(texMap, st);
+
         if(algo_shading == 1)       // flat shading
         {
             FragColor = vec4(flat_outputColor, 1);
@@ -173,7 +177,7 @@ void main()
     }
     
 
-    if(usingTexture == true)
+    if(drawingTriangles == true && usingTexture == true)
     {
         FragColor *= textureColor;
     }

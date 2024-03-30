@@ -280,8 +280,6 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_fNormals();
 	GenerateVBO_vNormals();
 	GenerateTextures();
-
-
 }
 
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
@@ -313,7 +311,18 @@ void MeshModel::GenerateTextures()
 	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texels);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	stbi_image_free(textureMap.image_data);
+
 }
 
 void MeshModel::loadFile(string fileName)
@@ -407,15 +416,9 @@ void MeshModel::loadFile(string fileName)
 		if (dlg.DoModal() == IDOK)
 		{
 			std::string filePath((LPCTSTR)dlg.GetPathName());
-			//stb test
-			int width, height, channels;
-			unsigned char* image_data = stbi_load(filePath.c_str(), &width, &height, &channels, 0);
-			if (image_data == NULL) {
-				cout << "error in stb load image" << endl;
-			}
-					
+			textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
+			//textureMap.normalizeImage();
 		}
-		int t = 0;
 	}
 }
 
@@ -949,4 +952,14 @@ void MeshModel::UpdateMaterialinGPU()
 
 		glBindVertexArray(0);
 	}
+}
+
+void MeshModel::UpdateTextureInGPU()
+{
+	/* Bind the TextureMap enable / disable */
+	int usingTexture = (verticesTextures_gpu.size() > 0);
+	glUniform1f(glGetUniformLocation(renderer->program, "usingTexture"), usingTexture);
+
+	if (usingTexture && tex > 0)
+		glBindTexture(GL_TEXTURE_2D, tex);
 }

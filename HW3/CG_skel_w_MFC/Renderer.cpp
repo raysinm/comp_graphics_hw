@@ -103,6 +103,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 
 	pModel->UpdateModelViewInGPU( cTransform, scene->GetActiveCamera()->rotationMat_normals);
 	pModel->UpdateMaterialinGPU();
+	pModel->UpdateTextureInGPU();
 
 
 	if (draw_algo == WIRE_FRAME) {

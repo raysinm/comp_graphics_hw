@@ -205,3 +205,22 @@ struct LightProperties
 	float Ls;
 	int type;  // Ambient=0 / Point=1 / parallel=2
 };
+
+typedef struct _STB_Image
+{
+	unsigned char* image_data;
+	float* image_data_normalized;
+	int width, height, channels;
+
+	//void normalizeImage()
+	//{
+	//	if (!image_data) return;
+
+	//	image_data_normalized = new float[width * height * channels];
+	//	if (!image_data_normalized) return;
+
+	//	for (int index = 0; index < width * height * channels; index++)
+	//		image_data_normalized[index] = image_data[index] / 255.0f;
+	//}
+
+} STB_Image;

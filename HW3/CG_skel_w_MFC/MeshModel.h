@@ -81,7 +81,8 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
-	GLuint tex;
+	GLuint tex = 0;
+	STB_Image textureMap = { 0 };
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
@@ -136,5 +137,6 @@ public:
 
 	void UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals);
 	void UpdateMaterialinGPU();
+	void UpdateTextureInGPU();
 
 };
