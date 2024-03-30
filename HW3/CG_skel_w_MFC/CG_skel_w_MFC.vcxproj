@@ -33,9 +33,9 @@
     <CharacterSet>NotSet</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
-    <UseInteloneTBB>true</UseInteloneTBB>
+    <UseInteloneTBB>false</UseInteloneTBB>
     <PreferredToolArchitecture>x86</PreferredToolArchitecture>
-    <InstrumentInteloneTBB>true</InstrumentInteloneTBB>
+    <InstrumentInteloneTBB>false</InstrumentInteloneTBB>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -65,7 +65,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../oneTBB/tbb/2021.11/include;../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../Cimg;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLFW_STATIC;FREEGLUT_STATIC;GLEW_STATIC;_USE_STATIC_TBB;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -80,12 +80,12 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3.lib;../freeglut/lib/freeglut_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../glew/lib/glew.lib;../freeglut/lib/freeglut_static.lib;../glfw/lib-vc2019/glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;</AdditionalLibraryDirectories>
       <ShowProgress>LinkVerbose</ShowProgress>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -94,7 +94,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../imgui/backends;../imgui;../glew/include;../glfw/include;../Cimg;../freeglut/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEGLUT_STATIC;GLEW_STATIC;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -107,13 +107,13 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>../glew/lib/glew.lib;../glfw/lib-vc2019/glfw3_mt.lib;../freeglut/lib/freeglut_static.lib</AdditionalDependencies>
+      <AdditionalDependencies>../glew/lib/glew.lib;../freeglut/lib/freeglut_static.lib;../glfw/lib-vc2019/glfw3_mt.lib</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../imgui/backends/;../imgui;../glfw/lib-vc2019;</AdditionalLibraryDirectories>
       <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -140,6 +140,7 @@
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Cimg\CImg.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
@@ -187,6 +188,5 @@
     <Font Include="..\imgui\fonts\NotoSans_Condensed-Regular.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
