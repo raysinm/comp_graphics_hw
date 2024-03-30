@@ -157,7 +157,7 @@ vec3 getColor(vec4 point, vec4 normal)
 
 void main()
 {
-    st = texcoord;
+    st = vec2(texcoord.x, 1 - texcoord.y);
     vPos = vec4(vPosition, 1);
     fPos = vec4(fPosition, 1);
     current_Color_emissive = uniformColor_emissive;

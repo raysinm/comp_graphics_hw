@@ -122,10 +122,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_BBOX]);
 		glUniform1i(glGetUniformLocation(program, "displayBBox"), 1);
-		glDisable(GL_DEPTH_TEST);
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(BBOX));
-		glEnable(GL_DEPTH_TEST);
-
 		glUniform1i(glGetUniformLocation(program, "displayBBox"), 0);
 	}
 	// Vertex Normals
@@ -134,9 +131,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_VNORMAL]);
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 1);
 		glUniform1f(glGetUniformLocation(program, "vnFactor"), *pModel->getLengthVertexNormal());
-		
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(V_NORMAL));
-		
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 0);
 	}
 	// Face normals
@@ -145,13 +140,9 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_FNORMAL]);
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 1);
 		glUniform1f(glGetUniformLocation(program, "fnFactor"), *pModel->getLengthFaceNormal());
-
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(F_NORMAL));
-
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 0);
 	}
-
-
 	glBindVertexArray(0);
 
 }

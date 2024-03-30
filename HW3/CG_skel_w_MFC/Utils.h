@@ -209,7 +209,7 @@ struct LightProperties
 typedef struct _STB_Image
 {
 	unsigned char* image_data;
-	float* image_data_normalized;
+	//float* image_data_normalized;
 	int width, height, channels;
 
 	//void normalizeImage()

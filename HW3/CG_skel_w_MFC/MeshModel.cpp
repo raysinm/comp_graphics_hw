@@ -321,6 +321,7 @@ void MeshModel::GenerateTextures()
 	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
 	glGenerateMipmap(GL_TEXTURE_2D);
+
 	stbi_image_free(textureMap.image_data);
 
 }
@@ -386,10 +387,11 @@ void MeshModel::loadFile(string fileName)
 		for (int i = 0; i < 3; i++)
 		{
 			int vertIndex = face.v[i] - 1;
+			int vertIndex_Texture = face.vt[i] - 1;
 			faces_v_indices.push_back(vertIndex);
 			vertex_faces_neighbors[vertIndex].push_back(face_id);
 			if(verticesTextures_raw.size() > 0)
-				verticesTextures_gpu.push_back(verticesTextures_raw[vertIndex]);
+				verticesTextures_gpu.push_back(verticesTextures_raw[vertIndex_Texture]);
 		}
 
 		face_id++;
@@ -417,7 +419,6 @@ void MeshModel::loadFile(string fileName)
 		{
 			std::string filePath((LPCTSTR)dlg.GetPathName());
 			textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
-			//textureMap.normalizeImage();
 		}
 	}
 }
