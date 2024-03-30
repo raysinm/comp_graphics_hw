@@ -224,3 +224,10 @@ typedef struct _STB_Image
 	//}
 
 } STB_Image;
+
+typedef enum ColorAnimationType
+{
+	COLOR_ANIMATION_STATIC = 0,
+	COLOR_ANIMATION_1,
+	COLOR_ANIMATION_2,
+} ColorAnimationType;

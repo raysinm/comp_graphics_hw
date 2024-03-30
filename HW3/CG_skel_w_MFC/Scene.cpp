@@ -638,25 +638,26 @@ void Scene::drawModelTab()
 
 	float* lenFaceNormal = activeMesh->getLengthFaceNormal();
 	float* lenVertNormal = activeMesh->getLengthVertexNormal();
-
-	ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
-	
-	if (*dispFaceNormal)
+	if (ImGui::CollapsingHeader("Displays"))
 	{
-		ImGui::SameLine();
-		ImGui::DragFloat("Length##Length_Face_normal", lenFaceNormal, 0.001f, 0, 0, "%.3f");
+		ImGui::Checkbox("Display Face Normals  ", dispFaceNormal);
+
+		if (*dispFaceNormal)
+		{
+			ImGui::SameLine();
+			ImGui::DragFloat("Length##Length_Face_normal", lenFaceNormal, 0.001f, 0, 0, "%.3f");
+		}
+
+		ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
+		if (*dispVertexNormal)
+		{
+			ImGui::SameLine();
+			ImGui::DragFloat("Length##Length_Vert_normal", lenVertNormal, 0.001f, 0, 0, "%.3f");
+		}
+
+		ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
 	}
 
-	ImGui::Checkbox("Display Vertex Normals", dispVertexNormal);
-	if (*dispVertexNormal)
-	{
-		ImGui::SameLine();
-		ImGui::DragFloat("Length##Length_Vert_normal", lenVertNormal, 0.001f, 0, 0, "%.3f");
-	}
-
-	ImGui::Checkbox("Display Bounding Box", dispBoundingBox);
-
-	// Model material
 	if (ImGui::CollapsingHeader("Material"))
 	{
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
@@ -726,111 +727,126 @@ void Scene::drawModelTab()
 		}
 	}
 
-	// Model position
 	if (ImGui::CollapsingHeader("Model"))
 	{
 
-		ImGui::SeparatorText("Model space");
-
-
-		ImGui::Text("Translation (X Y Z)");
-		ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-		ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-		ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-		if (ImGui::Button("reset##MT"))
+		if (ImGui::CollapsingHeader("Model space"))
 		{
-			activeMesh->ResetUserTransform_translate_model();
+			//ImGui::SeparatorText("Model space");
+
+			ImGui::Text("Translation (X Y Z)");
+			ImGui::DragFloat("##X_MT", &(g_trnsl->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+			ImGui::DragFloat("##Y_MT", &(g_trnsl->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+			ImGui::DragFloat("##Z_MT", &(g_trnsl->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+			if (ImGui::Button("reset##MT"))
+			{
+				activeMesh->ResetUserTransform_translate_model();
+			}
+
+			ImGui::Text("Rotation (X Y Z)");
+			ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			if (ImGui::Button("reset##MR"))
+			{
+				activeMesh->ResetUserTransform_rotate_model();
+			}
+
+			vec4* g_scale = &(activeMesh->_scale);
+
+			ImGui::Text("Scale (X Y Z)");
+			ImGui::Checkbox("keep ratio", &constScaleRatio);
+			ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+			if (constScaleRatio)
+			{
+				g_scale->y = g_scale->z = g_scale->x;
+			}
+			else
+			{
+				ImGui::DragFloat("##Y_MS", &(g_scale->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+				ImGui::DragFloat("##Z_MS", &(g_scale->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+			}
+
+			if (ImGui::Button("reset##MS"))
+			{
+				activeMesh->ResetUserTransform_scale_model();
+			}
 		}
 
-		ImGui::Text("Rotation (X Y Z)");
-		ImGui::DragFloat("##X_MR", &(g_rot->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Y_MR", &(g_rot->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Z_MR", &(g_rot->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		if (ImGui::Button("reset##MR"))
+		if (ImGui::CollapsingHeader("World space"))
 		{
-			activeMesh->ResetUserTransform_rotate_model();
+			//ImGui::SeparatorText("World space");
+
+			vec4* trnsl_w = &(activeMesh->_trnsl_w);
+			vec4* rot_w = &(activeMesh->_rot_w);
+			vec4* scale_w = &(activeMesh->_scale_w);
+
+
+			ImGui::Text("Translation (X Y Z)");
+			ImGui::DragFloat("##X_WT", &(trnsl_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+			ImGui::DragFloat("##Y_WT", &(trnsl_w->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+			ImGui::DragFloat("##Z_WT", &(trnsl_w->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
+
+			if (ImGui::Button("reset##WT"))
+			{
+				activeMesh->ResetUserTransform_translate_world();
+			}
+
+
+
+
+			ImGui::Text("Rotation (X Y Z)");
+			ImGui::DragFloat("##X_WR", &(rot_w->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			ImGui::DragFloat("##Y_WR", &(rot_w->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			ImGui::DragFloat("##Z_WR", &(rot_w->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
+			if (ImGui::Button("reset##WR"))
+			{
+				activeMesh->ResetUserTransform_rotate_world();
+			}
+
+
+			ImGui::Text("Scale (X Y Z)");
+			ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
+			ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+			if (constScaleRatio_w)
+			{
+				scale_w->y = scale_w->z = scale_w->x;
+			}
+			else
+			{
+				ImGui::DragFloat("##Y_WS", &(scale_w->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+				ImGui::DragFloat("##Z_WS", &(scale_w->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
+			}
+			if (ImGui::Button("reset##WS"))
+			{
+				activeMesh->ResetUserTransform_scale_world();
+			}
 		}
+	}
+	
+	if (ImGui::CollapsingHeader("Animation"))
+	{
+		int* colorAnimType = (int*) (&activeMesh->colorAnimationType);
+		ImGui::SeparatorText("Colors Animation");
+		ImGui::RadioButton("No Color Animation", colorAnimType, COLOR_ANIMATION_STATIC);
+		ImGui::RadioButton("Color Animation 1",  colorAnimType, COLOR_ANIMATION_1);
+		ImGui::RadioButton("Color Animation 2",  colorAnimType, COLOR_ANIMATION_2);
 
-		vec4* g_scale = &(activeMesh->_scale);
-
-		ImGui::Text("Scale (X Y Z)");
-		ImGui::Checkbox("keep ratio", &constScaleRatio);
-		ImGui::DragFloat("##X_MS", &(g_scale->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-		if (constScaleRatio)
-		{
-			g_scale->y = g_scale->z = g_scale->x;
-		}
-		else
-		{
-			ImGui::DragFloat("##Y_MS", &(g_scale->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-			ImGui::DragFloat("##Z_MS", &(g_scale->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-		}
-
-		if (ImGui::Button("reset##MS"))
-		{
-			activeMesh->ResetUserTransform_scale_model();
-		}
-
-
-		// World transformations
-		ImGui::SeparatorText("World space");
-
-		vec4* trnsl_w = &(activeMesh->_trnsl_w);
-		vec4* rot_w = &(activeMesh->_rot_w);
-		vec4* scale_w = &(activeMesh->_scale_w);
-
-
-		ImGui::Text("Translation (X Y Z)");
-		ImGui::DragFloat("##X_WT", &(trnsl_w->x), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-		ImGui::DragFloat("##Y_WT", &(trnsl_w->y), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-		ImGui::DragFloat("##Z_WT", &(trnsl_w->z), 0.01f, 0, 0, "%.1f"); ImGui::SameLine();
-
-		if (ImGui::Button("reset##WT"))
-		{
-			activeMesh->ResetUserTransform_translate_world();
-		}
-
-
-
-
-		ImGui::Text("Rotation (X Y Z)");
-		ImGui::DragFloat("##X_WR", &(rot_w->x), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Y_WR", &(rot_w->y), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		ImGui::DragFloat("##Z_WR", &(rot_w->z), 0.1f, 0, 0, "%.0f"); ImGui::SameLine();
-		if (ImGui::Button("reset##WR"))
-		{
-			activeMesh->ResetUserTransform_rotate_world();
-		}
-
-
-		ImGui::Text("Scale (X Y Z)");
-		ImGui::Checkbox("keep ratio##keepRatioWorld", &constScaleRatio_w);
-		ImGui::DragFloat("##X_WS", &(scale_w->x), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-		if (constScaleRatio_w)
-		{
-			scale_w->y = scale_w->z = scale_w->x;
-		}
-		else
-		{
-			ImGui::DragFloat("##Y_WS", &(scale_w->y), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-			ImGui::DragFloat("##Z_WS", &(scale_w->z), 0.01f, 0, 0, "%.3f"); ImGui::SameLine();
-		}
-		if (ImGui::Button("reset##WS"))
-		{
-			activeMesh->ResetUserTransform_scale_world();
-		}
+		ImGui::SeparatorText("Vertex Animation");
+		ImGui::Checkbox("Vertex Animation##vertexAnim", &activeMesh->vertexAnimationEnable);
 
 	}
-		// Delete model
-		ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
-		if (ImGui::Button("Delete model"))
-		{
-			models.erase(models.begin() + activeModel);
-			activeModel = NOT_SELECTED;
-		}
-		ImGui::PopStyleColor(3);
+
+	// Delete model
+	ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0, 0.6f, 0.6f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0, 0.7f, 0.7f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0, 0.8f, 0.8f));
+	if (ImGui::Button("Delete model"))
+	{
+		models.erase(models.begin() + activeModel);
+		activeModel = NOT_SELECTED;
+	}
+	ImGui::PopStyleColor(3);
 }
 
 void Scene::drawLightTab()

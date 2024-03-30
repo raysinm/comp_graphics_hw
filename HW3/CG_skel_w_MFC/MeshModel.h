@@ -83,12 +83,14 @@ public:
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
 	GLuint tex = 0;
 	STB_Image textureMap = { 0 };
+	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
 	bool showBoundingBox		= false;
 	bool nonUniformDataUpdated	= false;
 	bool isUniformMaterial		= true;
+	bool vertexAnimationEnable  = false;
 
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
