@@ -660,6 +660,14 @@ void Scene::drawModelTab()
 
 	if (ImGui::CollapsingHeader("Material"))
 	{
+		if (ImGui::Button("Load Texture"))
+			activeMesh->loadTextureFromFile();
+		ImGui::SameLine();
+		if (ImGui::Button("Load Normal Map"))
+			activeMesh->loadNMapFromFile();
+		ImGui::Checkbox("Use Texture", &(activeMesh->useTexture));
+		// TODO: Add load normal map button
+
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
 		if (activeMesh->isUniformMaterial)
 		{

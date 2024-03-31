@@ -281,7 +281,7 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_BBox();
 	GenerateVBO_fNormals();
 	GenerateVBO_vNormals();
-	GenerateTextures();
+	//GenerateTexture();
 }
 
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
@@ -308,29 +308,34 @@ vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int du
 	return temp;
 }
 
-void MeshModel::GenerateTextures()
+void MeshModel::GenerateTexture()
 {
 	// Texture
-	glActiveTexture(GL_TEXTURE0);
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	if (textureMap.image_data != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
 
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
-	glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	stbi_image_free(textureMap.image_data);
 
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		stbi_image_free(textureMap.image_data);
+	}
+}
+void MeshModel::GenerateNMap()
+{
 	// Normal Map
 	if (normalMap.image_data != nullptr)
 	{
-		glActiveTexture(GL_TEXTURE1);
+		glActiveTexture(GL_TEXTURE0);
 		glGenTextures(1, &nmap);
 		glBindTexture(GL_TEXTURE_2D, nmap);
 
@@ -433,6 +438,10 @@ void MeshModel::loadFile(string fileName)
 				vertex_normals[face.v[i] - 1] = verticesNormals[face.vn[i] - 1];
 	}
 
+}
+
+void MeshModel::loadTextureFromFile()
+{
 	if (verticesTextures_gpu.size() > 0)
 	{
 		CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
@@ -441,10 +450,27 @@ void MeshModel::loadFile(string fileName)
 			std::string filePath((LPCTSTR)dlg.GetPathName());
 			stbi_set_flip_vertically_on_load(true);
 			textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
-		
+
 		}
+		GenerateTexture();
 	}
 }
+
+void MeshModel::loadNMapFromFile()
+{
+	if (verticesTextures_gpu.size() > 0)
+	{
+		CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
+		if (dlg.DoModal() == IDOK)
+		{
+			std::string filePath((LPCTSTR)dlg.GetPathName());
+			stbi_set_flip_vertically_on_load(true);
+			normalMap.image_data = stbi_load(filePath.c_str(), &normalMap.width, &normalMap.height, &normalMap.channels, 0);
+		}
+		GenerateNMap();
+	}
+}
+
 
 void MeshModel::initBoundingBox()
 {
@@ -981,11 +1007,14 @@ void MeshModel::UpdateMaterialinGPU()
 void MeshModel::UpdateTextureInGPU()
 {
 	/* Bind the TextureMap enable / disable */
-	int usingTexture = (verticesTextures_gpu.size() > 0);
-	glUniform1f(glGetUniformLocation(renderer->program, "usingTexture"), usingTexture);
+	//int usingTexture = (verticesTextures_gpu.size() > 0);
+	glUniform1f(glGetUniformLocation(renderer->program, "usingTexture"), useTexture);
 
-	if (usingTexture && tex > 0)
+	if (useTexture && tex > 0)
 		glBindTexture(GL_TEXTURE_2D, tex);
+	if (useTexture && nmap > 0)
+		glBindTexture(GL_TEXTURE_2D, nmap);
+
 }
 
 void MeshModel::UpdateAnimationInGPU()

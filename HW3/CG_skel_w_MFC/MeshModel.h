@@ -24,7 +24,8 @@ protected:
 	void GenerateVBO_vNormals();
 	void GenerateVBO_fNormals();
 	void GenerateAllGPU_Stuff();
-	void GenerateTextures();
+	void GenerateTexture();
+	void GenerateNMap();
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 
 	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
@@ -92,7 +93,7 @@ public:
 	bool nonUniformDataUpdated	= false;
 	bool isUniformMaterial		= true;
 	bool vertexAnimationEnable  = false;
-
+	bool useTexture				= false;
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
 	~MeshModel(void);
@@ -137,6 +138,9 @@ public:
 	void GenerateMaterials();
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
+
+	void loadTextureFromFile();
+	void loadNMapFromFile();
 
 	void UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals);
 	void UpdateMaterialinGPU();
