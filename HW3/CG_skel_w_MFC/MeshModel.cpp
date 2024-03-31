@@ -432,7 +432,7 @@ void MeshModel::initBoundingBox()
 	// Bounding box init
 	vertex_positions_bbox_gpu = vector<vec3> (num_bbox_vertices);
 
-	float min_x, min_y, min_z, max_x, max_y, max_z;
+
 	min_x = max_x = vertex_positions_raw[0].x;
 	min_y = max_y = vertex_positions_raw[0].y;
 	min_z = max_z = vertex_positions_raw[0].z;
@@ -974,11 +974,14 @@ void MeshModel::UpdateAnimationInGPU()
 		auto end_time = chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
 		float durationInSecondsFloat = std::chrono::duration<float>(duration).count();
-		cout << durationInSecondsFloat << endl;
 
-		float res = (1 + sin(durationInSecondsFloat* animationFrequency))/2;
+		float time = (float)((float)durationInSecondsFloat - (int)durationInSecondsFloat);
+		float smoothTime = 0.5 + (sinf(M_PI*(time-0.5f))) / 2;
 
-		glUniform1f(glGetUniformLocation(renderer->program, "time"), res);
+		glUniform1f(glGetUniformLocation(renderer->program, "time"), smoothTime);
+		glUniform1f(glGetUniformLocation(renderer->program, "minX"), min_x);
+		glUniform1f(glGetUniformLocation(renderer->program, "maxX"), max_x);
+
 	}
 	glUniform1i(glGetUniformLocation(renderer->program, "colorAnimateType"), colorAnimationType);
 }

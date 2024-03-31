@@ -61,7 +61,7 @@ protected:
 	const unsigned int num_bbox_vertices = 24;
 	float length_face_normals   = 1.0f;
 	float length_vertex_normals = 1.0f;
-	//CImg<unsigned char> textureImage;
+	float min_x, min_y, min_z, max_x, max_y, max_z;
 	
 
 	mat4 _world_transform;
@@ -85,7 +85,6 @@ public:
 	GLuint tex = 0;
 	STB_Image textureMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
-	float animationFrequency = 1;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;

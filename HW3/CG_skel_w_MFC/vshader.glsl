@@ -40,7 +40,6 @@ uniform mat4 modelview_normals;
 uniform mat4 projection;
 uniform vec3 wireframeColor;
 uniform int colorAnimateType;
-uniform float animFactor;
 uniform float time;
 
 /* Material */
@@ -68,6 +67,7 @@ flat out float interpolated_Ks;
 flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
+out vec3 vertPos;
 
 /* Locals */
 vec4 vPos;
@@ -84,31 +84,6 @@ float current_Ks;
 float current_EmissiveFactor;
 int current_COS_ALPHA;
 
-vec3 hsvToRgb(vec3 hsv) {
-    float hue = hsv.x;
-    float saturation = hsv.y;
-    float value = hsv.z;
-    
-    float C = value * saturation;
-    float X = C * (1.0 - abs(mod(hue * 6.0, 2.0) - 1.0));
-    float m = value - C;
-    
-    vec3 rgb;
-    if (hue < 1.0/6.0)
-        rgb = vec3(C, X, 0.0);
-    else if (hue < 2.0/6.0)
-        rgb = vec3(X, C, 0.0);
-    else if (hue < 3.0/6.0)
-        rgb = vec3(0.0, C, X);
-    else if (hue < 4.0/6.0)
-        rgb = vec3(0.0, X, C);
-    else if (hue < 5.0/6.0)
-        rgb = vec3(X, 0.0, C);
-    else
-        rgb = vec3(C, 0.0, X);
-    
-    return rgb + vec3(m);
-}
 
 vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
 {
@@ -199,14 +174,6 @@ void main()
     current_COS_ALPHA = COS_ALPHA;
     if(isUniformMaterial == false)
         current_Color_diffuse  = non_uniformColor_diffuse;
-    if(colorAnimateType != 0)
-    {
-        // Calculate diffuse color based on current stage of animation
-        vec3 hsvColor = vec3(time, 1.0, 1.0); // Fixed saturation and value for full intensity rainbow
-    
-        // Convert HSV to RGB
-        current_Color_diffuse = hsvToRgb(hsvColor);
-    }
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
     resultPosition = projection * vPos_Cameraspace;
@@ -253,11 +220,7 @@ void main()
     	        
                 if(isUniformMaterial == false)
                     current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
-        		if(colorAnimateType != 0)
-                {
-                    vec3 hsvColor = vec3(time, 1.0, 1.0); 
-                    current_Color_diffuse = hsvToRgb(hsvColor);
-                }
+
                 flat_outputColor = getColor(P, N);
             }
             else if(algo_shading == 2) //Gouraud shading
@@ -285,4 +248,5 @@ void main()
     }
 
     gl_Position = resultPosition;
+    vertPos = vPosition;
 }

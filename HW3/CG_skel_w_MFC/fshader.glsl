@@ -24,6 +24,7 @@ in vec3      outputColor;
 in vec4      interpolated_normal;
 in vec4      interpolated_position;
 in vec2      st;
+in vec3      vertPos;
 
 /* Material */
 in vec3  interpolated_emissive;
@@ -46,6 +47,10 @@ uniform int displayBBox;
 uniform int displayVnormal;
 uniform int displayFnormal;
 uniform int numLights;
+uniform int colorAnimateType;
+uniform float time;
+uniform float minX;
+uniform float maxX;
 
 /* Output */
 out vec4 FragColor;
@@ -61,6 +66,18 @@ float current_EmissiveFactor;
 int current_COS_ALPHA;
 
 /* Functions */
+float map(float val, float minimum, float maximum)
+{
+    return (val - minimum) / (maximum - minimum);
+}
+
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
 vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
 {
 	vec3 I = vec3(lights[i].dir);                   // Light source direction to P (Assume Parallel light source)
@@ -174,12 +191,27 @@ void main()
 
         	FragColor = vec4(getColor(P, N), 1);
         }
-    }
+    
     
 
-    if(drawingTriangles == true && usingTexture == true)
-    {
-        FragColor *= textureColor;
+        if(drawingTriangles == true && usingTexture == true)
+        {
+            FragColor *= textureColor;
+        }
+        if(colorAnimateType == 1)
+        {
+            vec3 hsvColor = vec3(time, 1.0, 1.0);
+            FragColor += vec4(hsv2rgb(hsvColor)/2, 0);
+        }
+        else if(colorAnimateType == 2)
+        {
+            float PI = 3.14159265359;
+            float arg = map(vertPos.x, minX, maxX);
+            float t = 0.5 + sin(PI * (arg - 0.5f))/2;
+            vec3 hsvColor = vec3(t + time, 1.0, 1.0);
+            vec3 animateColor = hsv2rgb(hsvColor) / 2;
+            FragColor += vec4(animateColor, 0);
+        }
     }
 } 
 
