@@ -165,7 +165,7 @@ vec3 getColor(vec4 point, vec4 normal)
 
 void main()
 {
-    st = vec2(texcoord.x, 1 - texcoord.y);
+    st = texcoord;
     vPos = vec4(vPosition, 1);
     if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0)
     {
