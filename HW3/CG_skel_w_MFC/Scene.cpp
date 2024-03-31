@@ -729,7 +729,7 @@ void Scene::drawModelTab()
 
 	if (ImGui::CollapsingHeader("Model"))
 	{
-
+		ImGui::Indent();
 		if (ImGui::CollapsingHeader("Model space"))
 		{
 			//ImGui::SeparatorText("Model space");
@@ -822,8 +822,9 @@ void Scene::drawModelTab()
 				activeMesh->ResetUserTransform_scale_world();
 			}
 		}
+		ImGui::Unindent();
 	}
-	
+
 	if (ImGui::CollapsingHeader("Animation"))
 	{
 		int* colorAnimType = (int*) (&activeMesh->colorAnimationType);

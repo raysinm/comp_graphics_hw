@@ -82,8 +82,8 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
-	GLuint tex = 0;
-	STB_Image textureMap = { 0 };
+	GLuint tex = 0, nmap=0;
+	STB_Image textureMap = { 0 }, normalMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
 
 	bool showVertexNormals		= false;
