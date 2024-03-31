@@ -40,7 +40,11 @@ uniform mat4 modelview_normals;
 uniform mat4 projection;
 uniform vec3 wireframeColor;
 uniform int colorAnimateType;
+uniform int vertexAnimationEnable;
+uniform float minX;
+uniform float maxX;
 uniform float time;
+uniform float smoothTime;
 
 /* Material */
 uniform vec3 uniformColor_emissive;
@@ -163,6 +167,14 @@ void main()
 {
     st = vec2(texcoord.x, 1 - texcoord.y);
     vPos = vec4(vPosition, 1);
+    if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0)
+    {
+        float PI = 3.14159265359f;
+        
+        float displacementX = sin(vPos.y + (time)*2*PI) * 0.15 * (maxX - minX); 
+
+        vPos.x += displacementX;
+    }
     fPos = vec4(fPosition, 1);
     current_Color_emissive = uniformColor_emissive;
     current_Color_diffuse  = uniformColor_diffuse;

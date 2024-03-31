@@ -969,7 +969,7 @@ void MeshModel::UpdateTextureInGPU()
 
 void MeshModel::UpdateAnimationInGPU()
 {
-	if (colorAnimationType != 0)
+	if (colorAnimationType != 0 || vertexAnimationEnable)
 	{
 		auto end_time = chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
@@ -978,10 +978,12 @@ void MeshModel::UpdateAnimationInGPU()
 		float time = (float)((float)durationInSecondsFloat - (int)durationInSecondsFloat);
 		float smoothTime = 0.5 + (sinf(M_PI*(time-0.5f))) / 2;
 
-		glUniform1f(glGetUniformLocation(renderer->program, "time"), smoothTime);
+		glUniform1f(glGetUniformLocation(renderer->program, "time"), time);
+		glUniform1f(glGetUniformLocation(renderer->program, "smoothTime"), smoothTime);
 		glUniform1f(glGetUniformLocation(renderer->program, "minX"), min_x);
 		glUniform1f(glGetUniformLocation(renderer->program, "maxX"), max_x);
 
 	}
 	glUniform1i(glGetUniformLocation(renderer->program, "colorAnimateType"), colorAnimationType);
+	glUniform1i(glGetUniformLocation(renderer->program, "vertexAnimationEnable"), (int)vertexAnimationEnable);
 }

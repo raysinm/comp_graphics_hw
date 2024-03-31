@@ -48,7 +48,7 @@ uniform int displayVnormal;
 uniform int displayFnormal;
 uniform int numLights;
 uniform int colorAnimateType;
-uniform float time;
+uniform float smoothTime;
 uniform float minX;
 uniform float maxX;
 
@@ -200,7 +200,7 @@ void main()
         }
         if(colorAnimateType == 1)
         {
-            vec3 hsvColor = vec3(time, 1.0, 1.0);
+            vec3 hsvColor = vec3(smoothTime, 1.0, 1.0);
             FragColor += vec4(hsv2rgb(hsvColor)/2, 0);
         }
         else if(colorAnimateType == 2)
@@ -208,7 +208,7 @@ void main()
             float PI = 3.14159265359;
             float arg = map(vertPos.x, minX, maxX);
             float t = 0.5 + sin(PI * (arg - 0.5f))/2;
-            vec3 hsvColor = vec3(t + time, 1.0, 1.0);
+            vec3 hsvColor = vec3(t + smoothTime, 1.0, 1.0);
             vec3 animateColor = hsv2rgb(hsvColor) / 2;
             FragColor += vec4(animateColor, 0);
         }
