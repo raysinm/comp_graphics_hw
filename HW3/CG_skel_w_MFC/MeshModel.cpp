@@ -420,7 +420,9 @@ void MeshModel::loadFile(string fileName)
 		if (dlg.DoModal() == IDOK)
 		{
 			std::string filePath((LPCTSTR)dlg.GetPathName());
+			stbi_set_flip_vertically_on_load(true);
 			textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
+		
 		}
 	}
 }
