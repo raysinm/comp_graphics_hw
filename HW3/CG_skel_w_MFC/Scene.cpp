@@ -5,6 +5,8 @@
 #include "CG_skel_w_glfw.h"
 #include <string>
 #include <math.h>
+#include "stb_image.h"
+
 
 #define CLAMP(x, l, r) (min( max((x), (l)) , (r)))
 
@@ -182,6 +184,14 @@ void Camera::setOrtho()
 							0, 0    , 0      , 1);
 }
 
+mat4 Camera::GetOrthoMatrix()
+{
+	return mat4(1, 0    , 0,      0,
+				0    , 1, 0,      0,
+				0    , 0    , -1, -(c_zFar + c_zNear) / 2,
+				0    , 0    , 0     , 1);
+}
+
 void Camera::setPerspective()
 {
 	GLfloat x = c_right - c_left;
@@ -262,16 +272,16 @@ void Camera::updateTransform()
 	mat4 rot_y = RotateY(c_rot.y);
 	mat4 rot_z = RotateZ(c_rot.z);
 
-	mat4 rot = transpose(rot_z * (rot_y * rot_x));
+	rotation_mat = transpose(rot_z * (rot_y * rot_x));
 	mat4 trnsl = Translate(-c_trnsl);
 
 
 
 	//Save mid results for camera icon view
-	transform_mid_worldspace = Translate(c_trnsl) * transpose(rot);
+	transform_mid_worldspace = Translate(c_trnsl) * transpose(rotation_mat);
 	
 	// C-t  = R^T * T^-1
-	cTransform = rot * trnsl; // Mid result of cTransform
+	cTransform = rotation_mat * trnsl; // Mid result of cTransform
 
 
 	//Apply view-space transformations:
@@ -288,7 +298,7 @@ void Camera::updateTransform()
 	transform_mid_viewspace = trnsl_view * (rot_view * transform_mid_worldspace);
 
 	//Save the inverse rotation matrix for normals display:
-	rotationMat_normals = rot_view * rot;
+	rotationMat_normals = rot_view * rotation_mat;
 
 }
 
@@ -381,7 +391,6 @@ void Scene::draw()
 	//2. Update general uniforms in GPU:
 	UpdateGeneralUniformInGPU();
 	
-
 	//3. draw each Model
 	for (auto model : models)
 	{
@@ -416,6 +425,44 @@ void Scene::draw()
 	//		}
 	//	}
 	//}
+	
+	//5. Draw skybox (if enabled)
+	if (applyEnviornmentShading)
+	{
+		
+		//mat4 model_view_mat = GetActiveCamera()->rotation_mat;
+		mat4 model_view_mat = GetActiveCamera()->cTransform;
+		mat4 clean_model_view_mat = mat4(TopLeft3(model_view_mat), vec3(0, 0, 0), 1);
+		mat4 temp_clean_projection = GetActiveCamera()->GetOrthoMatrix();
+
+		cout << "camera cTransform: " << model_view_mat << endl;
+		cout << "camera clean cTransform: " << clean_model_view_mat << endl;
+
+		/* Bind the model-view matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "modelview"), 1, GL_TRUE , &(clean_model_view_mat[0][0]));
+
+		/* Bind the projection matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(temp_clean_projection[0][0]));
+
+		/* Bind the cameraPos vec3*/
+		vec3 cameraPos = GetActiveCamera()->getPosition();
+		glUniform3fv(glGetUniformLocation(renderer->program, "cameraPos"), 1, &cameraPos[0]);
+
+
+		glDepthFunc(GL_LEQUAL);
+		glBindVertexArray(skyboxVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
+		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
+		glDrawArrays(GL_TRIANGLES, 0, 36); //36 vertices for a 3d box;
+		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 0);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LESS);
+
+
+		UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
+	}
+
 
 }
 
@@ -1329,16 +1376,83 @@ void Scene::drawGUI()
 				for (auto camera : cameras)
 					camera->renderCamera = false;
 			}
-			if (ImGui::MenuItem("Allow clipping"))
+			if (ImGui::MenuItem("Enable Enviornment shading"))
 			{
-				for (auto camera : cameras)
-					camera->allowClipping = true;
+				applyEnviornmentShading = true;
+				if (cubeMapId == 0)
+				{
+					glUseProgram(renderer->program);
+					glGenTextures(1, &cubeMapId);
+					glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
+
+					vector<string> imagesNames = vector<string>(skyBoxImages.size());
+					CFileDialog dlg(TRUE, _T("nx.png"), NULL, NULL, _T("(nx.png)|nx.png|All Files (*.*)|*.*||"));
+					if (dlg.DoModal() == IDOK)
+					{
+						std::string filePath((LPCTSTR)dlg.GetPathName());
+						string justPath = filePath.substr(0, 1 + filePath.find_last_of('\\'));
+						for (UINT i = 0; i < imagesNames.size(); i++)
+							imagesNames[i] = justPath;
+
+						imagesNames[0] += string("nx.png");
+						imagesNames[1] += string("px.png");
+						imagesNames[2] += string("py.png");
+						imagesNames[3] += string("ny.png");
+						imagesNames[4] += string("pz.png");
+						imagesNames[5] += string("nz.png");
+
+						for (UINT i = 0; i < skyBoxImages.size(); i++)
+						{
+							stbi_set_flip_vertically_on_load(false);
+							skyBoxImages[i].image_data = stbi_load(imagesNames[i].c_str(), &skyBoxImages[i].width, &skyBoxImages[i].height, &skyBoxImages[i].channels, 0);
+
+							glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, skyBoxImages[i].width, skyBoxImages[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyBoxImages[i].image_data);
+							
+							stbi_image_free(skyBoxImages[i].image_data);
+						}
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+						glGenVertexArrays(1, &skyboxVAO);
+						glBindVertexArray(skyboxVAO);
+						glGenBuffers(1, &skyboxVBO);
+
+						/* vPosition */
+						{
+							glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+							int lenInBytes = sizeof(skyboxVertices);
+							glBufferData(GL_ARRAY_BUFFER, lenInBytes, skyboxVertices, GL_STATIC_DRAW);
+							GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+							glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+							glEnableVertexAttribArray(vPosition);
+						}
+					}
+					else
+					{
+						glDeleteTextures(1, &cubeMapId);
+						glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+						cubeMapId = 0;
+						applyEnviornmentShading = false;
+					}
+				}
 			}
-			if (ImGui::MenuItem("Disable clippping"))
+			if (ImGui::MenuItem("Disable Enviornment shading"))
 			{
-				for (auto camera : cameras)
-					camera->allowClipping = false;
+				applyEnviornmentShading = false;
 			}
+			//if (ImGui::MenuItem("Allow clipping"))
+			//{
+			//	for (auto camera : cameras)
+			//		camera->allowClipping = true;
+			//}
+			//if (ImGui::MenuItem("Disable clippping"))
+			//{
+			//	for (auto camera : cameras)
+			//		camera->allowClipping = false;
+			//}
 
 
 			ImGui::EndMenu();	// End Options menu
@@ -1640,6 +1754,7 @@ void Scene::UpdateGeneralUniformInGPU()
 {
 	glUniform1i(glGetUniformLocation(m_renderer->program, "algo_shading"), (int)draw_algo);
 	glUniform1i(glGetUniformLocation(m_renderer->program, "numLights"), (int)lights.size());
+	glUniform1i(glGetUniformLocation(m_renderer->program, "applyEnviornmentShading"), (int)applyEnviornmentShading);
 	GetActiveCamera()->UpdateProjectionMatInGPU();
 }
 

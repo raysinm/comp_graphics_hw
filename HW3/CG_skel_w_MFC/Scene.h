@@ -37,14 +37,12 @@ public:
 class Camera
 {
 private:
-	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
 
 	string name = "";
-	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
 
-	mat4 transform_mid_worldspace, transform_mid_viewspace;
+	mat4 transform_mid_worldspace, transform_mid_viewspace, rotation_mat;
 	
 	// Icon stuff
 	vec3* icon;
@@ -57,6 +55,7 @@ private:
 	friend class Scene;	// To acces transformations;
 
 public:
+	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
 
 	mat4 cTransform;
 	mat4 view_matrix;	// cTransform inversed
@@ -65,16 +64,9 @@ public:
 
 	Camera::Camera();
 	
+	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
 	void Camera::LookAt(const Model* target = nullptr);
-
-	void Ortho( const float left, const float right,
-		const float bottom, const float top,
-		const float zNear, const float zFar );
-	void Frustum( const float left, const float right,
-		const float bottom, const float top,
-		const float zNear, const float zFar );	// Sets projection matrix
-	mat4 Perspective( const float fovy, const float aspect,
-		const float zNear, const float zFar);	// Calls frustum
+	mat4 GetOrthoMatrix();
 
 	void setOrtho();
 	void setPerspective();
@@ -87,7 +79,7 @@ public:
 	void setName(std::string newName) { name = newName; }
 	std::string& getName() { return name; }
 	vec4 getTranslation() { return vec4(c_trnsl); }
-	vec3& getPosition() { return vec3(c_trnsl.x, c_trnsl.y, c_trnsl.z); }
+	vec3 getPosition() { return vec3(c_trnsl.x, c_trnsl.y, c_trnsl.z); }
 	void setStartPosition(vec4& pos) { c_trnsl = pos; }
 	
 	void updateTransform();
@@ -193,7 +185,48 @@ private:
 			return ("error");
 		}
 	}
-
+	vector<STB_Image> skyBoxImages = vector<STB_Image>(6);
+	const float skyboxVertices[108] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+	GLuint skyboxVAO = 0;
+	GLuint skyboxVBO = 0;
 public:
 	Scene(Renderer* renderer) : m_renderer(renderer)
 	{
@@ -219,7 +252,7 @@ public:
 	
 	Fog* fog;
 	
-	friend bool showInputDialog();
+	//friend bool showInputDialog();
 
 	Camera* GetActiveCamera();
 	Model* GetActiveModel();
@@ -233,6 +266,8 @@ public:
 	bool applyFog = false;
 	bool applyBloom = false;
 	bool applyFullScreenBlur = false;
+	bool applyEnviornmentShading = false;
+	GLuint cubeMapId = 0;
 
 
 };
