@@ -47,8 +47,10 @@ flat in int   interpolated_COS_ALPHA;
 uniform samplerCube skybox;
 uniform sampler2D texMap;
 uniform sampler2D normalMap;
+uniform sampler2D texMarble;
 uniform bool usingTexture;
 uniform bool usingNormalMap;
+uniform bool usingMarbleTex;
 uniform int applyEnviornmentShading;
 
 
@@ -65,6 +67,8 @@ uniform float smoothTime;
 uniform float minX;
 uniform float maxX;
 uniform vec3 cameraPos;
+uniform vec2 resolution;
+uniform vec3 mcolor1, mcolor2;
 
 /* Output */
 out vec4 FragColor;
@@ -191,6 +195,14 @@ vec4 calcNormalTangent(vec4 N)
 {
     return vec4(calcNormalTangent(vec3(N)), 1.0);
 }
+
+vec3 marbleColor(vec2 uv)
+{
+    float a = (sin(uv.x) + 1) / 2;
+	float b = 1 - (sin(uv.x) + 1) / 2;
+	return a * mcolor1 + b * mcolor2;
+}
+
 /* Main */
 void main()
 {
@@ -247,6 +259,14 @@ void main()
                 vec3 _N = -normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
                 N = vec4(_N, 1.0);
             }
+
+            if(usingMarbleTex)
+            {
+                vec2 uv = gl_FragCoord.xy / resolution;
+                vec3 marble_color = marbleColor(uv); 
+                current_Color_diffuse = marble_color;
+            }
+
         	FragColor = vec4(getColor(P, N), 1);
         }
     

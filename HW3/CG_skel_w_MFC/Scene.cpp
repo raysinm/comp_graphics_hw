@@ -714,19 +714,87 @@ void Scene::drawModelTab()
 		if (ImGui::Button("Load Normal Map"))
 			activeMesh->loadNMapFromFile();
 
-		ImGui::Checkbox("Use Texture", &(activeMesh->useTexture));
+		ImGui::Checkbox("Use Model Texture", &(activeMesh->useTexture));
 		if (activeMesh->useTexture)
 		{
+			activeMesh->useProceduralTex = false;
 			ImGui::SameLine();
 			ImGui::Checkbox("Use Normal Map", &(activeMesh->useNormalMap));
 		}
 		else
 			activeMesh->useNormalMap = false;
 
+		ImGui::Checkbox("Use Marble Texture", &(activeMesh->useProceduralTex));
+		if (activeMesh->useProceduralTex)
+		{
+			activeMesh->useTexture = false;
+			activeMesh->useNormalMap = false;
+			//activeMesh->nonUniformDataUpdated = false;
+			activeMesh->isUniformMaterial = false;
+			activeMesh->useProceduralTex = true;
+
+			float* n_scale			= &(activeMesh->noise_scale);
+			int* n_octaves			= &(activeMesh->noise_octaves);
+			float* n_lacunarity		= &(activeMesh->noise_lacunarity);
+			float* n_persistence	= &(activeMesh->noise_persistence);
+
+			ImGui::SeparatorText("Noise Details");
+			ImGui::Text("Scale"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_scale", n_scale, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Octaves"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragInt("##N_octaves", n_octaves, 1, 0, 10);
+
+			ImGui::Text("Lacunarity"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_lacunarity", n_lacunarity, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Persistence"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_persistence", n_persistence, 0.001f, 0, 1, "%.3f");
+
+			if (ImGui::Button("Reset all##RK"))
+			{
+				*n_scale = DEF_NOISE_SCALE;
+				*n_octaves = DEF_NOISE_OCTAVES;
+				*n_lacunarity = DEF_NOISE_LACUNARITY;
+				*n_persistence = DEF_NOISE_PERSISTENCE;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Regenerate noise"))
+			{
+				activeMesh->generateMarbleNoise();
+			}
+
+			vec3& base_color = (activeMesh->mcolor1);
+			vec3& detail_color = (activeMesh->mcolor2);
+
+			ImVec4 base_local = ImVec4(base_color.x, base_color.y, base_color.z, 1);
+			ImVec4 detail_local = ImVec4(detail_color.x, detail_color.y, detail_color.z, 1);
+			
+			colorPicker(&base_local, "Base Color", "##pickerBase");
+			colorPicker(&detail_local, "Detail Color", "##pickerDetail");
+
+			base_color.x = base_local.x;
+			base_color.y = base_local.y;
+			base_color.z = base_local.z;
+
+			detail_color.x = detail_local.x;
+			detail_color.y = detail_local.y;
+			detail_color.z = detail_local.z;
+
+			activeMesh->generateMarbleTexture();
+			//activeMesh->PopulateNonUniformColorVectorForGPU();	// For updating VBOs
+
+		}
+		else
+		{
+			activeMesh->isUniformMaterial = true;
+		}
+
+
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
+		Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 		if (activeMesh->isUniformMaterial)
 		{
-			Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 			vec3& emis_real = meshMaterial.getEmissive();
 			vec3& diff_real = meshMaterial.getDiffuse();
 			vec3& spec_real = meshMaterial.getSpecular();
@@ -750,7 +818,7 @@ void Scene::drawModelTab()
 			spec_real.x = spec_local.x;
 			spec_real.y = spec_local.y;
 			spec_real.z = spec_local.z;
-
+		}
 			float* ka = &(meshMaterial.Ka);
 			float* kd = &(meshMaterial.Kd);
 			float* ks = &(meshMaterial.Ks);
@@ -772,6 +840,7 @@ void Scene::drawModelTab()
 
 			ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 100);
+			
 			if (ImGui::Button("Reset all##RK"))
 			{
 				*ka = DEFUALT_LIGHT_Ka_VALUE;
@@ -780,8 +849,7 @@ void Scene::drawModelTab()
 				*emissivefactor = DEFUALT_EMIS_FACTOR;
 				*alphaFactor = DEFUALT_LIGHT_ALPHA;
 			}
-		}
-		else
+		else if(!activeMesh->useProceduralTex)
 		{
 			if (ImGui::Button("Generate Random Material"))
 			{

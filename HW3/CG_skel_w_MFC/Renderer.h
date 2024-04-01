@@ -90,5 +90,6 @@ public:
 	}
 	void drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform);
 	void UpdateLightsUBO(bool reallocate_ubo);
+	void calcResolution(int* w, int* h) { glfwGetFramebufferSize(m_window, w, h); }
 
 };

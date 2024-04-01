@@ -29,7 +29,6 @@ in vec2 texcoord;
 in vec3 tangent;
 in vec3 bitangent;  // Added for efficiency
 
-
 /* Uniforms */
 uniform int algo_shading;
 uniform int displayBBox;
@@ -64,6 +63,8 @@ uniform int COS_ALPHA;
 uniform bool isUniformMaterial;
 uniform bool usingTexture;
 uniform bool usingNormalMap;
+uniform bool usingMarbleTex;
+
 
 /* Output */
 flat out vec3 flat_outputColor;
@@ -245,7 +246,6 @@ void main()
     vec4 temp_bitangent = vec4(bitangent,1);
     temp_bitangent = modelview_normals * temp_bitangent;
     interpolatedbBitangent = normalize(vec3(temp_bitangent/temp_bitangent.w));
-
 
     vec4 temp_nmN = vec4(fn,1);
     temp_nmN = modelview_normals * temp_nmN;

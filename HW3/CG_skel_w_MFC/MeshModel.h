@@ -7,6 +7,9 @@
 #include <chrono>
 #include "Material.h"
 
+#include "FastNoiseLite.h"
+
+
 using namespace std;
 
 
@@ -26,6 +29,10 @@ protected:
 	void GenerateTexture();
 	void GenerateNMap();
 	void calculateTangentSpace();
+	float turbulence(vec3 p);
+	void generateMarbleNoise();
+	vec3 marble_color(float x);
+
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 
 	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
@@ -57,7 +64,11 @@ protected:
 
 	chrono::high_resolution_clock::time_point start_time;
 
+	// Marble
+	vector<float> marbleTextureBuffer;	//size: NOISE_MAP_SIZE * NOISE_MAP_SIZE
+
 	vector<Material> materials;
+	vector<vec3> vertex_marble_colors;	// Same size as vertex_positions_raw, or materials
 	Material userDefinedMaterial;
 
 	unsigned int num_vertices_raw;
@@ -87,9 +98,15 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
-	GLuint tex = 0, nmap=0;
+	GLuint tex = 0, nmap=0, marbletex = 0;
 	STB_Image textureMap = { 0 }, normalMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
+	// Marble
+	vec3 mcolor1 = vec3(1), mcolor2 = vec3(0.165, 0.094, 0.561);
+	float noise_scale  = DEF_NOISE_SCALE;
+	int noise_octaves = DEF_NOISE_OCTAVES;
+	float noise_lacunarity = DEF_NOISE_LACUNARITY;
+	float noise_persistence = DEF_NOISE_PERSISTENCE;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
@@ -99,6 +116,7 @@ public:
 	bool vertexAnimationEnable  = false;
 	bool useTexture				= false;
 	bool useNormalMap			= false;
+	bool useProceduralTex		= false;
 
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
@@ -111,7 +129,7 @@ public:
 	Vertex* GetBuffer();
 	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);
-	void PopulateNonUniformColorVectorForGPU();
+	void PopulateNonUniformColorVectorForGPU(MaterialType mat_type);
 	void loadFile(string fileName);
 	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);
 
@@ -144,6 +162,8 @@ public:
 	void GenerateMaterials();
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
+	void generateMarbleTexture();
+	void updateMarbleTexture();
 
 	void loadTextureFromFile();
 	void loadNMapFromFile();
