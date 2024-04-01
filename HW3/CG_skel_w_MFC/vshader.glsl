@@ -74,6 +74,7 @@ flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
 out vec3 vertPos;
+out vec3 vertPos_cameraspace;
 out vec3 skyboxCoords;
 
 
@@ -192,6 +193,7 @@ void main()
         current_Color_diffuse  = non_uniformColor_diffuse;
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
+    vertPos_cameraspace = vPos_Cameraspace.xyz / vPos_Cameraspace.w;
     resultPosition = projection * vPos_Cameraspace;
 
 
@@ -226,7 +228,7 @@ void main()
     {
         if(applyEnviornmentShading == 1)
         {
-            skyboxCoords = vec3(vPosition.x, vPosition.y, vPosition.z);
+            skyboxCoords = vPosition;
             gl_Position = (projection * modelview * vec4(vPosition, 1)).xyww;
             return;
         }

@@ -406,46 +406,6 @@ void Scene::draw()
 		m_renderer->drawModel(draw_algo, model, GetActiveCamera()->cTransform);
 	}
 
-	//4. Draw skybox (if enabled)
-	if (applyEnviornmentShading)
-	{
-		
-		mat4 model_view_mat = GetActiveCamera()->rotation_mat;
-		mat4 clean_model_view_mat = mat4(TopLeft3(model_view_mat), vec3(0, 0, 0), 1);
-		mat4 temp_clean_projection = GetActiveCamera()->GetOrthoMatrix();
-
-		cout << "camera cTransform: " << model_view_mat << endl;
-		cout << "camera clean cTransform: " << clean_model_view_mat << endl;
-
-		/* Bind the model-view matrix*/
-		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "modelview"), 1, GL_TRUE , &(clean_model_view_mat[0][0]));
-
-		/* Bind the projection matrix*/
-		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(temp_clean_projection[0][0]));
-
-		/* Bind the cameraPos vec3*/
-		vec3 cameraPos = GetActiveCamera()->getPosition();
-		glUniform3fv(glGetUniformLocation(renderer->program, "cameraPos"), 1, &cameraPos[0]);
-
-
-		glDepthFunc(GL_LEQUAL);
-
-
-		glBindVertexArray(skyboxVAO);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
-		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
-		glDrawArrays(GL_TRIANGLES, 0, 36); //36 vertices for a 3d box;
-		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 0);
-		glBindVertexArray(0);
-
-
-		glDepthFunc(GL_LESS);
-
-
-		UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
-	}
-
 	// ------------------------------------------------ TODO:
 	
 	//4. Render cameras as 3D plus signs
@@ -465,6 +425,44 @@ void Scene::draw()
 	//		}
 	//	}
 	//}
+	
+	//5. Draw skybox (if enabled)
+	if (applyEnviornmentShading)
+	{
+		
+		//mat4 model_view_mat = GetActiveCamera()->rotation_mat;
+		mat4 model_view_mat = GetActiveCamera()->cTransform;
+		mat4 clean_model_view_mat = mat4(TopLeft3(model_view_mat), vec3(0, 0, 0), 1);
+		mat4 temp_clean_projection = GetActiveCamera()->GetOrthoMatrix();
+
+		cout << "camera cTransform: " << model_view_mat << endl;
+		cout << "camera clean cTransform: " << clean_model_view_mat << endl;
+
+		/* Bind the model-view matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "modelview"), 1, GL_TRUE , &(clean_model_view_mat[0][0]));
+
+		/* Bind the projection matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(temp_clean_projection[0][0]));
+
+		/* Bind the cameraPos vec3*/
+		vec3 cameraPos = GetActiveCamera()->getPosition();
+		glUniform3fv(glGetUniformLocation(renderer->program, "cameraPos"), 1, &cameraPos[0]);
+
+
+		glDepthFunc(GL_LEQUAL);
+		glBindVertexArray(skyboxVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
+		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
+		glDrawArrays(GL_TRIANGLES, 0, 36); //36 vertices for a 3d box;
+		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 0);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LESS);
+
+
+		UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
+	}
+
 
 }
 
@@ -1370,8 +1368,6 @@ void Scene::drawGUI()
 					glGenTextures(1, &cubeMapId);
 					glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 
-
-
 					vector<string> imagesNames = vector<string>(skyBoxImages.size());
 					CFileDialog dlg(TRUE, _T("nx.png"), NULL, NULL, _T("(nx.png)|nx.png|All Files (*.*)|*.*||"));
 					if (dlg.DoModal() == IDOK)
@@ -1387,13 +1383,13 @@ void Scene::drawGUI()
 						imagesNames[3] += string("ny.png");
 						imagesNames[4] += string("pz.png");
 						imagesNames[5] += string("nz.png");
+
 						for (UINT i = 0; i < skyBoxImages.size(); i++)
 						{
 							stbi_set_flip_vertically_on_load(false);
 							skyBoxImages[i].image_data = stbi_load(imagesNames[i].c_str(), &skyBoxImages[i].width, &skyBoxImages[i].height, &skyBoxImages[i].channels, 0);
-							stbi_set_flip_vertically_on_load(true);
 
-							glTexImage2D((UINT)(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i), 0, GL_RGBA, skyBoxImages[i].width, skyBoxImages[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyBoxImages[i].image_data);
+							glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, skyBoxImages[i].width, skyBoxImages[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyBoxImages[i].image_data);
 							
 							stbi_image_free(skyBoxImages[i].image_data);
 						}

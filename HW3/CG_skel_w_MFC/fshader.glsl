@@ -25,6 +25,7 @@ in vec4      interpolated_normal;
 in vec4      interpolated_position;
 in vec2      st;
 in vec3      vertPos;
+in vec3      vertPos_cameraspace;
 in vec3      skyboxCoords;
 
 
@@ -216,8 +217,8 @@ void main()
             }
             else if(applyEnviornmentShading == 1)
             {
-                vec3 I = normalize(vertPos - cameraPos);
-                vec3 N = normalize(interpolated_normal.xyz / interpolated_normal.w);
+                vec3 I = normalize(vertPos_cameraspace);
+                vec3 N = normalize(interpolated_normal.xyz);
                
                 vec3 R = reflect(I, N);
 
