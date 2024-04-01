@@ -25,6 +25,10 @@ in vec4      interpolated_normal;
 in vec4      interpolated_position;
 in vec2      st;
 in vec3      vertPos;
+flat in vec3      interpolatedTangent;
+flat in vec3      interpolatedbBitangent;  
+flat in vec3      nmN;
+flat in mat3      TBN;
 in vec3      vertPos_cameraspace;
 in vec3      skyboxCoords;
 
@@ -42,7 +46,9 @@ flat in int   interpolated_COS_ALPHA;
 /* Textures*/
 uniform samplerCube skybox;
 uniform sampler2D texMap;
+uniform sampler2D normalMap;
 uniform bool usingTexture;
+uniform bool usingNormalMap;
 uniform int applyEnviornmentShading;
 
 
@@ -160,10 +166,37 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
+mat3 calcTBN(vec3 N)
+{
+    return mat3(interpolatedTangent, interpolatedbBitangent, N);
+}
+
+mat3 calcTBN(vec4 N)
+{
+    return mat3(interpolatedTangent, interpolatedbBitangent, vec3(N)); // MAYBE WRONG
+}
+
+vec3 calcNormalTangent(vec3 N)
+{
+    mat3 _TBN = calcTBN(N);
+        // Normal map calcs
+    vec3 normal_from_map = texture(normalMap, st).rgb; // Check if useNormalMap is true?
+    normal_from_map.y = 1 - normal_from_map.y;
+    normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
+   return normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
+
+}
+
+vec4 calcNormalTangent(vec4 N)
+{
+    return vec4(calcNormalTangent(vec3(N)), 1.0);
+}
 /* Main */
 void main()
 {
     vec4 textureColor;
+    vec3 normal_from_map;
+
     bool drawingTriangles = false;
 
     if(applyEnviornmentShading == 1 && displaySkyBox == 1)
@@ -180,7 +213,9 @@ void main()
 	else
     {
         drawingTriangles = true;
-        textureColor = texture2D(texMap, st);
+        textureColor = texture2D(texMap, st);   // Check if useTexture is true?
+
+
 
         if(algo_shading == 1)       // flat shading
         {
@@ -203,7 +238,15 @@ void main()
 
             vec4 P = interpolated_position; //Vertex Position in CameraSpace
             vec4 N = interpolated_normal;   //Interpolated Normal in CameraSpace
-
+            if(usingNormalMap)
+            {
+                mat3 _TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
+                vec3 normal_from_map = texture2D(normalMap, st).rgb; // Check if useNormalMap is true?
+                //normal_from_map.y = 1 - normal_from_map.y;
+                normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
+                vec3 _N = -normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
+                N = vec4(_N, 1.0);
+            }
         	FragColor = vec4(getColor(P, N), 1);
         }
     

@@ -707,6 +707,22 @@ void Scene::drawModelTab()
 
 	if (ImGui::CollapsingHeader("Material"))
 	{
+		if (ImGui::Button("Load Texture"))
+			activeMesh->loadTextureFromFile();
+		ImGui::SameLine();
+		
+		if (ImGui::Button("Load Normal Map"))
+			activeMesh->loadNMapFromFile();
+
+		ImGui::Checkbox("Use Texture", &(activeMesh->useTexture));
+		if (activeMesh->useTexture)
+		{
+			ImGui::SameLine();
+			ImGui::Checkbox("Use Normal Map", &(activeMesh->useNormalMap));
+		}
+		else
+			activeMesh->useNormalMap = false;
+
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
 		if (activeMesh->isUniformMaterial)
 		{
@@ -776,7 +792,7 @@ void Scene::drawModelTab()
 
 	if (ImGui::CollapsingHeader("Model"))
 	{
-
+		ImGui::Indent();
 		if (ImGui::CollapsingHeader("Model space"))
 		{
 			//ImGui::SeparatorText("Model space");
@@ -869,8 +885,9 @@ void Scene::drawModelTab()
 				activeMesh->ResetUserTransform_scale_world();
 			}
 		}
+		ImGui::Unindent();
 	}
-	
+
 	if (ImGui::CollapsingHeader("Animation"))
 	{
 		int* colorAnimType = (int*) (&activeMesh->colorAnimationType);
