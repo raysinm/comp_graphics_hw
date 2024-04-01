@@ -25,6 +25,8 @@ in vec4      interpolated_normal;
 in vec4      interpolated_position;
 in vec2      st;
 in vec3      vertPos;
+in vec3      skyboxCoords;
+
 
 /* Material */
 in vec3  interpolated_emissive;
@@ -37,8 +39,11 @@ flat in float interpolated_EmissiveFactor;
 flat in int   interpolated_COS_ALPHA;
 
 /* Textures*/
+uniform samplerCube skybox;
 uniform sampler2D texMap;
 uniform bool usingTexture;
+uniform int applyEnviornmentShading;
+
 
 /* Uniforms */
 uniform vec3 wireframeColor;
@@ -46,11 +51,13 @@ uniform int algo_shading;
 uniform int displayBBox;
 uniform int displayVnormal;
 uniform int displayFnormal;
+uniform int displaySkyBox;
 uniform int numLights;
 uniform int colorAnimateType;
 uniform float smoothTime;
 uniform float minX;
 uniform float maxX;
+uniform vec3 cameraPos;
 
 /* Output */
 out vec4 FragColor;
@@ -158,6 +165,13 @@ void main()
     vec4 textureColor;
     bool drawingTriangles = false;
 
+    if(applyEnviornmentShading == 1 && displaySkyBox == 1)
+    {
+        FragColor = texture(skybox, skyboxCoords);
+        return;
+    }
+
+
     if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1) //WireFrame
     {
 	    FragColor = vec4(outputColor, 1);
@@ -194,10 +208,23 @@ void main()
     
     
 
-        if(drawingTriangles == true && usingTexture == true)
+        if(drawingTriangles == true)
         {
-            FragColor *= textureColor;
+            if(usingTexture == true)
+            {
+                FragColor *= textureColor;
+            }
+            else if(applyEnviornmentShading == 1)
+            {
+                vec3 I = normalize(vertPos - cameraPos);
+                vec3 N = normalize(interpolated_normal.xyz / interpolated_normal.w);
+               
+                vec3 R = reflect(I, N);
+
+                FragColor = vec4(texture(skybox, R).rgb, 1.0);
+            }
         }
+
         if(colorAnimateType == 1)
         {
             vec3 hsvColor = vec3(smoothTime, 1.0, 1.0);
@@ -213,5 +240,5 @@ void main()
             FragColor += vec4(animateColor, 0);
         }
     }
-} 
+}
 

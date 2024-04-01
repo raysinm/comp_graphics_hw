@@ -32,6 +32,7 @@ uniform int algo_shading;
 uniform int displayBBox;
 uniform int displayVnormal;
 uniform int displayFnormal;
+uniform int displaySkyBox;
 uniform int numLights;
 uniform float vnFactor;
 uniform float fnFactor;
@@ -45,6 +46,7 @@ uniform float minX;
 uniform float maxX;
 uniform float time;
 uniform float smoothTime;
+uniform int applyEnviornmentShading;
 
 /* Material */
 uniform vec3 uniformColor_emissive;
@@ -72,6 +74,8 @@ flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
 out vec3 vertPos;
+out vec3 skyboxCoords;
+
 
 /* Locals */
 vec4 vPos;
@@ -167,7 +171,7 @@ void main()
 {
     st = texcoord;
     vPos = vec4(vPosition, 1);
-    if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0)
+    if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0 && displaySkyBox == 0)
     {
         float PI = 3.14159265359f;
         
@@ -189,6 +193,7 @@ void main()
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
     resultPosition = projection * vPos_Cameraspace;
+
 
 
     if(displayBBox == 1)
@@ -217,6 +222,15 @@ void main()
             resultPosition.w = 1;
         }
     }
+    else if(displaySkyBox == 1)
+    {
+        if(applyEnviornmentShading == 1)
+        {
+            skyboxCoords = vec3(vPosition.x, vPosition.y, vPosition.z);
+            gl_Position = (projection * modelview * vec4(vPosition, 1)).xyww;
+            return;
+        }
+    }
     else // draw shading algos
     {
         if(algo_shading == 0) //wireframe
@@ -234,6 +248,7 @@ void main()
                     current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
 
                 flat_outputColor = getColor(P, N);
+                interpolated_normal = N;
             }
             else if(algo_shading == 2) //Gouraud shading
             {
@@ -241,12 +256,12 @@ void main()
                 vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
 
         		outputColor = getColor(P, N);
+                interpolated_normal = N;
             }
             else if(algo_shading == 3) //Phong shading
             {
                 interpolated_normal = modelview_normals * vec4(vn, 1);
                 interpolated_position = vPos_Cameraspace;
-
                 interpolated_emissive = current_Color_emissive;
                 interpolated_diffuse  = current_Color_diffuse;
                 interpolated_specular = current_Color_specular;

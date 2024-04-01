@@ -23,7 +23,7 @@
 #define CAMERA_DEFAULT_NAME "Camera"
 #define MODEL_DEFAULT_NAME "Model"
 #define DEF_PARAM_RANGE 20;
-#define DEF_PARAM 10;
+#define DEF_PARAM 1;
 #define DEF_ZNEAR 1;
 #define DEF_ZFAR 20;
 #define DEF_FOV 45
