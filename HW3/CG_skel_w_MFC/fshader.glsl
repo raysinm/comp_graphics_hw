@@ -252,8 +252,6 @@ void main()
         	FragColor = vec4(getColor(P, N), 1);
         }
     
-    
-
         if(drawingTriangles == true)
         {
             if(usingTexture == true)
@@ -271,7 +269,6 @@ void main()
                 FragColor = vec4(texture(skybox, R).rgb, 1.0);
             }
         }
-
         if(colorAnimateType == 1)
         {
             vec3 hsvColor = vec3(smoothTime, 1.0, 1.0);

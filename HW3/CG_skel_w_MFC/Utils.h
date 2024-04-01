@@ -233,3 +233,10 @@ typedef enum ColorAnimationType
 	COLOR_ANIMATION_1,
 	COLOR_ANIMATION_2,
 } ColorAnimationType;
+
+typedef enum TextureMode
+{
+	TEXTURE_FROM_FILE = 0,
+	TEXTURE_CANONICAL_1,		// Project on XY place
+	TEXTURE_CANONICAL_2,		// Spherical 
+} TextureMode;

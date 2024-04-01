@@ -723,21 +723,66 @@ void Scene::drawModelTab()
 
 	if (ImGui::CollapsingHeader("Material"))
 	{
+		ImGui::SeparatorText("Textures");
+
 		if (ImGui::Button("Load Texture"))
 			activeMesh->loadTextureFromFile();
+		
 		ImGui::SameLine();
 		
 		if (ImGui::Button("Load Normal Map"))
 			activeMesh->loadNMapFromFile();
 
-		ImGui::Checkbox("Use Texture", &(activeMesh->useTexture));
-		if (activeMesh->useTexture)
+		bool textureCoordsSetOk = (activeMesh->verticesTextures_original_gpu.size()  > 0 && activeMesh->textureMode == TEXTURE_FROM_FILE) || \
+								  (activeMesh->verticesTextures_canonical_gpu.size() > 0 && activeMesh->textureMode != TEXTURE_FROM_FILE);
+
+		if (activeMesh->textureLoaded)
 		{
-			ImGui::SameLine();
-			ImGui::Checkbox("Use Normal Map", &(activeMesh->useNormalMap));
+			if (textureCoordsSetOk)
+			{
+				// There is texture coordiants, enable the user to select if to use or not
+				ImGui::Checkbox("Use Texture", &(activeMesh->useTexture));
+			}
+			else
+			{
+				// There is no texture coordiants!
+				// Can't use texture
+				activeMesh->useTexture = false;
+			}
 		}
-		else
-			activeMesh->useNormalMap = false;
+
+		if (activeMesh->normalMapLoaded)
+		{
+			if (activeMesh->textureLoaded)
+			{
+				if (textureCoordsSetOk)
+				{
+					// There is texture coordiants, enable the user to select if to use or not
+					ImGui::SameLine();
+					ImGui::Checkbox("Use Normal Map", &(activeMesh->useNormalMap));
+				}
+				else
+				{
+					// There is no texture coordiants!
+					// Can't use normalMap
+					activeMesh->useNormalMap = false;
+				}
+
+			}
+		}
+
+		const char* items[] = { "Default texture", "XY-Plane Projection", "Spherical Projection" };
+		int prevTextMode = (int)activeMesh->textureMode;
+		ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * 0.5f);
+		ImGui::Combo("##Texture Mode", &prevTextMode, items, IM_ARRAYSIZE(items), -1.0f);
+		if (prevTextMode != activeMesh->textureMode)
+		{
+			activeMesh->textureMode = (TextureMode)prevTextMode;
+			activeMesh->UpdateTextureCoordsInGPU();
+		}
+		
+		
+		ImGui::SeparatorText("Colors");
 
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
 		if (activeMesh->isUniformMaterial)
