@@ -39,8 +39,12 @@ uniform int displaySkyBox;
 uniform int numLights;
 uniform float vnFactor;
 uniform float fnFactor;
-uniform mat4 modelview;
-uniform mat4 modelview_normals;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 model_normals;
+uniform mat4 view_normals;
+
 uniform mat4 projection;
 uniform vec3 wireframeColor;
 uniform int colorAnimateType;
@@ -84,7 +88,8 @@ flat out vec3      interpolatedTangent;
 flat out vec3      interpolatedbBitangent;  
 flat out vec3      nmN;
 flat out mat3      TBN;
-out vec3 vertPos_cameraspace;
+out vec3 vertPos_worldspace;
+out vec3 normal_worldspace;
 out vec3 skyboxCoords;
 
 
@@ -102,6 +107,8 @@ float current_Kd;
 float current_Ks;
 float current_EmissiveFactor;
 int current_COS_ALPHA;
+mat4 modelview;
+mat4 modelview_normals;
 
 
 
@@ -208,7 +215,9 @@ vec4 calcNormalTangent(vec4 N)
 
 void main()
 {
-    st = vec2(texcoord.x, texcoord.y);
+    modelview = view * model;
+    modelview_normals = view_normals * model_normals;
+
     st = texcoord;
     vPos = vec4(vPosition, 1);
     if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0 && displaySkyBox == 0)
@@ -232,9 +241,12 @@ void main()
         current_Color_diffuse  = non_uniformColor_diffuse;
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
-    vertPos_cameraspace = vPos_Cameraspace.xyz / vPos_Cameraspace.w;
+    vertPos_worldspace = (model * vPos).xyz;
     resultPosition = projection * vPos_Cameraspace;
-    // Normal map calculations
+   
+   
+   
+   // Normal map calculations
     //interpolatedTangent   = normalize(vec3(modelview_normals* vec4(tangent,0)));
     //interpolatedbBitangent = normalize(vec3(modelview_normals* vec4(bitangent,0)));
     //nmN                    = normalize(vec3(modelview_normals* vec4(fn,0)));
@@ -246,7 +258,7 @@ void main()
     temp_bitangent = modelview_normals * temp_bitangent;
     interpolatedbBitangent = normalize(vec3(temp_bitangent/temp_bitangent.w));
 
-
+     
     vec4 temp_nmN = vec4(fn,1);
     temp_nmN = modelview_normals * temp_nmN;
     nmN = normalize(vec3(temp_nmN/temp_nmN.w));
@@ -310,6 +322,9 @@ void main()
 
                 flat_outputColor = getColor(P, N);
                 interpolated_normal = N;
+
+                if(applyEnviornmentShading == 1)
+                    normal_worldspace = (model_normals * vec4(fn, 1)).xyz;
             }
             else if(algo_shading == 2) //Gouraud shading
             {
@@ -320,6 +335,9 @@ void main()
 
         		outputColor = getColor(P, N);
                 interpolated_normal = N;
+
+                if(applyEnviornmentShading == 1)
+                    normal_worldspace = (model_normals * vec4(vn, 1)).xyz;
             }
             else if(algo_shading == 3) //Phong shading
             {
@@ -333,6 +351,9 @@ void main()
                 interpolated_Ks = current_Ks;
                 interpolated_EmissiveFactor = current_EmissiveFactor;
                 interpolated_COS_ALPHA = current_COS_ALPHA;
+
+                if(applyEnviornmentShading == 1)
+                    normal_worldspace = (model_normals * vec4(vn, 1)).xyz;
             }
         }
     }

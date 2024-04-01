@@ -20,28 +20,29 @@ layout(std140) uniform Lights
 
 /* Input */
 flat in vec3 flat_outputColor;
+flat in vec3 interpolatedTangent;
+flat in vec3 interpolatedbBitangent;  
+flat in vec3 nmN;
+flat in mat3 TBN;
 in vec3      outputColor;
 in vec4      interpolated_normal;
 in vec4      interpolated_position;
 in vec2      st;
 in vec3      vertPos;
-flat in vec3      interpolatedTangent;
-flat in vec3      interpolatedbBitangent;  
-flat in vec3      nmN;
-flat in mat3      TBN;
-in vec3      vertPos_cameraspace;
+in vec3      vertPos_worldspace;
+in vec3      normal_worldspace;
 in vec3      skyboxCoords;
 
 
 /* Material */
-in vec3  interpolated_emissive;
-in vec3  interpolated_diffuse;
-in vec3  interpolated_specular;
 flat in float interpolated_Ka;
 flat in float interpolated_Kd;
 flat in float interpolated_Ks;
 flat in float interpolated_EmissiveFactor;
 flat in int   interpolated_COS_ALPHA;
+in vec3       interpolated_emissive;
+in vec3       interpolated_diffuse;
+in vec3       interpolated_specular;
 
 /* Textures*/
 uniform samplerCube skybox;
@@ -53,18 +54,18 @@ uniform int applyEnviornmentShading;
 
 
 /* Uniforms */
-uniform vec3 wireframeColor;
-uniform int algo_shading;
-uniform int displayBBox;
-uniform int displayVnormal;
-uniform int displayFnormal;
-uniform int displaySkyBox;
-uniform int numLights;
-uniform int colorAnimateType;
+uniform vec3  wireframeColor;
+uniform vec3  cameraPos;
 uniform float smoothTime;
 uniform float minX;
 uniform float maxX;
-uniform vec3 cameraPos;
+uniform int   algo_shading;
+uniform int   displayBBox;
+uniform int   displayVnormal;
+uniform int   displayFnormal;
+uniform int   displaySkyBox;
+uniform int   numLights;
+uniform int   colorAnimateType;
 
 /* Output */
 out vec4 FragColor;
@@ -191,6 +192,7 @@ vec4 calcNormalTangent(vec4 N)
 {
     return vec4(calcNormalTangent(vec3(N)), 1.0);
 }
+
 /* Main */
 void main()
 {
@@ -213,9 +215,9 @@ void main()
 	else
     {
         drawingTriangles = true;
-        textureColor = texture2D(texMap, st);   // Check if useTexture is true?
 
-
+        if(usingTexture == true)
+          textureColor = texture2D(texMap, st);
 
         if(algo_shading == 1)       // flat shading
         {
@@ -258,10 +260,11 @@ void main()
             {
                 FragColor *= textureColor;
             }
-            else if(applyEnviornmentShading == 1)
+
+            if(applyEnviornmentShading == 1)
             {
-                vec3 I = normalize(vertPos_cameraspace);
-                vec3 N = normalize(interpolated_normal.xyz);
+                vec3 I = normalize(vertPos_worldspace - cameraPos);
+                vec3 N = normalize(normal_worldspace.xyz);
                
                 vec3 R = reflect(I, N);
 

@@ -184,12 +184,25 @@ void Camera::setOrtho()
 							0, 0    , 0      , 1);
 }
 
-mat4 Camera::GetOrthoMatrix()
+mat4 Camera::GetPerspectiveoMatrix()
 {
-	return mat4(1, 0    , 0,      0,
-				0    , 1, 0,      0,
-				0    , 0    , -1, -(c_zFar + c_zNear) / 2,
-				0    , 0    , 0     , 1);
+	float c_fovy_local = 30;
+	float c_zNear_local = 1;
+	float c_zFar_local = 100;
+
+	float c_top_local = c_zNear_local * tan((M_PI / 180) * c_fovy_local);
+	float c_right_local = c_top_local;
+	float c_bottom_local = -c_top_local;
+	float c_left_local   = -c_right_local;
+
+	GLfloat x = c_right_local - c_left_local;
+	GLfloat y = c_top_local - c_bottom_local;
+	GLfloat z = c_zFar_local - c_zNear_local;
+
+	return mat4(2 * c_zNear_local / x, 0, (c_right_local + c_left_local) / x, 0,
+				0, 2 * c_zNear_local / y, (c_top_local + c_bottom_local) / y, 0,
+				0, 0, -(c_zFar_local + c_zNear_local) / z, -(2 * c_zNear_local * c_zFar_local) / z,
+				0, 0, -1, 0);
 }
 
 void Camera::setPerspective()
@@ -431,15 +444,17 @@ void Scene::draw()
 	{
 		
 		//mat4 model_view_mat = GetActiveCamera()->rotation_mat;
-		mat4 model_view_mat = GetActiveCamera()->cTransform;
-		mat4 clean_model_view_mat = mat4(TopLeft3(model_view_mat), vec3(0, 0, 0), 1);
-		mat4 temp_clean_projection = GetActiveCamera()->GetOrthoMatrix();
+		mat4 modelEmptyMat = mat4(1);
+		mat4 view_mat = GetActiveCamera()->cTransform;
+		mat4 clean_view_mat = mat4(TopLeft3(view_mat), vec3(0, 0, 0), 1);
+		mat4 temp_clean_projection = GetActiveCamera()->GetPerspectiveoMatrix();
 
-		cout << "camera cTransform: " << model_view_mat << endl;
-		cout << "camera clean cTransform: " << clean_model_view_mat << endl;
 
-		/* Bind the model-view matrix*/
-		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "modelview"), 1, GL_TRUE , &(clean_model_view_mat[0][0]));
+		/* Bind the model matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model"), 1, GL_TRUE, &(modelEmptyMat[0][0]));
+
+		/* Bind the view matrix*/
+		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view"), 1, GL_TRUE, &(clean_view_mat[0][0]));
 
 		/* Bind the projection matrix*/
 		glUniformMatrix4fv(glGetUniformLocation(renderer->program, "projection"), 1, GL_TRUE, &(temp_clean_projection[0][0]));
@@ -451,13 +466,14 @@ void Scene::draw()
 
 		glDepthFunc(GL_LEQUAL);
 		glBindVertexArray(skyboxVAO);
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
 		glDrawArrays(GL_TRIANGLES, 0, 36); //36 vertices for a 3d box;
 		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 0);
 		glBindVertexArray(0);
 		glDepthFunc(GL_LESS);
+		glActiveTexture(GL_TEXTURE0);
 
 
 		UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
@@ -1382,6 +1398,7 @@ void Scene::drawGUI()
 				if (cubeMapId == 0)
 				{
 					glUseProgram(renderer->program);
+					//glActiveTexture(GL_TEXTURE0);
 					glGenTextures(1, &cubeMapId);
 					glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 
@@ -1403,7 +1420,11 @@ void Scene::drawGUI()
 
 						for (UINT i = 0; i < skyBoxImages.size(); i++)
 						{
-							stbi_set_flip_vertically_on_load(false);
+							if(i == 2 || i == 3) //Flip just for up and down
+								stbi_set_flip_vertically_on_load(true);
+							else
+								stbi_set_flip_vertically_on_load(false);
+
 							skyBoxImages[i].image_data = stbi_load(imagesNames[i].c_str(), &skyBoxImages[i].width, &skyBoxImages[i].height, &skyBoxImages[i].channels, 0);
 
 							glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, skyBoxImages[i].width, skyBoxImages[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyBoxImages[i].image_data);

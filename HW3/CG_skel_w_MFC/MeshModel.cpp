@@ -965,19 +965,30 @@ void MeshModel::GenerateMaterials()
 
 void MeshModel::UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals)
 {
-	// Calculate model-view matrix:
-	model_view_mat = Tc * _world_transform * _model_transform;
+	// Calculate model view matrix:
+	mat4 model = _world_transform * _model_transform;
+	mat4 view = Tc;
+	//model_view_mat = view * model; //computed in GPU
 
-	// Calculate model-view-normals matrix:
-	model_view_mat_for_normals = Tc_for_normals * _world_transform_for_normals * _model_transform_for_normals;
+	// Calculate model view matrix:
+	mat4 model_normals = _world_transform_for_normals * _model_transform_for_normals;
+	mat4 view_normals = Tc_for_normals;
+	//model_view_mat_for_normals = view_normals * model_normals; //computed in GPU
 
-	/* Bind the model-view matrix*/
-	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
-	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat[0][0]));
 
-	/* Bind the model-view-normals matrix*/
-	matrixLocation = glGetUniformLocation(renderer->program, "modelview_normals");
-	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat_for_normals[0][0]));
+	/* Bind the model matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model"), 1, GL_TRUE, &(model[0][0]));
+
+	/* Bind the view matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view"), 1, GL_TRUE, &(view[0][0]));
+	
+	/* Bind the model_normals matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model_normals"), 1, GL_TRUE, &(model_normals[0][0]));
+
+	/* Bind the view_normals matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view_normals"), 1, GL_TRUE, &(view_normals[0][0]));
+
+
 }
 
 void MeshModel::UpdateMaterialinGPU()
@@ -1034,7 +1045,6 @@ void MeshModel::UpdateMaterialinGPU()
 void MeshModel::UpdateTextureInGPU()
 {
 	/* Bind the TextureMap enable / disable */
-	//int usingTexture = (verticesTextures_gpu.size() > 0);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingTexture"), (int)useTexture);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingNormalMap"), (int)useNormalMap);
 

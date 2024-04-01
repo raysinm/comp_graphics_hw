@@ -66,7 +66,7 @@ public:
 	
 	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);
 	void Camera::LookAt(const Model* target = nullptr);
-	mat4 GetOrthoMatrix();
+	mat4 GetPerspectiveoMatrix();
 
 	void setOrtho();
 	void setPerspective();
