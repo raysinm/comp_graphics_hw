@@ -240,7 +240,7 @@ void main()
             vec4 N = interpolated_normal;   //Interpolated Normal in CameraSpace
             if(usingNormalMap)
             {
-                mat3 _TBN = mat3(interpolatedTangent, interpolatedbBitangent, vec3(N/N.w));
+                mat3 _TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
                 vec3 normal_from_map = texture2D(normalMap, st).rgb; // Check if useNormalMap is true?
                 //normal_from_map.y = 1 - normal_from_map.y;
                 normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
