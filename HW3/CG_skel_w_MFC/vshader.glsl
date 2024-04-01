@@ -26,6 +26,9 @@ in vec3 fn;
 in vec3 non_uniformColor_diffuse_FLAT;  //every 3 is duplicated to be the average of the face (to make a uniform same color for FLAT shading)
 in vec3 non_uniformColor_diffuse;       //simple 1to1 mapping for every vertex - it's color
 in vec2 texcoord;
+in vec3 tangent;
+in vec3 bitangent;  // Added for efficiency
+
 
 /* Uniforms */
 uniform int algo_shading;
@@ -45,6 +48,7 @@ uniform float minX;
 uniform float maxX;
 uniform float time;
 uniform float smoothTime;
+uniform sampler2D normalMap;
 
 /* Material */
 uniform vec3 uniformColor_emissive;
@@ -56,6 +60,8 @@ uniform float Ks;
 uniform float EmissiveFactor;
 uniform int COS_ALPHA;
 uniform bool isUniformMaterial;
+uniform bool usingTexture;
+uniform bool usingNormalMap;
 
 /* Output */
 flat out vec3 flat_outputColor;
@@ -72,7 +78,10 @@ flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
 out vec3 vertPos;
-
+flat out vec3      interpolatedTangent;
+flat out vec3      interpolatedbBitangent;  
+flat out vec3      nmN;
+flat out mat3      TBN;
 /* Locals */
 vec4 vPos;
 vec4 vPos_Cameraspace;
@@ -87,6 +96,8 @@ float current_Kd;
 float current_Ks;
 float current_EmissiveFactor;
 int current_COS_ALPHA;
+
+
 
 
 vec3 calcIntensity(int i, vec3 P, vec3 N, int typeOfColor)
@@ -163,9 +174,34 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
+mat3 calcTBN(vec3 N)
+{
+    return mat3(interpolatedTangent, interpolatedbBitangent, N);
+}
+
+mat3 calcTBN(vec4 N)
+{
+    return mat3(interpolatedTangent, interpolatedbBitangent, vec3(N)); // MAYBE WRONG
+}
+
+vec3 calcNormalTangent(vec3 N)
+{
+    mat3 _TBN = calcTBN(N);
+        // Normal map calcs
+    vec3 normal_from_map = texture(normalMap, st).rgb; // Check if useNormalMap is true?
+    normal_from_map.y = 1 - normal_from_map.y;
+    normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
+   return normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
+
+}
+
+vec4 calcNormalTangent(vec4 N)
+{
+    return vec4(calcNormalTangent(vec3(N)), 1.0);
+}
+
 void main()
 {
-    //st = vec2(texcoord.x, 1 - texcoord.y);
     st = vec2(texcoord.x, texcoord.y);
     vPos = vec4(vPosition, 1);
     if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0)
@@ -190,7 +226,24 @@ void main()
     vertexIndex = gl_VertexID;
     vPos_Cameraspace = modelview * vPos;
     resultPosition = projection * vPos_Cameraspace;
+    // Normal map calculations
+    //interpolatedTangent   = normalize(vec3(modelview_normals* vec4(tangent,0)));
+    //interpolatedbBitangent = normalize(vec3(modelview_normals* vec4(bitangent,0)));
+    //nmN                    = normalize(vec3(modelview_normals* vec4(fn,0)));
+    vec4 temp_tangent = vec4(tangent,1);
+    temp_tangent = modelview_normals * temp_tangent;
+    interpolatedTangent = normalize(vec3(temp_tangent/temp_tangent.w));
 
+    vec4 temp_bitangent = vec4(bitangent,1);
+    temp_bitangent = modelview_normals * temp_bitangent;
+    interpolatedbBitangent = normalize(vec3(temp_bitangent/temp_bitangent.w));
+
+
+    vec4 temp_nmN = vec4(fn,1);
+    temp_nmN = modelview_normals * temp_nmN;
+    nmN = normalize(vec3(temp_nmN/temp_nmN.w));
+
+    TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
 
     if(displayBBox == 1)
     {
@@ -230,7 +283,10 @@ void main()
             {
                 vec4 P = modelview * vec4(fPosition, 1);
                 vec4 N = modelview_normals * vec4(fn, 1);
-    	        
+                
+                if(usingNormalMap)
+                    N = calcNormalTangent(N);
+
                 if(isUniformMaterial == false)
                     current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
 
@@ -240,6 +296,8 @@ void main()
             {
                 vec4 P = vPos_Cameraspace;                //Vertex Position in CameraSpace
                 vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
+                if(usingNormalMap)
+                    N = calcNormalTangent(N);
 
         		outputColor = getColor(P, N);
             }

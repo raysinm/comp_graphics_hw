@@ -26,6 +26,7 @@ protected:
 	void GenerateAllGPU_Stuff();
 	void GenerateTexture();
 	void GenerateNMap();
+	void calculateTangentSpace();
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 
 	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
@@ -42,6 +43,10 @@ protected:
 	vector<vec3> vertex_positions_Fnormals_gpu;
 	vector<vec3> vertex_directions_Fnormals_gpu;
 	vector<vec2> verticesTextures_gpu;
+	vector<vec3> triangles_TangentV_gpu;
+	vector<vec3> triangles_BiTangentV_gpu;
+
+
 
 	vector<int> faces_v_indices;					//Each 3 indices makes a face. (triangle)
 	vector<vector<int>> vertex_faces_neighbors;		//Used for calculating the vertex normals.
@@ -94,6 +99,8 @@ public:
 	bool isUniformMaterial		= true;
 	bool vertexAnimationEnable  = false;
 	bool useTexture				= false;
+	bool useNormalMap			= false;
+
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
 	~MeshModel(void);

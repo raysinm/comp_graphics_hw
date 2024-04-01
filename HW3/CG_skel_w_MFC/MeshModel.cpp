@@ -202,6 +202,27 @@ void MeshModel::GenerateVBO_Triangles()
 		}
 	}
 
+	/* TANGENT */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_TANGENT]);
+		int lenInBytes = triangles_TangentV_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, triangles_TangentV_gpu.data(), GL_STATIC_DRAW);
+		GLint tangent = glGetAttribLocation(renderer->program, "tangent");
+		glVertexAttribPointer(tangent, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(tangent);
+	}
+
+	/* BITANGENT */
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_BITANGENT]);
+		int lenInBytes = triangles_BiTangentV_gpu.size() * 3 * sizeof(float);
+		glBufferData(GL_ARRAY_BUFFER, lenInBytes, triangles_BiTangentV_gpu.data(), GL_STATIC_DRAW);
+		GLint bitangent = glGetAttribLocation(renderer->program, "bitangent");
+		glVertexAttribPointer(bitangent, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(bitangent);
+	}
+
+
 	glBindVertexArray(0);
 }
 
@@ -245,6 +266,10 @@ void MeshModel::GenerateVBO_vNormals()
 
 	glBindVertexArray(0);
 }
+
+
+
+
 
 void MeshModel::GenerateVBO_fNormals()
 {
@@ -320,7 +345,7 @@ void MeshModel::GenerateTexture()
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
@@ -335,13 +360,13 @@ void MeshModel::GenerateNMap()
 	// Normal Map
 	if (normalMap.image_data != nullptr)
 	{
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTexture(GL_TEXTURE1);
 		glGenTextures(1, &nmap);
 		glBindTexture(GL_TEXTURE_2D, nmap);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, normalMap.width, normalMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, normalMap.image_data);
@@ -622,6 +647,8 @@ void MeshModel::CreateVertexVectorForGPU()
 	vertex_fn_triangle_gpu				= duplicateEachElement(tmpFaceDirections, 3);
 
 	PopulateNonUniformColorVectorForGPU();
+	if(verticesTextures_gpu.size() > 0)
+		calculateTangentSpace();
 }
 
 void MeshModel::PopulateNonUniformColorVectorForGPU()
@@ -1008,13 +1035,21 @@ void MeshModel::UpdateTextureInGPU()
 {
 	/* Bind the TextureMap enable / disable */
 	//int usingTexture = (verticesTextures_gpu.size() > 0);
-	glUniform1f(glGetUniformLocation(renderer->program, "usingTexture"), useTexture);
+	glUniform1i(glGetUniformLocation(renderer->program, "usingTexture"), (int)useTexture);
+	glUniform1i(glGetUniformLocation(renderer->program, "usingNormalMap"), (int)useNormalMap);
 
 	if (useTexture && tex > 0)
+	{
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex);
-	if (useTexture && nmap > 0)
+	}
+	if (useNormalMap && nmap > 0)
+	{
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, nmap);
+	}
 
+	// TOOD: Add update for tangent vectors if normal map enabled
 }
 
 void MeshModel::UpdateAnimationInGPU()
@@ -1036,4 +1071,55 @@ void MeshModel::UpdateAnimationInGPU()
 	}
 	glUniform1i(glGetUniformLocation(renderer->program, "colorAnimateType"), colorAnimationType);
 	glUniform1i(glGetUniformLocation(renderer->program, "vertexAnimationEnable"), (int)vertexAnimationEnable);
+}
+
+void MeshModel::calculateTangentSpace()
+{
+	for (int i=0; i < vertex_positions_triangle_gpu.size(); i+=3)
+	{
+		// Face's vertex positions
+		vec3 vertex1 = vertex_positions_triangle_gpu[i+0];
+		vec3 vertex2 = vertex_positions_triangle_gpu[i+1];
+		vec3 vertex3 = vertex_positions_triangle_gpu[i+2];
+		
+		// Edges of triangle
+		vec3 e1 = vertex2 - vertex1;
+		vec3 e2 = vertex3 - vertex1;
+
+		// Texture coordinates
+		vec2 uv1 = verticesTextures_gpu[i + 0];
+		vec2 uv2 = verticesTextures_gpu[i + 1];
+		vec2 uv3 = verticesTextures_gpu[i + 2];
+		
+		// Delta of coordinates 
+		vec2 delta1 = uv2 - uv1;
+		vec2 delta2 = uv3 - uv1;
+
+		float frac = 1.0 / (delta1.x * delta2.y - delta1.y * delta2.x);
+
+		// Calculate Tangent vector:
+		vec3 tangent;
+		tangent.x = frac*(delta2.y * e1.x - delta1.y * e2.x);
+		tangent.y = frac*(delta2.y * e1.y - delta1.y * e2.y);
+		tangent.z = frac*(delta2.y * e1.z - delta1.y * e2.z);
+
+		// Calculate BiTangent vector:
+		vec3 bitangent;
+		bitangent.x = frac*(-delta2.x * e1.x + delta1.x * e2.x);
+		bitangent.y = frac*(-delta2.x * e1.y + delta1.x * e2.y);
+		bitangent.z = frac*(-delta2.x * e1.z + delta1.x * e2.z);
+
+		tangent = normalize(tangent);
+		bitangent = normalize(bitangent);
+
+		// Duplication for VBO size consistency
+		triangles_TangentV_gpu.push_back(tangent);
+		triangles_TangentV_gpu.push_back(tangent);
+		triangles_TangentV_gpu.push_back(tangent);
+
+		triangles_BiTangentV_gpu.push_back(bitangent);
+		triangles_BiTangentV_gpu.push_back(bitangent);
+		triangles_BiTangentV_gpu.push_back(bitangent);
+
+	}
 }
