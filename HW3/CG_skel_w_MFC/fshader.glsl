@@ -283,10 +283,6 @@ void main()
             FragColor = vec4(texture(skybox, R).rgb, 1.0);
         }
 
-        if(usingTexture == true)
-        {
-            FragColor *= textureColor;
-        }
 
         if(usingMarbleTex)
         {
@@ -304,6 +300,11 @@ void main()
             vec3 marbleColor = marble_color(sin(t));
 
             FragColor = mix(FragColor, vec4(marbleColor, 1), 0.5);
+        }
+
+        if(usingTexture == true)
+        {
+            FragColor *= textureColor;
         }
         
         if(colorAnimateType == 1)
