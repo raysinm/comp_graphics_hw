@@ -54,6 +54,36 @@ struct FaceIdcs
 	}
 };
 
+MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
+{
+	loadFile(fileName);
+	initBoundingBox();
+	GenerateMaterials();
+	CreateVertexVectorForGPU();
+	GenerateAllGPU_Stuff();
+}
+
+MeshModel::~MeshModel(void)
+{
+	if (textureLoaded && tex > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glDeleteTextures(1, &tex);
+	}
+
+	if (normalMapLoaded && nmap > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, nmap);
+		glDeleteTextures(1, &nmap);
+	}
+
+	if (marbletex > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, marbletex);
+		glDeleteTextures(1, &marbletex);
+	}
+}
+
 vec3 vec3fFromStream(std::istream & aStream)
 {
 	float x, y, z;
@@ -381,31 +411,6 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_vNormals();
 }
 
-MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
-{
-	loadFile(fileName);
-	initBoundingBox();
-	//generateMarbleNoise();
-	GenerateMaterials();
-	CreateVertexVectorForGPU();
-	GenerateAllGPU_Stuff();
-}
-
-MeshModel::~MeshModel(void)
-{
-	if (textureLoaded && tex > 0)
-	{
-		glBindTexture(GL_TEXTURE_2D, tex);
-		glDeleteTextures(1, &tex);
-	}
-
-	if (normalMapLoaded && nmap > 0)
-	{
-		glBindTexture(GL_TEXTURE_2D, nmap);
-		glDeleteTextures(1, &nmap);
-	}
-}
-
 vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int duplicateNumber)
 {
 	vector<vec3> temp;
@@ -414,66 +419,6 @@ vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int du
 			temp.push_back(elemnt);
 		
 	return temp;
-}
-
-void MeshModel::GenerateTexture()
-{
-	// Texture
-	if (textureMap.image_data != nullptr)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		if (tex > 0)
-		{
-			glBindTexture(GL_TEXTURE_2D, tex);
-			glDeleteTextures(1, &tex);
-		}
-
-		glGenTextures(1, &tex);
-		glBindTexture(GL_TEXTURE_2D, tex);
-
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		if(textureMap.channels == 3)
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
-		else
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureMap.width, textureMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureMap.image_data);
-
-		glGenerateMipmap(GL_TEXTURE_2D);
-		stbi_image_free(textureMap.image_data);
-	}
-}
-
-void MeshModel::GenerateNMap()
-{
-	// Normal Map
-	if (normalMap.image_data != nullptr)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		if (nmap > 0)
-		{
-			glBindTexture(GL_TEXTURE_2D, nmap);
-			glDeleteTextures(1, &nmap);
-		}
-		glGenTextures(1, &nmap);
-		glBindTexture(GL_TEXTURE_2D, nmap);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		if (textureMap.channels == 3)
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, normalMap.width, normalMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, normalMap.image_data);
-		else
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, normalMap.width, normalMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, normalMap.image_data);
-		glGenerateMipmap(GL_TEXTURE_2D); 
-
-		stbi_image_free(normalMap.image_data);
-	}
 }
 
 void MeshModel::loadFile(string fileName)
@@ -770,28 +715,6 @@ void MeshModel::PopulateNonUniformColorVectorForGPU()
 			vertex_diffuse_color_flat_triangle_gpu.push_back(avgColorOfFace);
 	}
 }
-
-//void MeshModel::MarblePopulateNonUniformColorVectorForGPU()
-//{
-//	vertex_diffuse_color_flat_triangle_gpu.clear();
-//	vertex_diffuse_color_triangle_gpu.clear();
-//	UINT k = 0;
-//
-//	for (UINT f = 0; f < num_faces; f++)
-//	{
-//		vec3 avgColorOfFace = vec3(0);
-//		for (UINT i = 0; i < 3; i++)
-//		{
-//			UINT vertIndex = faces_v_indices[k++];
-//			vertex_diffuse_color_triangle_gpu.push_back(vertex_marble_colors[vertIndex]);
-//			avgColorOfFace += vertex_marble_colors[vertIndex];
-//		}
-//		avgColorOfFace /= 3;
-//
-//		for (UINT i = 0; i < 3; i++)
-//			vertex_diffuse_color_flat_triangle_gpu.push_back(avgColorOfFace);
-//	}
-//}
 
 void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
 {
@@ -1172,9 +1095,10 @@ void MeshModel::UpdateTextureInGPU()
 	glUniform1i(glGetUniformLocation(renderer->program, "usingNormalMap"), (int)useNormalMap);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingMarbleTex"), (int)useProceduralTex);
 	
-	glUniform1i(glGetUniformLocation(renderer->program, "tex"), 0);
-	glUniform1i(glGetUniformLocation(renderer->program, "normalMap"), 1);
-	glUniform1i(glGetUniformLocation(renderer->program, "texMarble"), 6);
+	glUniform1i(glGetUniformLocation(renderer->program, "tex")		, 0);	//GL_TEXTURE0
+	glUniform1i(glGetUniformLocation(renderer->program, "normalMap"), 1);	//GL_TEXTURE1
+	glUniform1i(glGetUniformLocation(renderer->program, "texMarble"), 2);	//GL_TEXTURE2
+	glUniform1i(glGetUniformLocation(renderer->program, "skybox")	, 3);	//GL_TEXTURE3
 	
 	glUniform1f(glGetUniformLocation(renderer->program, "minX"), min_x);
 	glUniform1f(glGetUniformLocation(renderer->program, "maxX"), max_x);
@@ -1205,8 +1129,7 @@ void MeshModel::UpdateTextureInGPU()
 	}
 	if (useProceduralTex && marbletex > 0)
 	{
-		
-		glActiveTexture(GL_TEXTURE6);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, marbletex);
 
 		glUniform3f(glGetUniformLocation(renderer->program, "mcolor1"), mcolor1.x, mcolor1.y, mcolor1.z);
@@ -1338,15 +1261,79 @@ void MeshModel::generateMarbleNoise()
 
 }
 
+void MeshModel::GenerateTexture()
+{
+	// Texture
+	if (textureMap.image_data != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		if (tex > 0)
+		{
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glDeleteTextures(1, &tex);
+		}
 
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		if(textureMap.channels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
+		else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureMap.width, textureMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureMap.image_data);
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(textureMap.image_data);
+	}
+}
+
+void MeshModel::GenerateNMap()
+{
+	// Normal Map
+	if (normalMap.image_data != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		if (nmap > 0)
+		{
+			glBindTexture(GL_TEXTURE_2D, nmap);
+			glDeleteTextures(1, &nmap);
+		}
+		glGenTextures(1, &nmap);
+		glBindTexture(GL_TEXTURE_2D, nmap);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		if (textureMap.channels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, normalMap.width, normalMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, normalMap.image_data);
+		else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, normalMap.width, normalMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, normalMap.image_data);
+		glGenerateMipmap(GL_TEXTURE_2D); 
+
+		stbi_image_free(normalMap.image_data);
+	}
+}
 
 void MeshModel::generateMarbleTexture()
 {
 	generateMarbleNoise();
 	
-	glActiveTexture(GL_TEXTURE6);
+	glActiveTexture(GL_TEXTURE2);
+	if (marbletex > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, marbletex);
+		glDeleteTextures(1, &marbletex);
+	}
 	glGenTextures(1, &marbletex);
 	glBindTexture(GL_TEXTURE_2D, marbletex);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
@@ -1356,4 +1343,3 @@ void MeshModel::generateMarbleTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NOISE_MAP_SIZE, NOISE_MAP_SIZE, 0, GL_RED, GL_FLOAT, marbleTextureBuffer.data());
 
 }
-

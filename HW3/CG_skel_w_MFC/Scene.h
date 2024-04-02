@@ -237,8 +237,11 @@ public:
 	};
 	~Scene()
 	{
-		if (fog)
-			delete fog;
+		if (cubeMapId > 0)
+		{
+			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
+			glDeleteTextures(1, &cubeMapId);
+		}
 	}
 	void loadOBJModel(string fileName);
 	void draw();

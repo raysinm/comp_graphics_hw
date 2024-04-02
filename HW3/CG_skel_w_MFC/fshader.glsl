@@ -42,10 +42,10 @@ in vec3       interpolated_diffuse;
 in vec3       interpolated_specular;
 
 /* Textures*/
-uniform samplerCube skybox;
-uniform sampler2D texMap;
-uniform sampler2D normalMap;
-uniform sampler2D texMarble;
+uniform sampler2D texMap;       //GL_TEXTURE0
+uniform sampler2D normalMap;    //GL_TEXTURE1
+uniform sampler2D texMarble;    //GL_TEXTURE2
+uniform samplerCube skybox;     //GL_TEXTURE3
 uniform bool usingTexture;
 uniform bool usingNormalMap;
 uniform bool usingMarbleTex;
@@ -284,7 +284,7 @@ void main()
         }
 
 
-        if(usingMarbleTex)
+        if(usingMarbleTex == true)
         {
             float xPos = map(vertPos.x, minX, maxX);
             float yPos = map(vertPos.y, minY, maxY);

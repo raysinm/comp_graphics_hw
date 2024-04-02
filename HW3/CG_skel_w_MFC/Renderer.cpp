@@ -21,59 +21,15 @@ Renderer::~Renderer(void)
 
 void Renderer::SwapBuffers()
 {
-
-	//int a = glGetError();
-	//glActiveTexture(GL_TEXTURE0);
-	//a = glGetError();
-	//glBindTexture(GL_TEXTURE_2D, gScreenTex);
-
-	//a = glGetError();
-	////glTexSubImage2D(/GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer_screen);
-	//glGenerateMipmap(GL_TEXTURE_2D);
-	//a = glGetError();
-
-	//glBindVertexArray(VAO_vertex_pos);
-	//a = glGetError();
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-	//a = glGetError();
 	glfwSwapBuffers(m_window);
-	//a = glGetError();
 }
 
 void Renderer::CreateTexture()
 {
-	/* Save this for texture implementation... */
-
-
-	//glGenTextures(1, &m_textureID);
-	//glBindTexture(GL_TEXTURE_2D, m_textureID);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer_screen);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void Renderer::updateTexture()
 {
-	return;
-
-	/* Save this for texture implementation... */
-
-
-	//// Delete the existing texture
-	//glDeleteTextures(1, &m_textureID);
-
-	//// Generate a new texture
-	//glGenTextures(1, &m_textureID);
-
-	//// Bind the new texture
-	//glBindTexture(GL_TEXTURE_2D, m_textureID);
-
-	//// Set texture parameters (adjust as needed)
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	//// Allocate texture storage with the updated buffer data
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, m_width, m_height, 0, GL_RGB, GL_FLOAT, m_outBuffer_screen);
 }
 
 vec2 Renderer::GetWindowSize()
@@ -107,20 +63,17 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	pModel->UpdateTextureInGPU();
 	pModel->UpdateAnimationInGPU();
 
-	glActiveTexture(GL_TEXTURE0);
-	if (draw_algo == WIRE_FRAME) {
+	if (draw_algo == WIRE_FRAME)
+	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
 	}
-	else {
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, pModel->marbletex);
+	else
+	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_TRIANGLE]);
 		glDrawArrays(GL_TRIANGLES, 0, pModel->GetBuffer_len(MODEL_TRIANGLES));
-
 	}
 
-	// Bounding Box
 	if (pModel->showBoundingBox)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_BBOX]);
@@ -128,7 +81,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(BBOX));
 		glUniform1i(glGetUniformLocation(program, "displayBBox"), 0);
 	}
-	// Vertex Normals
+
 	if (pModel->showVertexNormals)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_VNORMAL]);
@@ -137,7 +90,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(V_NORMAL));
 		glUniform1i(glGetUniformLocation(program, "displayVnormal"), 0);
 	}
-	// Face normals
+
 	if (pModel->showFaceNormals)
 	{
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_FNORMAL]);
@@ -146,6 +99,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(F_NORMAL));
 		glUniform1i(glGetUniformLocation(program, "displayFnormal"), 0);
 	}
+	
 	glBindVertexArray(0);
 
 }
