@@ -13,7 +13,6 @@
 #define MODEL_TAB_INDEX  0
 #define CAMERA_TAB_INDEX 1
 #define LIGHT_TAB_INDEX  2
-#define EFFECTS_TAB_INDEX  3
 
 using namespace std;
 extern Renderer* renderer;
@@ -45,6 +44,7 @@ const float SCALE_RANGE_MIN = -1, SCALE_RANGE_MAX = 20;
 //--------------------------------------------------
 //-------------------- CAMERA ----------------------
 //--------------------------------------------------
+
 Camera::Camera()
 {
 	name = CAMERA_DEFAULT_NAME;
@@ -340,8 +340,6 @@ void Camera::zoom(double s_offset, double update_rate)
 
 
 
-
-
 //--------------------------------------------------
 //-------------------- SCENE ----------------------
 //--------------------------------------------------
@@ -420,7 +418,6 @@ void Scene::draw()
 	}
 
 	// ------------------------------------------------ TODO:
-	
 	//4. Render cameras as 3D plus signs
 	//for (auto camera : cameras)
 	//{
@@ -442,12 +439,8 @@ void Scene::draw()
 	//5. Draw skybox (if enabled)
 	if (applyEnviornmentShading)
 	{
-		
-
-		//mat4 model_view_mat = GetActiveCamera()->rotation_mat;
 		mat4 modelEmptyMat = mat4(1);
-		mat4 view_mat = GetActiveCamera()->cTransform;
-		mat4 clean_view_mat = mat4(TopLeft3(view_mat), vec3(0, 0, 0), 1);
+		mat4 clean_view_mat = mat4(TopLeft3(GetActiveCamera()->cTransform), vec3(0, 0, 0), 1);
 		mat4 temp_clean_projection = GetActiveCamera()->GetPerspectiveoMatrix();
 
 
@@ -465,21 +458,21 @@ void Scene::draw()
 		glUniform3fv(glGetUniformLocation(renderer->program, "cameraPos"), 1, &cameraPos[0]);
 		glUniform1i(glGetUniformLocation(renderer->program, "skybox"), 5);
 
+		/* Bind the Texture unit */
+		glUniform1i(glGetUniformLocation(renderer->program, "skybox"), 3);	//GL_TEXTURE3
 
 		glDepthFunc(GL_LEQUAL);
 		glBindVertexArray(skyboxVAO);
-
-		glActiveTexture(GL_TEXTURE5);
+		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
 		glDrawArrays(GL_TRIANGLES, 0, 36); //36 vertices for a 3d box;
 		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 0);
 		glBindVertexArray(0);
 		glDepthFunc(GL_LESS);
-		glActiveTexture(GL_TEXTURE0);
 
 
-		UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
+		//UpdateGeneralUniformInGPU(); //Reset the GPU data (projection matrix updated)
 	}
 
 
@@ -519,9 +512,9 @@ void Scene::drawCameraTab()
 	string name(cameras[activeCamera]->getName());
 	ImGui::SeparatorText(name.c_str());
 
-	ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera); ImGui::SameLine();
-	bool* g_allowClipping = &(cameras[activeCamera]->allowClipping);
-	ImGui::Checkbox("Allow clipping", g_allowClipping);
+	//ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera); ImGui::SameLine();
+	//bool* g_allowClipping = &(cameras[activeCamera]->allowClipping);
+	//ImGui::Checkbox("Allow clipping", g_allowClipping);
 
 
 	float* g_left = &(cameras[activeCamera]->c_left);
@@ -1160,81 +1153,20 @@ void Scene::drawLightTab()
 		m_renderer->UpdateLightsUBO(false);
 }
 
-
-//void Scene::drawEffectsTab()
-//{
-//	//ImGui::SeparatorText("Fog");
-//	//ImGui::Checkbox("Fog##fog_bool", &applyFog);
-//	//if (applyFog)
-//	//{
-//	//	//Color
-//	//	vec3& color = fog->getColor();
-//
-//	//	ImVec4 color_local = ImVec4(color.x, color.y, color.z, 1);
-//
-//	//	colorPicker(&color_local, "Color", "##FogColor");
-//
-//	//	color.x = color_local.x;
-//	//	color.y = color_local.y;
-//	//	color.z = color_local.z;
-//
-//	//	Camera* activeCam = cameras[activeCamera];
-//
-//	//	ImGui::DragFloat("##FogEffect", &(fog->getEffect()), 0.1f, 0, DEF_MAX_FOG_EFFECT, "%.1f"); ImGui::SameLine();
-//	//	ImGui::Text("Fog effect");
-//	//}
-//	//
-//	//
-//	//ImGui::SeparatorText("Bloom Filter");
-//	//ImGui::Checkbox("Bloom Filter##bloom_bool", &applyBloom);
-//	//if (applyBloom)
-//	//{
-//	//	ImGui::Text("Threshold [0 - 3]"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragFloat("##BolomThresh", &(m_renderer->bloom_filter_threshold), 0.001f, 0, 3, "%.3f"); 
-//
-//	//	ImGui::Text("Multiply factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragFloat("##BloomFactor", &(m_renderer->bloom_filter_factor), 0.001f, 0, 10, "%.3f");
-//
-//	//	ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragInt("##bloomkernelsize", &(m_renderer->kernelbloomFilterSize), 0.01f, 0, 100);
-//
-//	//	ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragFloat("##bloomkernelsigma", &(m_renderer->kernelbloomFilterSigma), 0.001f, 0.1, 100);
-//	//}
-//
-//
-//	//ImGui::SeparatorText("Full screen blur");
-//	//ImGui::Checkbox("Full Screen Blur##bfs_blur", &applyFullScreenBlur);
-//	//if (applyFullScreenBlur)
-//	//{
-//	//	ImGui::Text("Gauissian kernel size"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragInt("##Blurkernelsize", &(m_renderer->kernelFSBlurSize), 0.01f, 0, 100);
-//
-//	//	ImGui::Text("Gauissian sigma value"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-//	//	ImGui::DragFloat("##Blurkernelsigma", &(m_renderer->FSblurSigma),0.001f, 0.1, 100);
-//	//}
-//
-//
-//	//ImGui::SeparatorText("Anti-Aliasing");
-//	//ImGui::Checkbox("Super Sampling Anti-Aliasing##aass", &m_renderer->ss_antialias);
-//
-//	
-//}
-
 void Scene::drawGUI()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.WindowPadding = ImVec2(0, 0);
-	style.ItemSpacing   = ImVec2(5, 4);
-	style.FramePadding  = ImVec2(4, 10);
+	style.ItemSpacing = ImVec2(5, 4);
+	style.FramePadding = ImVec2(4, 10);
 	style.SeparatorTextBorderSize = 10;
-	style.SeparatorTextAlign= ImVec2(0.5, 0.5);
+	style.SeparatorTextAlign = ImVec2(0.5, 0.5);
 	style.SeparatorTextPadding = ImVec2(20, 10);
 
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	
+
 	//UnSelect the object if it's transformation windows closed
-	if (!showTransWindow && activeModel != NOT_SELECTED) 
+	if (!showTransWindow && activeModel != NOT_SELECTED)
 	{
 		models[activeModel]->selected = false;
 		activeModel = NOT_SELECTED;
@@ -1251,29 +1183,30 @@ void Scene::drawGUI()
 		}
 	}
 
-		
+	//---------------------------------------------------------
+	//---------------------- Main Menu ------------------------
+	//---------------------------------------------------------
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::ArrowButton("Sidebar", ImGuiDir_Right))
 		{
-			showTransWindow = ! showTransWindow;
-
+			showTransWindow = !showTransWindow;
 		}
 		if (ImGui::BeginMenu("Add"))
 		{
 			if (ImGui::MenuItem("Model (.obj file)"))	// Loading Model
+			{
+				CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
+				if (dlg.DoModal() == IDOK)
 				{
-					CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("(*.obj)|*.obj|All Files (*.*)|*.*||"));
-					if (dlg.DoModal() == IDOK)
-					{
-						std::string filename((LPCTSTR)dlg.GetPathName());
-						loadOBJModel(filename);
+					std::string filename((LPCTSTR)dlg.GetPathName());
+					loadOBJModel(filename);
 
-						strcpy(nameBuffer, models.back()->getName().c_str());
-						add_showModelDlg = true;
-						showTransWindow = true;
-					}
+					strcpy(nameBuffer, models.back()->getName().c_str());
+					add_showModelDlg = true;
+					showTransWindow = true;
 				}
+			}
 			if (ImGui::BeginMenu("Primitive Model"))	// Creating PrimModel of many types
 			{
 				if (ImGui::MenuItem("Cube"))
@@ -1331,14 +1264,11 @@ void Scene::drawGUI()
 				posBuffer[2] = c_trnsl->z;
 
 				add_showLightDlg = true;
-				showTransWindow  = true;
+				showTransWindow = true;
 			}
-			
+
 			ImGui::EndMenu();
 		}
-
-		// SELECT
-
 		if (ImGui::BeginMenu("Models"))
 		{
 			if (models.size() > 0)
@@ -1388,21 +1318,20 @@ void Scene::drawGUI()
 						lights[t]->selected = false;
 
 					/* Select current light */
-					activeLight			= c;
+					activeLight = c;
 					lights[c]->selected = true;
-					showTransWindow		= true;
+					showTransWindow = true;
 				}
 			}
 			ImGui::EndMenu();
 		}
 
-		
 		// Delete Model/Camera/Lights
 		if (models.size() > 0 || cameras.size() > 1 || lights.size() > 1)
 		{
 			if (ImGui::BeginMenu("Delete..."))
 			{
-				if (models.size()  > 0)
+				if (models.size() > 0)
 				{
 					if (ImGui::BeginMenu("Models"))
 					{
@@ -1450,8 +1379,8 @@ void Scene::drawGUI()
 						ImGui::EndMenu();
 					}
 
-				}				
-				if (lights.size()  > 1)	// Delete only if there is more than one light
+				}
+				if (lights.size() > 1)	// Delete only if there is more than one light
 				{
 					if (ImGui::BeginMenu("Lights"))
 					{
@@ -1484,7 +1413,7 @@ void Scene::drawGUI()
 				ImGui::EndMenu(); //End delete
 			}
 		}
-		
+
 		if (ImGui::BeginMenu("Shading Algorithm"))
 		{
 			for (int i = 0; i < static_cast<int>(DrawAlgo::COUNT); ++i) {
@@ -1495,33 +1424,15 @@ void Scene::drawGUI()
 
 			ImGui::EndMenu();	// End Shading algo menu
 		}
-		//if (ImGui::BeginMenu("Visual Effects"))
-		//{
-		//	ImGui::MenuItem("Fog", NULL, &applyFog);
-		//	ImGui::MenuItem("Bloom Filter", NULL, &applyBloom);
-		//	ImGui::MenuItem("Full screen blur", NULL, &applyFullScreenBlur);
-		//	ImGui::MenuItem("Supersampling Antialiasing", NULL, &(m_renderer->ss_antialias));
-		//	ImGui::EndMenu();	// End Effects menu
-		//}
-		if (ImGui::BeginMenu("Options"))
+		if (ImGui::BeginMenu("Environment Mapping"))
 		{
-			if (ImGui::MenuItem("Render all cameras"))
-			{
-				for (auto camera : cameras)
-					camera->renderCamera=true;
-			}
-			if (ImGui::MenuItem("Un-Render all cameras"))
-			{
-				for (auto camera : cameras)
-					camera->renderCamera = false;
-			}
-			if (ImGui::MenuItem("Enable Enviornment shading"))
+			if (ImGui::MenuItem("Enable"))
 			{
 				applyEnviornmentShading = true;
 				if (cubeMapId == 0)
 				{
 					glUseProgram(renderer->program);
-					glActiveTexture(GL_TEXTURE5);
+					glActiveTexture(GL_TEXTURE3);
 					glGenTextures(1, &cubeMapId);
 					glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 
@@ -1543,22 +1454,23 @@ void Scene::drawGUI()
 
 						for (UINT i = 0; i < skyBoxImages.size(); i++)
 						{
-							if(i == 2 || i == 3) //Flip just for up and down
+							if (i == 2 || i == 3) //Flip just for up and down
 								stbi_set_flip_vertically_on_load(true);
 							else
 								stbi_set_flip_vertically_on_load(false);
 
 							skyBoxImages[i].image_data = stbi_load(imagesNames[i].c_str(), &skyBoxImages[i].width, &skyBoxImages[i].height, &skyBoxImages[i].channels, 0);
 
+							glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+							glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+							glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+							glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+							glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
 							glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, skyBoxImages[i].width, skyBoxImages[i].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, skyBoxImages[i].image_data);
-							
+
 							stbi_image_free(skyBoxImages[i].image_data);
 						}
-						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 						glGenVertexArrays(1, &skyboxVAO);
 						glBindVertexArray(skyboxVAO);
@@ -1583,21 +1495,10 @@ void Scene::drawGUI()
 					}
 				}
 			}
-			if (ImGui::MenuItem("Disable Enviornment shading"))
+			if (ImGui::MenuItem("Disable"))
 			{
 				applyEnviornmentShading = false;
 			}
-			//if (ImGui::MenuItem("Allow clipping"))
-			//{
-			//	for (auto camera : cameras)
-			//		camera->allowClipping = true;
-			//}
-			//if (ImGui::MenuItem("Disable clippping"))
-			//{
-			//	for (auto camera : cameras)
-			//		camera->allowClipping = false;
-			//}
-
 
 			ImGui::EndMenu();	// End Options menu
 		}
@@ -1618,8 +1519,8 @@ void Scene::drawGUI()
 		closedTransfWindowFlag = false;
 		float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
 		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarHeight), ImGuiCond_Always);
-		ImGui::SetNextWindowSizeConstraints(ImVec2(350, m_renderer->GetWindowSize().y - mainMenuBarHeight),\
-											ImVec2(m_renderer->GetWindowSize().x / 2, m_renderer->GetWindowSize().y - mainMenuBarHeight));
+		ImGui::SetNextWindowSizeConstraints(ImVec2(350, m_renderer->GetWindowSize().y - mainMenuBarHeight), \
+			ImVec2(m_renderer->GetWindowSize().x / 2, m_renderer->GetWindowSize().y - mainMenuBarHeight));
 		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove))
 		{
 			int currentWidth = (int)ImGui::GetWindowSize().x;
@@ -1630,9 +1531,9 @@ void Scene::drawGUI()
 			}
 
 			const char* names[3] = { 0 };
-			names[MODEL_TAB_INDEX]   = "Model";
-			names[CAMERA_TAB_INDEX]  = "Camera";
-			names[LIGHT_TAB_INDEX]   = "Light";
+			names[MODEL_TAB_INDEX] = "Model";
+			names[CAMERA_TAB_INDEX] = "Camera";
+			names[LIGHT_TAB_INDEX] = "Light";
 			//names[EFFECTS_TAB_INDEX] = "Effects";
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
@@ -1658,18 +1559,14 @@ void Scene::drawGUI()
 						{
 							drawLightTab();
 						}
-						//else if (n == EFFECTS_TAB_INDEX)
-						//{
-						//	drawEffectsTab();
-						//}
-						
+
 						ImGui::EndTabItem();
 					}
 				}
 				ImGui::PopItemWidth();
 				ImGui::EndTabBar();
 			}
-			
+
 			ImGui::End();
 		}
 	}
@@ -1788,7 +1685,7 @@ void Scene::drawGUI()
 		if (GUI_popup_pressedOK)
 		{
 			auto currModel = models.back();	// Surely loaded new model
-			
+
 			currModel->setName(nameBuffer);
 			((MeshModel*)currModel)->setTranslationWorld(vec3(posBuffer[0], posBuffer[1], posBuffer[2]));
 
@@ -1800,12 +1697,12 @@ void Scene::drawGUI()
 
 
 		}
-		else if ( GUI_popup_pressedCANCEL )
+		else if (GUI_popup_pressedCANCEL)
 		{
 			activeModel = NOT_SELECTED;
 			delete ((MeshModel*)models[models.size() - 1]);
 			models.pop_back();
-			
+
 			ResetPopUpFlags();
 		}
 	}
@@ -1815,8 +1712,8 @@ void Scene::drawGUI()
 		{
 			auto currCamera = cameras.back();
 			currCamera->setName(nameBuffer);
-			
-			
+
+
 			currCamera->setStartPosition(vec4(posBuffer[0], posBuffer[1], posBuffer[2], 0));
 			currCamera->updateTransform();
 			ResetPopUpFlags();
@@ -1834,7 +1731,7 @@ void Scene::drawGUI()
 		if (GUI_popup_pressedOK)
 		{
 			auto currLight = lights.back();
-			currLight->setName(nameBuffer);			
+			currLight->setName(nameBuffer);
 			currLight->setPosition(vec3(posBuffer[0], posBuffer[1], posBuffer[2]));
 			ResetPopUpFlags();
 			m_renderer->UpdateLightsUBO(true);
@@ -1848,25 +1745,6 @@ void Scene::drawGUI()
 
 		}
 	}
-
-	
-	//--------------------------------------------------------------
-	//------ Draw the ImGui::Image (Used for displaying our texture)
- 	//--------------------------------------------------------------
-	//ImVec2 imgPos = ImVec2(viewportX, viewportY);
-	//ImVec2 imgSize = ImVec2(viewportWidth, viewportHeight);
-
-	//ImGui::SetNextWindowPos (imgPos);
-	//ImGui::SetNextWindowSize(imgSize);
-
-	//if (ImGui::Begin("Main Window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove			 | \
-	//										ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollWithMouse | \
-	//										ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs))
-	//{
-	//	ImGui::Image((void*)(intptr_t)(m_renderer->m_textureID), imgSize);
-	//	ImGui::End();
-	//}
-
 }
 
 Camera* Scene::GetActiveCamera()
