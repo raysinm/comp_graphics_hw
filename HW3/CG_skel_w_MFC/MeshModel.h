@@ -66,6 +66,8 @@ protected:
 
 	// Marble
 	vector<float> marbleTextureBuffer;	//size: NOISE_MAP_SIZE * NOISE_MAP_SIZE
+	friend void saveTextureToPNG(const std::vector<float>& data, int width, int height, const char* filename);
+
 
 	vector<Material> materials;
 	vector<vec3> vertex_marble_colors;	// Same size as vertex_positions_raw, or materials
@@ -92,6 +94,7 @@ protected:
 	void calculateFaceNormals();
 	void estimateVertexNormals();
 	void CreateVertexVectorForGPU();
+	
 
 	Renderer* renderer;
 
@@ -102,11 +105,13 @@ public:
 	STB_Image textureMap = { 0 }, normalMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
 	// Marble
-	vec3 mcolor1 = vec3(1), mcolor2 = vec3(0.165, 0.094, 0.561);
+	vec3 mcolor1 = vec3(0.8,0.8,0.8), mcolor2 = vec3(0.165, 0.094, 0.561);
+	//vec3 mcolor1 = vec3(1,0,0), mcolor2 = vec3(0,0,1);
+
 	float noise_scale  = DEF_NOISE_SCALE;
 	int noise_octaves = DEF_NOISE_OCTAVES;
 	float noise_lacunarity = DEF_NOISE_LACUNARITY;
-	float noise_persistence = DEF_NOISE_PERSISTENCE;
+	float noise_gain = DEF_NOISE_GAIN;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
@@ -129,7 +134,7 @@ public:
 	Vertex* GetBuffer();
 	vec2* GetBuffer(MODEL_OBJECT obj);
 	unsigned int GetBuffer_len(MODEL_OBJECT obj);
-	void PopulateNonUniformColorVectorForGPU(MaterialType mat_type);
+	void PopulateNonUniformColorVectorForGPU();
 	void loadFile(string fileName);
 	void draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot);
 

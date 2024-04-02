@@ -30,10 +30,10 @@
 #define DEF_ASPECT 1
 #define DEF_MAX_FOG_EFFECT 100
 #define NOISE_MAP_SIZE 512
-#define DEF_NOISE_SCALE 0.1
+#define DEF_NOISE_SCALE 100
 #define DEF_NOISE_OCTAVES 4
-#define DEF_NOISE_LACUNARITY 2.0
-#define DEF_NOISE_PERSISTENCE 0.5
+#define DEF_NOISE_LACUNARITY 5.54
+#define DEF_NOISE_GAIN 0.001
 
 
 typedef unsigned int UINT;
@@ -239,10 +239,10 @@ typedef enum ColorAnimationType
 	COLOR_ANIMATION_2,
 } ColorAnimationType;
 
-typedef enum MaterialType
-{
-	MATERIAL_TYPE_UNIFORM,
-	MATERIAL_TYPE_NONUNIFORM,
-	MATERIAL_TYPE_MARBLE,
-	MATERIAL_TYPE_COUNT
-};
+//typedef enum MaterialType
+//{
+//	MATERIAL_TYPE_UNIFORM,
+//	MATERIAL_TYPE_NONUNIFORM,
+//	MATERIAL_TYPE_MARBLE,
+//	MATERIAL_TYPE_COUNT
+//};

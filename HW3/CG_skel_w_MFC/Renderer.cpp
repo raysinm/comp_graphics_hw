@@ -112,7 +112,8 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));
 	}
 	else {
-
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, pModel->marbletex);
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_TRIANGLE]);
 		glDrawArrays(GL_TRIANGLES, 0, pModel->GetBuffer_len(MODEL_TRIANGLES));
 

@@ -64,8 +64,9 @@ uniform int displaySkyBox;
 uniform int numLights;
 uniform int colorAnimateType;
 uniform float smoothTime;
-uniform float minX;
-uniform float maxX;
+uniform float minX, minY;
+uniform float maxX, maxY;
+
 uniform vec3 cameraPos;
 uniform vec2 resolution;
 uniform vec3 mcolor1, mcolor2;
@@ -82,7 +83,7 @@ float current_Kd;
 float current_Ks;
 float current_EmissiveFactor;
 int current_COS_ALPHA;
-
+float PI = 3.14159265359;
 /* Functions */
 float map(float val, float minimum, float maximum)
 {
@@ -196,12 +197,41 @@ vec4 calcNormalTangent(vec4 N)
     return vec4(calcNormalTangent(vec3(N)), 1.0);
 }
 
-vec3 marbleColor(vec2 uv)
+vec3 marbleColor(float x)
 {
-    float a = (sin(uv.x) + 1) / 2;
-	float b = 1 - (sin(uv.x) + 1) / 2;
+    float a = (sin(x) + 1) / 2;
+	float b = 1 - (sin(x) + 1) / 2;
 	return a * mcolor1 + b * mcolor2;
 }
+
+
+
+
+
+
+
+
+
+
+float marblePattern(vec2 uv) {
+    float frequency = 10.0;
+    float amplitude = 8;
+    float turbulence = 3.0;
+
+    float noiseValue = texture2D(texMarble, uv).r; // Sample noise texture
+    float marble = sin((uv.x + uv.y) * frequency) * amplitude;
+    marble += 0.5 * sin((uv.x * frequency) * 0.5) * amplitude;
+    return mix(marble, noiseValue, 0.8); // Mix noise with marble pattern
+}
+
+
+
+
+
+
+
+
+
 
 /* Main */
 void main()
@@ -260,12 +290,6 @@ void main()
                 N = vec4(_N, 1.0);
             }
 
-            if(usingMarbleTex)
-            {
-                vec2 uv = gl_FragCoord.xy / resolution;
-                vec3 marble_color = marbleColor(uv); 
-                current_Color_diffuse = marble_color;
-            }
 
         	FragColor = vec4(getColor(P, N), 1);
         }
@@ -286,6 +310,35 @@ void main()
                 vec3 R = reflect(I, N);
 
                 FragColor = vec4(texture(skybox, R).rgb, 1.0);
+            }
+            if(usingMarbleTex)
+            {
+                float xPos = map(vertPos.x, minX, maxX);
+                float yPos = map(vertPos.y, minY, maxY);
+                //float turbulence = texture2D(texMarble, vec2(xPos, yPos)).r;
+                //float x = xPos + turbulence; 
+                //vec3 marble_color;
+                //
+                //marble_color = marbleColor(x/2); 
+                //
+                ////current_Color_diffuse = marble_color;
+                //FragColor = vec4(marble_color, 1);
+                  // Normalize screen coordinates
+                vec2 uv = vec2(xPos, yPos);
+
+                // Generate marble pattern using noise texture
+                float marbleValue = marblePattern(uv);
+
+                // Apply color modulation based on marble pattern
+                vec3 baseColor = vec3(0.8, 0.8, 0.8); // Base color of marble
+                vec3 veiningColor = vec3(0.2, 0.2, 0.2); // Color of veining
+                vec3 marbleColor = mix(baseColor, veiningColor, marbleValue);
+
+                // Output final color
+                FragColor = vec4(marbleColor, 1.0);
+            // Function to generate marble pattern using noise texture
+
+            
             }
         }
 
