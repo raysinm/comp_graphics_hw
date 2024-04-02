@@ -23,7 +23,7 @@ flat in vec3 flat_outputColor;
 flat in vec3 interpolatedTangent;
 flat in vec3 interpolatedbBitangent;  
 flat in vec3 nmN;
-flat in mat3 TBN;
+in mat3 TBN;
 in vec3      outputColor;
 in vec4      interpolated_normal;
 in vec4      interpolated_position;
@@ -48,8 +48,10 @@ in vec3       interpolated_specular;
 uniform samplerCube skybox;
 uniform sampler2D texMap;
 uniform sampler2D normalMap;
+uniform sampler2D texMarble;
 uniform bool usingTexture;
 uniform bool usingNormalMap;
+uniform bool usingMarbleTex;
 uniform int applyEnviornmentShading;
 
 
@@ -57,8 +59,11 @@ uniform int applyEnviornmentShading;
 uniform vec3  wireframeColor;
 uniform vec3  cameraPos;
 uniform float smoothTime;
-uniform float minX;
-uniform float maxX;
+uniform float minX, minY;
+uniform float maxX, maxY;
+
+uniform vec2 resolution;
+uniform vec3 mcolor1, mcolor2;
 uniform int   algo_shading;
 uniform int   displayBBox;
 uniform int   displayVnormal;
@@ -79,7 +84,7 @@ float current_Kd;
 float current_Ks;
 float current_EmissiveFactor;
 int current_COS_ALPHA;
-
+float PI = 3.14159265359;
 /* Functions */
 float map(float val, float minimum, float maximum)
 {
@@ -167,31 +172,47 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
-mat3 calcTBN(vec3 N)
+vec4 calcNormalTangent()
 {
-    return mat3(interpolatedTangent, interpolatedbBitangent, N);
+    vec3 normal_from_map = texture2D(normalMap, st).rgb * 2.0 - 1.0; // Normalize to [-1,1]
+    return vec4(normalize(TBN * normal_from_map), 1);
 }
 
-mat3 calcTBN(vec4 N)
+vec3 marbleColor(float x)
 {
-    return mat3(interpolatedTangent, interpolatedbBitangent, vec3(N)); // MAYBE WRONG
+    float a = (sin(x) + 1) / 2;
+	float b = 1 - (sin(x) + 1) / 2;
+	return a * mcolor1 + b * mcolor2;
 }
 
-vec3 calcNormalTangent(vec3 N)
-{
-    mat3 _TBN = calcTBN(N);
-        // Normal map calcs
-    vec3 normal_from_map = texture(normalMap, st).rgb; // Check if useNormalMap is true?
-    normal_from_map.y = 1 - normal_from_map.y;
-    normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
-   return normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
 
+
+
+
+
+
+
+
+
+float marblePattern(vec2 uv) {
+    float frequency = 10.0;
+    float amplitude = 8;
+    float turbulence = 3.0;
+
+    float noiseValue = texture2D(texMarble, uv).r; // Sample noise texture
+    float marble = sin((uv.x + uv.y) * frequency) * amplitude;
+    marble += 0.5 * sin((uv.x * frequency) * 0.5) * amplitude;
+    return mix(marble, noiseValue, 0.8); // Mix noise with marble pattern
 }
 
-vec4 calcNormalTangent(vec4 N)
-{
-    return vec4(calcNormalTangent(vec3(N)), 1.0);
-}
+
+
+
+
+
+
+
+
 
 /* Main */
 void main()
@@ -242,13 +263,12 @@ void main()
             vec4 N = interpolated_normal;   //Interpolated Normal in CameraSpace
             if(usingNormalMap)
             {
-                mat3 _TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
-                vec3 normal_from_map = texture2D(normalMap, st).rgb; // Check if useNormalMap is true?
-                //normal_from_map.y = 1 - normal_from_map.y;
-                normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
-                vec3 _N = -normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
-                N = vec4(_N, 1.0);
+                //vec3 normal_from_map = texture2D(normalMap, st).rgb * 2.0 - 1.0; // Normalize to [-1,1]
+                //N = vec4(normalize(TBN * normal_from_map), 1);
+                N = calcNormalTangent();
             }
+
+
         	FragColor = vec4(getColor(P, N), 1);
         }
     
@@ -267,6 +287,35 @@ void main()
                 vec3 R = reflect(I, N);
 
                 FragColor = vec4(texture(skybox, R).rgb, 1.0);
+            }
+            if(usingMarbleTex)
+            {
+                float xPos = map(vertPos.x, minX, maxX);
+                float yPos = map(vertPos.y, minY, maxY);
+                //float turbulence = texture2D(texMarble, vec2(xPos, yPos)).r;
+                //float x = xPos + turbulence; 
+                //vec3 marble_color;
+                //
+                //marble_color = marbleColor(x/2); 
+                //
+                ////current_Color_diffuse = marble_color;
+                //FragColor = vec4(marble_color, 1);
+                  // Normalize screen coordinates
+                vec2 uv = vec2(xPos, yPos);
+
+                // Generate marble pattern using noise texture
+                float marbleValue = marblePattern(uv);
+
+                // Apply color modulation based on marble pattern
+                vec3 baseColor = vec3(0.8, 0.8, 0.8); // Base color of marble
+                vec3 veiningColor = vec3(0.2, 0.2, 0.2); // Color of veining
+                vec3 marbleColor = mix(baseColor, veiningColor, marbleValue);
+
+                // Output final color
+                FragColor = vec4(marbleColor, 1.0);
+            // Function to generate marble pattern using noise texture
+
+            
             }
         }
         if(colorAnimateType == 1)

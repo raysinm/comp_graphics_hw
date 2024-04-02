@@ -724,7 +724,6 @@ void Scene::drawModelTab()
 	if (ImGui::CollapsingHeader("Material"))
 	{
 		ImGui::SeparatorText("Textures");
-
 		if (ImGui::Button("Load Texture"))
 			activeMesh->loadTextureFromFile();
 		
@@ -784,10 +783,78 @@ void Scene::drawModelTab()
 		
 		ImGui::SeparatorText("Colors");
 
+		ImGui::Checkbox("Use Marble Texture", &(activeMesh->useProceduralTex));
+		if (activeMesh->useProceduralTex)
+		{
+			activeMesh->useTexture = false;
+			activeMesh->useNormalMap = false;
+			//activeMesh->nonUniformDataUpdated = false;
+			//activeMesh->isUniformMaterial = false;
+
+			float* n_scale			= &(activeMesh->noise_scale);
+			int* n_octaves			= &(activeMesh->noise_octaves);
+			float* n_lacunarity		= &(activeMesh->noise_lacunarity);
+			float* n_gain	= &(activeMesh->noise_gain);
+
+			ImGui::Indent();
+			ImGui::SeparatorText("Noise Details");
+			ImGui::Text("Scale"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_scale", n_scale, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Octaves"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragInt("##N_octaves", n_octaves, 1, 0, 10);
+
+			ImGui::Text("Lacunarity"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_lacunarity", n_lacunarity, 0.001f, 0, 10, "%.3f");
+
+			ImGui::Text("Persistence"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_gain", n_gain, 0.001f, 0, 1, "%.3f");
+
+
+			vec3& base_color = (activeMesh->mcolor1);
+			vec3& detail_color = (activeMesh->mcolor2);
+
+			ImVec4 base_local = ImVec4(base_color.x, base_color.y, base_color.z, 1);
+			ImVec4 detail_local = ImVec4(detail_color.x, detail_color.y, detail_color.z, 1);
+			
+			colorPicker(&base_local, "Base Color", "##pickerBase"); ImGui::SameLine();
+			colorPicker(&detail_local, "Detail Color", "##pickerDetail");
+
+			base_color.x = base_local.x;
+			base_color.y = base_local.y;
+			base_color.z = base_local.z;
+
+			detail_color.x = detail_local.x;
+			detail_color.y = detail_local.y;
+			detail_color.z = detail_local.z;
+
+
+			if (ImGui::Button("Reset all##RK"))
+			{
+				*n_scale = DEF_NOISE_SCALE;
+				*n_octaves = DEF_NOISE_OCTAVES;
+				*n_lacunarity = DEF_NOISE_LACUNARITY;
+				*n_gain = DEF_NOISE_GAIN;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Regenerate texture"))
+			{
+				activeMesh->generateMarbleTexture();
+			}
+				
+			//activeMesh->PopulateNonUniformColorVectorForGPU();	// For updating VBOs
+
+		}
+		else
+		{
+			activeMesh->isUniformMaterial = true;
+		}
+
+		ImGui::SeparatorText("Other Materials");
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
+		Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 		if (activeMesh->isUniformMaterial)
 		{
-			Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 			vec3& emis_real = meshMaterial.getEmissive();
 			vec3& diff_real = meshMaterial.getDiffuse();
 			vec3& spec_real = meshMaterial.getSpecular();
@@ -849,6 +916,7 @@ void Scene::drawModelTab()
 				activeMesh->GenerateMaterials();
 			}
 		}
+		
 	}
 
 	if (ImGui::CollapsingHeader("Model"))

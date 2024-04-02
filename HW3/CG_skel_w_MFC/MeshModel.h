@@ -7,6 +7,9 @@
 #include <chrono>
 #include "Material.h"
 
+#include "FastNoiseLite.h"
+
+
 using namespace std;
 
 
@@ -26,6 +29,10 @@ protected:
 	void GenerateTexture();
 	void GenerateNMap();
 	void calculateTangentSpace();
+	float turbulence(vec3 p);
+	void generateMarbleNoise();
+	vec3 marble_color(float x);
+
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 
 	vector<vec3> vertex_positions_raw;					 // Raw data from .obj file.
@@ -58,7 +65,13 @@ protected:
 
 	chrono::high_resolution_clock::time_point start_time;
 
+	// Marble
+	vector<float> marbleTextureBuffer;	//size: NOISE_MAP_SIZE * NOISE_MAP_SIZE
+	friend void saveTextureToPNG(const std::vector<float>& data, int width, int height, const char* filename);
+
+
 	vector<Material> materials;
+	vector<vec3> vertex_marble_colors;	// Same size as vertex_positions_raw, or materials
 	Material userDefinedMaterial;
 
 	unsigned int num_vertices_raw;
@@ -90,12 +103,20 @@ protected:
 public:
 	vec4 _trnsl, _rot, _scale;			// Model space
 	vec4 _trnsl_w, _rot_w, _scale_w;	// World space
-	GLuint tex = 0, nmap=0;
+	GLuint tex = 0, nmap=0, marbletex = 0;
 	STB_Image textureMap = { 0 }, normalMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
 	bool textureLoaded = false;
 	bool normalMapLoaded = false;
 	TextureMode textureMode = TEXTURE_FROM_FILE;
+	// Marble
+	vec3 mcolor1 = vec3(0.8,0.8,0.8), mcolor2 = vec3(0.165, 0.094, 0.561);
+	//vec3 mcolor1 = vec3(1,0,0), mcolor2 = vec3(0,0,1);
+
+	float noise_scale  = DEF_NOISE_SCALE;
+	int noise_octaves = DEF_NOISE_OCTAVES;
+	float noise_lacunarity = DEF_NOISE_LACUNARITY;
+	float noise_gain = DEF_NOISE_GAIN;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;
@@ -105,6 +126,7 @@ public:
 	bool vertexAnimationEnable  = false;
 	bool useTexture				= false;
 	bool useNormalMap			= false;
+	bool useProceduralTex		= false;
 
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
@@ -150,6 +172,8 @@ public:
 	void GenerateMaterials();
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
+	void generateMarbleTexture();
+	void updateMarbleTexture();
 
 	void loadTextureFromFile();
 	void loadNMapFromFile();

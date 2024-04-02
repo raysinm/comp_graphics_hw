@@ -13,7 +13,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 struct FaceIdcs
 {
@@ -153,6 +154,7 @@ MeshModel::MeshModel(Renderer* rend)
 	ResetAllUserTransforms();
 	start_time = chrono::high_resolution_clock::now();
 
+
 }
 
 void MeshModel::GenerateVBO_WireFrame()
@@ -253,7 +255,9 @@ void MeshModel::GenerateVBO_Triangles()
 void MeshModel::UpdateTangentSpaceInGPU()
 {
 	/* TANGENT */
+	if (verticesTextures_original_gpu.size() > 0)
 	{
+
 		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_TANGENT]);
 		int lenInBytes = triangles_TangentV_gpu.size() * 3 * sizeof(float);
 		glBufferData(GL_ARRAY_BUFFER, lenInBytes, triangles_TangentV_gpu.data(), GL_STATIC_DRAW);
@@ -263,6 +267,7 @@ void MeshModel::UpdateTangentSpaceInGPU()
 	}
 
 	/* BITANGENT */
+	if (verticesTextures_original_gpu.size() > 0)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_BITANGENT]);
 		int lenInBytes = triangles_BiTangentV_gpu.size() * 3 * sizeof(float);
@@ -390,6 +395,7 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 {
 	loadFile(fileName);
 	initBoundingBox();
+	//generateMarbleNoise();
 	GenerateMaterials();
 	CreateVertexVectorForGPU();
 	GenerateAllGPU_Stuff();
@@ -747,12 +753,15 @@ void MeshModel::CreateVertexVectorForGPU()
 	PopulateNonUniformColorVectorForGPU();
 	if(verticesTextures_original_gpu.size() > 0)
 		calculateTangentSpace();
+	generateMarbleTexture();
+
 }
 
 void MeshModel::PopulateNonUniformColorVectorForGPU()
 {
 	vertex_diffuse_color_flat_triangle_gpu.clear();
 	vertex_diffuse_color_triangle_gpu.clear();
+	
 	UINT k = 0;
 
 	for (UINT f = 0; f < num_faces; f++)
@@ -761,8 +770,9 @@ void MeshModel::PopulateNonUniformColorVectorForGPU()
 		for (UINT i = 0; i < 3; i++)
 		{
 			UINT vertIndex = faces_v_indices[k++];
-			vertex_diffuse_color_triangle_gpu.push_back(materials[vertIndex].c_diffuse);
-			avgColorOfFace += materials[vertIndex].c_diffuse;
+			vec3 color = materials[vertIndex].c_diffuse;
+			vertex_diffuse_color_triangle_gpu.push_back(color);
+			avgColorOfFace += color;
 		}
 		avgColorOfFace /= 3;
 
@@ -770,6 +780,28 @@ void MeshModel::PopulateNonUniformColorVectorForGPU()
 			vertex_diffuse_color_flat_triangle_gpu.push_back(avgColorOfFace);
 	}
 }
+
+//void MeshModel::MarblePopulateNonUniformColorVectorForGPU()
+//{
+//	vertex_diffuse_color_flat_triangle_gpu.clear();
+//	vertex_diffuse_color_triangle_gpu.clear();
+//	UINT k = 0;
+//
+//	for (UINT f = 0; f < num_faces; f++)
+//	{
+//		vec3 avgColorOfFace = vec3(0);
+//		for (UINT i = 0; i < 3; i++)
+//		{
+//			UINT vertIndex = faces_v_indices[k++];
+//			vertex_diffuse_color_triangle_gpu.push_back(vertex_marble_colors[vertIndex]);
+//			avgColorOfFace += vertex_marble_colors[vertIndex];
+//		}
+//		avgColorOfFace /= 3;
+//
+//		for (UINT i = 0; i < 3; i++)
+//			vertex_diffuse_color_flat_triangle_gpu.push_back(avgColorOfFace);
+//	}
+//}
 
 void MeshModel::draw(mat4& cTransform, mat4& projection, bool allowClipping, mat4& cameraRot)
 {
@@ -1053,6 +1085,7 @@ void MeshModel::GenerateMaterials()
 		float randomValue = dis(gen);
 		float randomValue2 = dis(gen);
 		float randomValue3 = dis(gen);
+		
 		current.c_diffuse = vec3(randomValue, randomValue2, randomValue3);
 
 		materials.push_back(current);
@@ -1115,7 +1148,9 @@ void MeshModel::UpdateMaterialinGPU()
 		glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
 
 		nonUniformDataUpdated = true;
+
 		PopulateNonUniformColorVectorForGPU();
+
 		/* DIFFUSE_COLOR_FLAT */
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_DIFFUSE_COLOR_FLAT]);
@@ -1145,6 +1180,16 @@ void MeshModel::UpdateTextureInGPU()
 	/* Bind the TextureMap enable / disable */
 	glUniform1i(glGetUniformLocation(renderer->program, "usingTexture"), (int)useTexture);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingNormalMap"), (int)useNormalMap);
+	glUniform1i(glGetUniformLocation(renderer->program, "usingMarbleTex"), (int)useProceduralTex);
+	
+	glUniform1i(glGetUniformLocation(renderer->program, "tex"), 0);
+	glUniform1i(glGetUniformLocation(renderer->program, "normalMap"), 1);
+	glUniform1i(glGetUniformLocation(renderer->program, "texMarble"), 6);
+	
+	glUniform1f(glGetUniformLocation(renderer->program, "minX"), min_x);
+	glUniform1f(glGetUniformLocation(renderer->program, "maxX"), max_x);
+	glUniform1f(glGetUniformLocation(renderer->program, "minY"), min_y);
+	glUniform1f(glGetUniformLocation(renderer->program, "maxY"), max_y);
 
 	if (useTexture && tex > 0)
 	{
@@ -1155,6 +1200,17 @@ void MeshModel::UpdateTextureInGPU()
 	{
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, nmap);
+	}
+	if (useProceduralTex && marbletex > 0)
+	{
+		
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, marbletex);
+
+		glUniform3f(glGetUniformLocation(renderer->program, "mcolor1"), mcolor1.x, mcolor1.y, mcolor1.z);
+		glUniform3f(glGetUniformLocation(renderer->program, "mcolor2"), mcolor2.x, mcolor2.y, mcolor2.z);
+
+
 	}
 
 	// TOOD: Add update for tangent vectors if normal map enabled
@@ -1219,7 +1275,7 @@ void MeshModel::calculateTangentSpace()
 		vec2 delta1 = uv2 - uv1;
 		vec2 delta2 = uv3 - uv1;
 
-		float frac = 1.0 / (delta1.x * delta2.y - delta1.y * delta2.x);
+		float frac = 1.0 / (delta1.x * delta2.y - delta2.x * delta1.y);
 
 		// Calculate Tangent vector:
 		vec3 tangent;
@@ -1247,3 +1303,157 @@ void MeshModel::calculateTangentSpace()
 
 	}
 }
+
+
+void saveTextureToPNG(const std::vector<float>& data, int width, int height, const char* filename) {
+	// Convert texture data to unsigned char
+	std::vector<unsigned char> imageData(data.begin(), data.end());
+	for (size_t i = 0; i < data.size(); ++i) {
+		imageData[i] = static_cast<unsigned char>(data[i] * 255); // Convert float to unsigned char
+	}
+	// Save texture data to PNG file
+	//stbi_write_png(char const* filename, int w, int h, int comp, const void* data, int stride_in_bytes);
+	stbi_write_png(filename, width, height, 1, imageData.data(), width * sizeof(unsigned char));
+}
+
+void MeshModel::generateMarbleNoise()
+{
+
+	marbleTextureBuffer.clear();
+	FastNoiseLite noise;
+	//noise.SetFrequency(noise_freq);
+	//noise.SetSeed(142);
+
+	// Gather noise data
+	int width = NOISE_MAP_SIZE;
+	int height = NOISE_MAP_SIZE;
+
+	noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);	// Perlin type
+	noise.SetFrequency(1.0 / noise_scale);
+	noise.SetFractalOctaves(noise_octaves);
+	noise.SetFractalLacunarity(noise_lacunarity);
+	noise.SetFractalGain(noise_gain);
+	noise.SetFractalType(FastNoiseLite::FractalType::FractalType_FBm);
+
+	vector<float> perlinNoise;
+
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			float nx = static_cast<float>(x) / width;
+			float ny = static_cast<float>(y) / height;
+			float value = noise.GetNoise(nx, ny);
+			value = (value + 1) / 2.0;	// Normalization to [0,1]
+			//marbleTextureBuffer.push_back(value*255);
+			//marbleTextureBuffer.push_back(value*255);
+			//marbleTextureBuffer.push_back(value*255);
+			perlinNoise.push_back(value);
+
+
+		}
+	}
+
+
+	// 
+	// 
+	// 
+	// === smoothing via convolution with blurring kernel
+
+	// define the smoothing kernel (3x3 gaussian blur kernel)
+	std::vector<float> kernel = {
+		1.0f, 2.0f, 1.0f,
+		2.0f, 4.0f, 2.0f,
+		1.0f, 2.0f, 1.0f
+	};
+	for (float& v : kernel)
+		v /= 16;
+
+	marbleTextureBuffer = perlinNoise;	// copy noise data
+
+	for (int y = 1; y < width - 1; y++)
+	{
+		for (int x = 1; x < height - 1; x++)
+		{
+			float sum = 0;
+
+			for (int ky = -1; ky <= 1; ky++)
+			{
+				for (int kx = -1; kx <= 1; kx++)
+				{
+					int nx = x + kx;
+					int ny = y + ky;
+
+					sum += perlinNoise[ny * height + nx] * kernel[(ky + 1) * 3 + kx + 1];
+				}
+			}
+
+			marbleTextureBuffer[y * width + x] = sum;
+		}
+	}
+
+	saveTextureToPNG(marbleTextureBuffer, width, height, "marbleTexture.png");
+
+}
+
+//float MeshModel::turbulence(vec3 p)
+//{
+//	// Sample noise
+//	float size_x = abs(max_x - min_x);
+//	float size_y = abs(max_y - min_y);
+//	float x = (p.x - min_x) / size_x * (NOISE_MAP_SIZE - 1);
+//	float y = (p.y - min_y) / size_y * (NOISE_MAP_SIZE - 1);
+//	return marbleTextureBuffer[y * (NOISE_MAP_SIZE-1) + x ];
+//}
+//
+//vec3 MeshModel::marble_color(float x)
+//{
+//	float a = (sin(x) + 1) / 2;
+//	float b = 1 - (sin(x) + 1) / 2;
+//	return a * mcolor1 + b * mcolor2;
+//}
+
+void MeshModel::generateMarbleTexture()
+{
+	//vertex_marble_colors.clear();
+	/*for (vec3 v : vertex_positions_raw)
+	{
+		float x = turbulence(v);
+		vec3 color = marble_color(x);
+		vertex_marble_colors.push_back(color);
+	}*/
+
+	generateMarbleNoise();
+	
+	glActiveTexture(GL_TEXTURE6);
+	glGenTextures(1, &marbletex);
+	glBindTexture(GL_TEXTURE_2D, marbletex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NOISE_MAP_SIZE, NOISE_MAP_SIZE, 0, GL_RED, GL_FLOAT, marbleTextureBuffer.data());
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NOISE_MAP_SIZE, NOISE_MAP_SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, marbleTextureBuffer.data());
+
+	float minval = 1;
+	float maxval = 0;
+	for (auto val : marbleTextureBuffer)
+	{
+		minval = min(val, minval);
+		maxval = max(val, maxval);
+	}
+	cout << "min: " << minval << " max: " << maxval << endl;
+	//glBindTexture(GL_TEXTURE_2D, 0);
+}
+//void MeshModel::updateMarbleTexture()
+//{
+//	vertex_marble_colors.clear();
+//	for (int i = 0;)
+//	{
+//		float x = v.x + turbulence(v);
+//		vec3 color = marble_color(x);
+//		vertex_marble_colors.push_back(color);
+//	}
+//}
