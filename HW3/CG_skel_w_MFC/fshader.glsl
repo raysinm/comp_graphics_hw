@@ -206,7 +206,6 @@ float turbulence(vec3 p, int octaves)
     float noise_freq = noiseFreq;
     for (int i=0; i<octaves; i++)
     {
-        //val += abs(noise1(p * noise_freq));   // TODO: play around
         val += texture2D(texMarble, (vec2(p.x,p.y) * noise_freq)).r * 2.0 - 1.0;
         noise_freq *= 2.07;
     }
@@ -288,8 +287,6 @@ void main()
             float yPos = map(vertPos.y, minY, maxY);
             float zPos = map(vertPos.z, minZ, maxZ);
             vec3 normPos = vec3(xPos, yPos, zPos);
-
-            float noise = noise1(normPos);
                 
             float t = mix(xPos, yPos, 0.45);
             t *= veinFreq;
