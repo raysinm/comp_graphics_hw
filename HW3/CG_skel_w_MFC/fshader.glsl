@@ -290,8 +290,6 @@ void main()
             float yPos = map(vertPos.y, minY, maxY);
             float zPos = map(vertPos.z, minZ, maxZ);
             vec3 normPos = vec3(xPos, yPos, zPos);
-
-            float noise = noise1(normPos);
                 
             float t = mix(xPos, yPos, 0.45);
             t *= veinFreq;
