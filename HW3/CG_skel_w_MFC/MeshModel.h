@@ -51,7 +51,7 @@ protected:
 	vector<vec2> verticesTextures_original_gpu;
 	vector<vec2> verticesTextures_canonical_gpu;
 	vector<vec3> triangles_TangentV_gpu;
-	vector<vec3> triangles_BiTangentV_gpu;
+	//vector<vec3> triangles_BiTangentV_gpu;
 
 
 
@@ -110,13 +110,15 @@ public:
 	bool normalMapLoaded = false;
 	TextureMode textureMode = TEXTURE_FROM_FILE;
 	// Marble
-	vec3 mcolor1 = vec3(0.8,0.8,0.8), mcolor2 = vec3(0.165, 0.094, 0.561);
+	vec3 mcolor1 = vec3(0.8,0.8,0.8), mcolor2 = vec3(0.051, 0.047, 0.349);
 	//vec3 mcolor1 = vec3(1,0,0), mcolor2 = vec3(0,0,1);
 
-	float noise_scale  = DEF_NOISE_SCALE;
+	float vein_freq  = DEF_VEIN_FREQ;
+	int vein_thickness = DEF_VEIN_THICKNESS;
+	float mix_factor = DEF_COL_MIX_FACTOR;
+	float noise_freq = DEF_NOISE_FREQ;
 	int noise_octaves = DEF_NOISE_OCTAVES;
-	float noise_lacunarity = DEF_NOISE_LACUNARITY;
-	float noise_gain = DEF_NOISE_GAIN;
+	float noise_amplitude = DEF_NOISE_AMPLITUDE;
 
 	bool showVertexNormals		= false;
 	bool showFaceNormals		= false;

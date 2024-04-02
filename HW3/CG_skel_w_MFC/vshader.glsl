@@ -27,7 +27,6 @@ in vec3 non_uniformColor_diffuse_FLAT;  //every 3 is duplicated to be the averag
 in vec3 non_uniformColor_diffuse;       //simple 1to1 mapping for every vertex - it's color
 in vec2 texcoord;
 in vec3 tangent;
-in vec3 bitangent;  // Added for efficiency
 
 /* Uniforms */
 uniform int algo_shading;
@@ -85,9 +84,6 @@ flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
 out vec3 vertPos;
-flat out vec3      tangentVec;
-flat out vec3      bitangentVec;  
-flat out vec3      nmN;
 out mat3      TBN;
 out vec3 vertPos_worldspace;
 out vec3 normal_worldspace;
@@ -110,7 +106,7 @@ float current_EmissiveFactor;
 int current_COS_ALPHA;
 mat4 modelview;
 mat4 modelview_normals;
-
+vec3 tangentVec, bitangentVec, nmN;
 
 
 
@@ -188,13 +184,6 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
-void calcTBN(vec3 N)
-{
-    nmN = normalize(N);
-    bitangentVec = normalize(cross(tangent, nmN));
-    TBN = mat3(tangentVec, bitangentVec, nmN);
-}
-
 void calcTBN(vec4 N)
 {
     nmN = normalize(vec3(N/N.w));
@@ -242,22 +231,9 @@ void main()
    
    
    // Normal map calculations
-    //tangentVec   = normalize(vec3(modelview_normals* vec4(tangent,0)));
-    //bitangentVec = normalize(vec3(modelview_normals* vec4(bitangent,0)));
-    //nmN                    = normalize(vec3(modelview_normals* vec4(fn,0)));
     vec4 temp_tangent = vec4(tangent,1);
     temp_tangent = modelview_normals * temp_tangent;
     tangentVec = normalize(vec3(temp_tangent/temp_tangent.w));
-
-    //vec4 temp_bitangent = vec4(bitangent,1);
-    //temp_bitangent = modelview_normals * temp_bitangent;
-    //bitangentVec = normalize(vec3(temp_bitangent/temp_bitangent.w));
-
-     
-    //vec4 temp_nmN = vec4(fn,1);
-
-
-
 
 
     if(displayBBox == 1)
@@ -333,7 +309,6 @@ void main()
                     calcTBN(N);
                     N = calcNormalTangent();
                 }
-
         		outputColor = getColor(P, N);
 
                 if(applyEnviornmentShading == 1)

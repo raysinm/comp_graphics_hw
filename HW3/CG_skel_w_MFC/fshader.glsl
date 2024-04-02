@@ -20,10 +20,7 @@ layout(std140) uniform Lights
 
 /* Input */
 flat in vec3 flat_outputColor;
-flat in vec3 interpolatedTangent;
-flat in vec3 interpolatedbBitangent;  
-flat in vec3 nmN;
-in mat3 TBN;
+in mat3      TBN;
 in vec3      outputColor;
 in vec4      interpolated_normal;
 in vec4      interpolated_position;
@@ -59,8 +56,9 @@ uniform int applyEnviornmentShading;
 uniform vec3  wireframeColor;
 uniform vec3  cameraPos;
 uniform float smoothTime;
-uniform float minX, minY;
-uniform float maxX, maxY;
+uniform float minX, minY, minZ;
+uniform float maxX, maxY, maxZ;
+
 
 uniform vec2 resolution;
 uniform vec3 mcolor1, mcolor2;
@@ -71,6 +69,13 @@ uniform int   displayFnormal;
 uniform int   displaySkyBox;
 uniform int   numLights;
 uniform int   colorAnimateType;
+
+uniform float veinFreq;
+uniform int veinThickness;
+uniform float colMixFactor;
+uniform float noiseFreq;
+uniform int noiseOctaves;
+uniform float noiseAmplitude;
 
 /* Output */
 out vec4 FragColor;
@@ -178,40 +183,37 @@ vec4 calcNormalTangent()
     return vec4(normalize(TBN * normal_from_map), 1);
 }
 
-vec3 marbleColor(float x)
+
+vec3 marble_color(float x)
 {
-    float a = (sin(x) + 1) / 2;
-	float b = 1 - (sin(x) + 1) / 2;
-	return a * mcolor1 + b * mcolor2;
+    vec3 col;
+    x = (x + 1) / 2;          // Normalize to [0,1]
+    
+    for (int i=0; i < veinThickness; i++)
+    {
+        x = sqrt(x);              // vein effect
+    }    
+    //col = vec3(.2 + .75*x);           //option 1
+    //col.b*=0.95;             
+    //col = vec3(x);                    //option 2
+    col = mix(mcolor2, mcolor1, colMixFactor*x);     //option 3
+
+    return col;
 }
 
 
-
-
-
-
-
-
-
-
-float marblePattern(vec2 uv) {
-    float frequency = 10.0;
-    float amplitude = 8;
-    float turbulence = 3.0;
-
-    float noiseValue = texture2D(texMarble, uv).r; // Sample noise texture
-    float marble = sin((uv.x + uv.y) * frequency) * amplitude;
-    marble += 0.5 * sin((uv.x * frequency) * 0.5) * amplitude;
-    return mix(marble, noiseValue, 0.8); // Mix noise with marble pattern
+float turbulence(vec3 p, int octaves)
+{
+    float val = 0.0;
+    float noise_freq = noiseFreq;
+    for (int i=0; i<octaves; i++)
+    {
+        //val += abs(noise1(p * noise_freq));   // TODO: play around
+        val += texture2D(texMarble, (vec2(p.x,p.y) * noise_freq)).r * 2.0 - 1.0;
+        noise_freq *= 2.07;
+    }
+    return val;
 }
-
-
-
-
-
-
-
-
 
 
 /* Main */
@@ -292,28 +294,20 @@ void main()
             {
                 float xPos = map(vertPos.x, minX, maxX);
                 float yPos = map(vertPos.y, minY, maxY);
-                //float turbulence = texture2D(texMarble, vec2(xPos, yPos)).r;
-                //float x = xPos + turbulence; 
-                //vec3 marble_color;
-                //
-                //marble_color = marbleColor(x/2); 
-                //
-                ////current_Color_diffuse = marble_color;
-                //FragColor = vec4(marble_color, 1);
-                  // Normalize screen coordinates
-                vec2 uv = vec2(xPos, yPos);
+                float zPos = map(vertPos.z, minZ, maxZ);
+                vec3 normPos = vec3(xPos, yPos, zPos);
 
-                // Generate marble pattern using noise texture
-                float marbleValue = marblePattern(uv);
+                float noise = noise1(normPos);
+                
+                float t = mix(xPos, yPos, 0.45);
+                t *= veinFreq;
+                t += noiseAmplitude * turbulence(normPos, noiseOctaves);
 
-                // Apply color modulation based on marble pattern
-                vec3 baseColor = vec3(0.8, 0.8, 0.8); // Base color of marble
-                vec3 veiningColor = vec3(0.2, 0.2, 0.2); // Color of veining
-                vec3 marbleColor = mix(baseColor, veiningColor, marbleValue);
+                vec3 marbleColor = marble_color(sin(t));
 
-                // Output final color
-                FragColor = vec4(marbleColor, 1.0);
-            // Function to generate marble pattern using noise texture
+                FragColor =mix(FragColor, vec4(marbleColor, 1), 0.5);
+
+
 
             
             }

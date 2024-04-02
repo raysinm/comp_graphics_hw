@@ -266,16 +266,16 @@ void MeshModel::UpdateTangentSpaceInGPU()
 		glEnableVertexAttribArray(tangent);
 	}
 
-	/* BITANGENT */
-	if (verticesTextures_original_gpu.size() > 0)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_BITANGENT]);
-		int lenInBytes = triangles_BiTangentV_gpu.size() * 3 * sizeof(float);
-		glBufferData(GL_ARRAY_BUFFER, lenInBytes, triangles_BiTangentV_gpu.data(), GL_STATIC_DRAW);
-		GLint bitangent = glGetAttribLocation(renderer->program, "bitangent");
-		glVertexAttribPointer(bitangent, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(bitangent);
-	}
+	///* BITANGENT */
+	//if (verticesTextures_original_gpu.size() > 0)
+	//{
+	//	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_BITANGENT]);
+	//	int lenInBytes = triangles_BiTangentV_gpu.size() * 3 * sizeof(float);
+	//	glBufferData(GL_ARRAY_BUFFER, lenInBytes, triangles_BiTangentV_gpu.data(), GL_STATIC_DRAW);
+	//	GLint bitangent = glGetAttribLocation(renderer->program, "bitangent");
+	//	glVertexAttribPointer(bitangent, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//	glEnableVertexAttribArray(bitangent);
+	//}
 }
 
 void MeshModel::UpdateTextureCoordsInGPU()
@@ -1190,6 +1190,18 @@ void MeshModel::UpdateTextureInGPU()
 	glUniform1f(glGetUniformLocation(renderer->program, "maxX"), max_x);
 	glUniform1f(glGetUniformLocation(renderer->program, "minY"), min_y);
 	glUniform1f(glGetUniformLocation(renderer->program, "maxY"), max_y);
+	glUniform1f(glGetUniformLocation(renderer->program, "minZ"), min_z);
+	glUniform1f(glGetUniformLocation(renderer->program, "maxZ"), max_z);
+
+	glUniform1f(glGetUniformLocation(renderer->program, "veinFreq"), vein_freq);
+	glUniform1i(glGetUniformLocation(renderer->program, "veinThickness"), vein_thickness);
+	glUniform1f(glGetUniformLocation(renderer->program, "colMixFactor"), mix_factor);
+	glUniform1f(glGetUniformLocation(renderer->program, "noiseFreq"), noise_freq);
+	glUniform1i(glGetUniformLocation(renderer->program, "noiseOctaves"), noise_octaves);
+	glUniform1f(glGetUniformLocation(renderer->program, "noiseAmplitude"), noise_amplitude);
+
+
+
 
 	if (useTexture && tex > 0)
 	{
@@ -1242,7 +1254,7 @@ void MeshModel::calculateTangentSpace()
 	if (textureMode == TEXTURE_FROM_FILE && verticesTextures_original_gpu.size() == 0) return;
 
 	triangles_TangentV_gpu.clear();
-	triangles_BiTangentV_gpu.clear();
+	//triangles_BiTangentV_gpu.clear();
 	for (int i=0; i < vertex_positions_triangle_gpu.size(); i+=3)
 	{
 		// Face's vertex positions
@@ -1283,23 +1295,23 @@ void MeshModel::calculateTangentSpace()
 		tangent.y = frac*(delta2.y * e1.y - delta1.y * e2.y);
 		tangent.z = frac*(delta2.y * e1.z - delta1.y * e2.z);
 
-		// Calculate BiTangent vector:
-		vec3 bitangent;
-		bitangent.x = frac*(-delta2.x * e1.x + delta1.x * e2.x);
-		bitangent.y = frac*(-delta2.x * e1.y + delta1.x * e2.y);
-		bitangent.z = frac*(-delta2.x * e1.z + delta1.x * e2.z);
+		//// Calculate BiTangent vector:
+		//vec3 bitangent;
+		//bitangent.x = frac*(-delta2.x * e1.x + delta1.x * e2.x);
+		//bitangent.y = frac*(-delta2.x * e1.y + delta1.x * e2.y);
+		//bitangent.z = frac*(-delta2.x * e1.z + delta1.x * e2.z);
 
 		tangent = normalize(tangent);
-		bitangent = normalize(bitangent);
+		//bitangent = normalize(bitangent);
 
 		// Duplication for VBO size consistency
 		triangles_TangentV_gpu.push_back(tangent);
 		triangles_TangentV_gpu.push_back(tangent);
 		triangles_TangentV_gpu.push_back(tangent);
 
-		triangles_BiTangentV_gpu.push_back(bitangent);
-		triangles_BiTangentV_gpu.push_back(bitangent);
-		triangles_BiTangentV_gpu.push_back(bitangent);
+		//triangles_BiTangentV_gpu.push_back(bitangent);
+		//triangles_BiTangentV_gpu.push_back(bitangent);
+		//triangles_BiTangentV_gpu.push_back(bitangent);
 
 	}
 }
@@ -1322,18 +1334,17 @@ void MeshModel::generateMarbleNoise()
 	marbleTextureBuffer.clear();
 	FastNoiseLite noise;
 	//noise.SetFrequency(noise_freq);
-	//noise.SetSeed(142);
-
+	
 	// Gather noise data
 	int width = NOISE_MAP_SIZE;
 	int height = NOISE_MAP_SIZE;
 
 	noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);	// Perlin type
-	noise.SetFrequency(1.0 / noise_scale);
-	noise.SetFractalOctaves(noise_octaves);
-	noise.SetFractalLacunarity(noise_lacunarity);
-	noise.SetFractalGain(noise_gain);
 	noise.SetFractalType(FastNoiseLite::FractalType::FractalType_FBm);
+	noise.SetFrequency(0.03);
+	noise.SetFractalOctaves(4);
+	noise.SetFractalLacunarity(2);
+	noise.SetFractalGain(0.5);
 
 	vector<float> perlinNoise;
 
@@ -1341,14 +1352,14 @@ void MeshModel::generateMarbleNoise()
 	{
 		for (int x = 0; x < width; x++)
 		{
-			float nx = static_cast<float>(x) / width;
-			float ny = static_cast<float>(y) / height;
+			float nx = static_cast<float>(x);
+			float ny = static_cast<float>(y);
 			float value = noise.GetNoise(nx, ny);
 			value = (value + 1) / 2.0;	// Normalization to [0,1]
 			//marbleTextureBuffer.push_back(value*255);
 			//marbleTextureBuffer.push_back(value*255);
 			//marbleTextureBuffer.push_back(value*255);
-			perlinNoise.push_back(value);
+			marbleTextureBuffer.push_back(value);
 
 
 		}
@@ -1361,36 +1372,36 @@ void MeshModel::generateMarbleNoise()
 	// === smoothing via convolution with blurring kernel
 
 	// define the smoothing kernel (3x3 gaussian blur kernel)
-	std::vector<float> kernel = {
-		1.0f, 2.0f, 1.0f,
-		2.0f, 4.0f, 2.0f,
-		1.0f, 2.0f, 1.0f
-	};
-	for (float& v : kernel)
-		v /= 16;
+	//std::vector<float> kernel = {
+	//	1.0f, 2.0f, 1.0f,
+	//	2.0f, 4.0f, 2.0f,
+	//	1.0f, 2.0f, 1.0f
+	//};
+	//for (float& v : kernel)
+	//	v /= 16;
 
-	marbleTextureBuffer = perlinNoise;	// copy noise data
+	//marbleTextureBuffer = perlinNoise;	// copy noise data
 
-	for (int y = 1; y < width - 1; y++)
-	{
-		for (int x = 1; x < height - 1; x++)
-		{
-			float sum = 0;
+	//for (int y = 1; y < width - 1; y++)
+	//{
+	//	for (int x = 1; x < height - 1; x++)
+	//	{
+	//		float sum = 0;
 
-			for (int ky = -1; ky <= 1; ky++)
-			{
-				for (int kx = -1; kx <= 1; kx++)
-				{
-					int nx = x + kx;
-					int ny = y + ky;
+	//		for (int ky = -1; ky <= 1; ky++)
+	//		{
+	//			for (int kx = -1; kx <= 1; kx++)
+	//			{
+	//				int nx = x + kx;
+	//				int ny = y + ky;
 
-					sum += perlinNoise[ny * height + nx] * kernel[(ky + 1) * 3 + kx + 1];
-				}
-			}
+	//				sum += perlinNoise[ny * height + nx] * kernel[(ky + 1) * 3 + kx + 1];
+	//			}
+	//		}
 
-			marbleTextureBuffer[y * width + x] = sum;
-		}
-	}
+	//		marbleTextureBuffer[y * width + x] = sum;
+	//	}
+	//}
 
 	saveTextureToPNG(marbleTextureBuffer, width, height, "marbleTexture.png");
 
@@ -1428,8 +1439,8 @@ void MeshModel::generateMarbleTexture()
 	glActiveTexture(GL_TEXTURE6);
 	glGenTextures(1, &marbletex);
 	glBindTexture(GL_TEXTURE_2D, marbletex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

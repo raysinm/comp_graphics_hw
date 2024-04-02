@@ -791,50 +791,59 @@ void Scene::drawModelTab()
 			//activeMesh->nonUniformDataUpdated = false;
 			//activeMesh->isUniformMaterial = false;
 
-			float* n_scale			= &(activeMesh->noise_scale);
-			int* n_octaves			= &(activeMesh->noise_octaves);
-			float* n_lacunarity		= &(activeMesh->noise_lacunarity);
-			float* n_gain	= &(activeMesh->noise_gain);
+			float* vein_freq = &(activeMesh->vein_freq);
+			int* vein_thickness = &(activeMesh->vein_thickness);
+			float* mix_factor = &(activeMesh->mix_factor);
+			float* noise_freq = &(activeMesh->noise_freq);
+			int* noise_octaves = &(activeMesh->noise_octaves);
+			float* noise_amplitude = &(activeMesh->noise_amplitude);
 
 			ImGui::Indent();
-			ImGui::SeparatorText("Noise Details");
-			ImGui::Text("Scale"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##N_scale", n_scale, 0.001f, 0, 10, "%.3f");
+			ImGui::SeparatorText("Details");
+			
+			ImGui::Text("Vein Frequency"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##V_freq", vein_freq, 0.1f, 0, 30, "%.1f");
 
-			ImGui::Text("Octaves"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragInt("##N_octaves", n_octaves, 1, 0, 10);
+			ImGui::Text("Vein Thickness"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragInt("##V_thickness", vein_thickness, 1, 0, 5);
 
-			ImGui::Text("Lacunarity"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##N_lacunarity", n_lacunarity, 0.001f, 0, 10, "%.3f");
+			ImGui::Text("Noise Frequency"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_freq", noise_freq, 0.001f, 0, 5, "%.3f");
 
-			ImGui::Text("Persistence"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##N_gain", n_gain, 0.001f, 0, 1, "%.3f");
+			ImGui::Text("Noise Octaves"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragInt("##N_octaves", noise_octaves, 1, 0, 6);
+
+			ImGui::Text("Noise Amplitude"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##N_amplitude", noise_amplitude, 0.1f, 0, 15, "%.1f");
 
 
 			vec3& base_color = (activeMesh->mcolor1);
-			vec3& detail_color = (activeMesh->mcolor2);
+			vec3& vein_color = (activeMesh->mcolor2);
 
 			ImVec4 base_local = ImVec4(base_color.x, base_color.y, base_color.z, 1);
-			ImVec4 detail_local = ImVec4(detail_color.x, detail_color.y, detail_color.z, 1);
+			ImVec4 vein_local = ImVec4(vein_color.x, vein_color.y, vein_color.z, 1);
 			
 			colorPicker(&base_local, "Base Color", "##pickerBase"); ImGui::SameLine();
-			colorPicker(&detail_local, "Detail Color", "##pickerDetail");
+			colorPicker(&vein_local, "Vein Color", "##pickerVein");
 
 			base_color.x = base_local.x;
 			base_color.y = base_local.y;
 			base_color.z = base_local.z;
 
-			detail_color.x = detail_local.x;
-			detail_color.y = detail_local.y;
-			detail_color.z = detail_local.z;
+			vein_color.x = vein_local.x;
+			vein_color.y = vein_local.y;
+			vein_color.z = vein_local.z;
+
+			ImGui::Text("Color Mix Factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::DragFloat("##C_mixfactor", mix_factor, 0.01f, 0, 1, "%.2f");
 
 
 			if (ImGui::Button("Reset all##RK"))
 			{
-				*n_scale = DEF_NOISE_SCALE;
-				*n_octaves = DEF_NOISE_OCTAVES;
-				*n_lacunarity = DEF_NOISE_LACUNARITY;
-				*n_gain = DEF_NOISE_GAIN;
+				*vein_freq = DEF_VEIN_FREQ;
+				*noise_freq = DEF_NOISE_FREQ;
+				*noise_octaves = DEF_NOISE_OCTAVES;
+				*noise_amplitude = DEF_NOISE_AMPLITUDE;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Regenerate texture"))
