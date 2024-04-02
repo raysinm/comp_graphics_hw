@@ -142,8 +142,6 @@ void Renderer::UpdateLightsUBO(bool reallocate_ubo)
 	glUnmapBuffer(GL_UNIFORM_BUFFER);
 }
 
-
-
 void Renderer::InitOpenGLRendering()
 {
 	program = InitShader("vshader.glsl", "fshader.glsl");

@@ -43,9 +43,6 @@ private:
 
 	mat4 transform_mid_worldspace, transform_mid_viewspace, rotation_mat;
 	
-	// Icon stuff
-	vec3* icon;
-	vec2* iconBuffer;
 
 	unsigned int num_icon_vertices;
 
@@ -62,6 +59,11 @@ public:
 	mat4 projection;
 	mat4 rotationMat_normals;
 
+	// Icon stuff
+	vec3* icon;
+	vec2* iconBuffer;
+	GLuint VAO = 0;
+	GLuint VBO = 0;
 	Camera::Camera();
 	
 	mat4 LookAt(const vec4& eye, const vec4& at, const vec4& up);

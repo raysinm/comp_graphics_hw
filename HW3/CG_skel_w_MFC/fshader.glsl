@@ -58,15 +58,13 @@ uniform vec3  cameraPos;
 uniform float smoothTime;
 uniform float minX, minY, minZ;
 uniform float maxX, maxY, maxZ;
-
-
-uniform vec2 resolution;
-uniform vec3 mcolor1, mcolor2;
+uniform vec3  mcolor1, mcolor2;
 uniform int   algo_shading;
 uniform int   displayBBox;
 uniform int   displayVnormal;
 uniform int   displayFnormal;
 uniform int   displaySkyBox;
+uniform int   displayCameraIcon;
 uniform int   numLights;
 uniform int   colorAnimateType;
 
@@ -230,7 +228,7 @@ void main()
     }
 
 
-    if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1) //WireFrame
+    if(algo_shading == 0 || displayBBox == 1 || displayVnormal == 1 || displayFnormal == 1 || displayCameraIcon == 1) //WireFrame
     {
 	    FragColor = vec4(outputColor, 1);
     }
