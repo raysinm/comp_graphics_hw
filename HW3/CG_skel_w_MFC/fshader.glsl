@@ -222,7 +222,6 @@ void main()
     vec4 textureColor;
     vec3 normal_from_map;
 
-    bool drawingTriangles = false;
 
     if(applyEnviornmentShading == 1 && displaySkyBox == 1)
     {
@@ -237,7 +236,6 @@ void main()
     }
 	else
     {
-        drawingTriangles = true;
 
         if(usingTexture == true)
           textureColor = texture2D(texMap, st);
@@ -274,44 +272,40 @@ void main()
         	FragColor = vec4(getColor(P, N), 1);
         }
     
-        if(drawingTriangles == true)
+        
+        if(applyEnviornmentShading == 1 && !usingTexture && !usingMarbleTex)
         {
-            if(usingTexture == true)
-            {
-                FragColor *= textureColor;
-            }
-
-            if(applyEnviornmentShading == 1)
-            {
-                vec3 I = normalize(vertPos_worldspace - cameraPos);
-                vec3 N = normalize(normal_worldspace.xyz);
+            vec3 I = normalize(vertPos_worldspace - cameraPos);
+            vec3 N = normalize(normal_worldspace.xyz);
                
-                vec3 R = reflect(I, N);
+            vec3 R = reflect(I, N);
 
-                FragColor = vec4(texture(skybox, R).rgb, 1.0);
-            }
-            if(usingMarbleTex)
-            {
-                float xPos = map(vertPos.x, minX, maxX);
-                float yPos = map(vertPos.y, minY, maxY);
-                float zPos = map(vertPos.z, minZ, maxZ);
-                vec3 normPos = vec3(xPos, yPos, zPos);
-
-                float noise = noise1(normPos);
-                
-                float t = mix(xPos, yPos, 0.45);
-                t *= veinFreq;
-                t += noiseAmplitude * turbulence(normPos, noiseOctaves);
-
-                vec3 marbleColor = marble_color(sin(t));
-
-                FragColor =mix(FragColor, vec4(marbleColor, 1), 0.5);
-
-
-
-            
-            }
+            FragColor = vec4(texture(skybox, R).rgb, 1.0);
         }
+
+        if(usingTexture == true)
+        {
+            FragColor *= textureColor;
+        }
+
+        if(usingMarbleTex)
+        {
+            float xPos = map(vertPos.x, minX, maxX);
+            float yPos = map(vertPos.y, minY, maxY);
+            float zPos = map(vertPos.z, minZ, maxZ);
+            vec3 normPos = vec3(xPos, yPos, zPos);
+
+            float noise = noise1(normPos);
+                
+            float t = mix(xPos, yPos, 0.45);
+            t *= veinFreq;
+            t += noiseAmplitude * turbulence(normPos, noiseOctaves);
+
+            vec3 marbleColor = marble_color(sin(t));
+
+            FragColor = mix(FragColor, vec4(marbleColor, 1), 0.5);
+        }
+        
         if(colorAnimateType == 1)
         {
             vec3 hsvColor = vec3(smoothTime, 1.0, 1.0);
