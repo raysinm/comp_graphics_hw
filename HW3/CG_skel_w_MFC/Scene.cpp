@@ -443,6 +443,7 @@ void Scene::draw()
 	if (applyEnviornmentShading)
 	{
 		
+
 		//mat4 model_view_mat = GetActiveCamera()->rotation_mat;
 		mat4 modelEmptyMat = mat4(1);
 		mat4 view_mat = GetActiveCamera()->cTransform;
@@ -462,10 +463,12 @@ void Scene::draw()
 		/* Bind the cameraPos vec3*/
 		vec3 cameraPos = GetActiveCamera()->getPosition();
 		glUniform3fv(glGetUniformLocation(renderer->program, "cameraPos"), 1, &cameraPos[0]);
+		glUniform1i(glGetUniformLocation(renderer->program, "skybox"), 5);
 
 
 		glDepthFunc(GL_LEQUAL);
 		glBindVertexArray(skyboxVAO);
+
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 		glUniform1i(glGetUniformLocation(m_renderer->program, "displaySkyBox"), 1);
@@ -1518,7 +1521,7 @@ void Scene::drawGUI()
 				if (cubeMapId == 0)
 				{
 					glUseProgram(renderer->program);
-					//glActiveTexture(GL_TEXTURE0);
+					glActiveTexture(GL_TEXTURE5);
 					glGenTextures(1, &cubeMapId);
 					glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapId);
 
