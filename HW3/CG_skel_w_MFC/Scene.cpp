@@ -788,8 +788,6 @@ void Scene::drawModelTab()
 		{
 			activeMesh->useTexture = false;
 			activeMesh->useNormalMap = false;
-			//activeMesh->nonUniformDataUpdated = false;
-			//activeMesh->isUniformMaterial = false;
 
 			float* n_scale			= &(activeMesh->noise_scale);
 			int* n_octaves			= &(activeMesh->noise_octaves);
@@ -842,15 +840,11 @@ void Scene::drawModelTab()
 				activeMesh->generateMarbleTexture();
 			}
 				
-			//activeMesh->PopulateNonUniformColorVectorForGPU();	// For updating VBOs
+		}
 
-		}
-		else
-		{
-			activeMesh->isUniformMaterial = true;
-		}
 
 		ImGui::SeparatorText("Other Materials");
+
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
 		Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 		if (activeMesh->isUniformMaterial)

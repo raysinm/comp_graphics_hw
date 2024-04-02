@@ -39,7 +39,6 @@ class Camera
 private:
 
 	string name = "";
-	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 	vec4 target;
 
 	mat4 transform_mid_worldspace, transform_mid_viewspace, rotation_mat;
@@ -56,6 +55,7 @@ private:
 
 public:
 	float c_left, c_right, c_top, c_bottom, c_fovy , c_aspect , c_zNear, c_zFar;
+	vec4 c_trnsl, c_rot, c_trnsl_viewspace, c_rot_viewspace;
 
 	mat4 cTransform;
 	mat4 view_matrix;	// cTransform inversed
@@ -165,10 +165,7 @@ private:
 	bool GUI_popup_pressedOK = false, GUI_popup_pressedCANCEL = false;
 	bool showGrid = false;
 
-	int viewportX;
-	int viewportY;
-	int viewportWidth;
-	int viewportHeight;
+
 	char* drawAlgoToString(DrawAlgo x)
 	{
 		switch (x)
@@ -268,6 +265,10 @@ public:
 	bool applyFullScreenBlur = false;
 	bool applyEnviornmentShading = false;
 	GLuint cubeMapId = 0;
+	int viewportX;
+	int viewportY;
+	int viewportWidth;
+	int viewportHeight;
 
 
 };

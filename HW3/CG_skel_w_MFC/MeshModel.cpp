@@ -1141,7 +1141,7 @@ void MeshModel::UpdateMaterialinGPU()
 	glUniform1i(glGetUniformLocation(renderer->program, "COS_ALPHA"), userDefinedMaterial.COS_ALPHA);
 
 	/* Bind the isUniformMaterial */
-	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), isUniformMaterial);
+	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), (int)isUniformMaterial);
 
 	if (!isUniformMaterial && !nonUniformDataUpdated)
 	{
@@ -1210,10 +1210,7 @@ void MeshModel::UpdateTextureInGPU()
 		glUniform3f(glGetUniformLocation(renderer->program, "mcolor1"), mcolor1.x, mcolor1.y, mcolor1.z);
 		glUniform3f(glGetUniformLocation(renderer->program, "mcolor2"), mcolor2.x, mcolor2.y, mcolor2.z);
 
-
 	}
-
-	// TOOD: Add update for tangent vectors if normal map enabled
 }
 
 void MeshModel::UpdateAnimationInGPU()
@@ -1303,7 +1300,6 @@ void MeshModel::calculateTangentSpace()
 
 	}
 }
-
 
 void saveTextureToPNG(const std::vector<float>& data, int width, int height, const char* filename) {
 	// Convert texture data to unsigned char
@@ -1396,23 +1392,6 @@ void MeshModel::generateMarbleNoise()
 
 }
 
-//float MeshModel::turbulence(vec3 p)
-//{
-//	// Sample noise
-//	float size_x = abs(max_x - min_x);
-//	float size_y = abs(max_y - min_y);
-//	float x = (p.x - min_x) / size_x * (NOISE_MAP_SIZE - 1);
-//	float y = (p.y - min_y) / size_y * (NOISE_MAP_SIZE - 1);
-//	return marbleTextureBuffer[y * (NOISE_MAP_SIZE-1) + x ];
-//}
-//
-//vec3 MeshModel::marble_color(float x)
-//{
-//	float a = (sin(x) + 1) / 2;
-//	float b = 1 - (sin(x) + 1) / 2;
-//	return a * mcolor1 + b * mcolor2;
-//}
-
 void MeshModel::generateMarbleTexture()
 {
 	//vertex_marble_colors.clear();
@@ -1447,13 +1426,4 @@ void MeshModel::generateMarbleTexture()
 	cout << "min: " << minval << " max: " << maxval << endl;
 	//glBindTexture(GL_TEXTURE_2D, 0);
 }
-//void MeshModel::updateMarbleTexture()
-//{
-//	vertex_marble_colors.clear();
-//	for (int i = 0;)
-//	{
-//		float x = v.x + turbulence(v);
-//		vec3 color = marble_color(x);
-//		vertex_marble_colors.push_back(color);
-//	}
-//}
+
