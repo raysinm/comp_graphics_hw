@@ -29,9 +29,7 @@ protected:
 	void GenerateTexture();
 	void GenerateNMap();
 	void calculateTangentSpace();
-	float turbulence(vec3 p);
 	void generateMarbleNoise();
-	vec3 marble_color(float x);
 
 	vector<vec3> duplicateEachElement(const vector<vec3>& v, const int duplicateNumber = 2);
 
@@ -51,7 +49,6 @@ protected:
 	vector<vec2> verticesTextures_original_gpu;
 	vector<vec2> verticesTextures_canonical_gpu;
 	vector<vec3> triangles_TangentV_gpu;
-	//vector<vec3> triangles_BiTangentV_gpu;
 
 
 
@@ -175,7 +172,6 @@ public:
 	vector<Material>& getMaterials() { return materials; }
 	Material& getUserDefinedMaterial() { return userDefinedMaterial; }
 	void generateMarbleTexture();
-	void updateMarbleTexture();
 
 	void loadTextureFromFile();
 	void loadNMapFromFile();
