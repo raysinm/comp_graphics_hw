@@ -143,10 +143,10 @@ void mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
 	{
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-		cout << "xpos = " << xpos << endl << "ypos = " << ypos << endl;
-		cout << "X viewport = " << scene->viewportX << endl;
+		//cout << "xpos = " << xpos << endl << "ypos = " << ypos << endl;
+		//cout << "X viewport = " << scene->viewportX << endl;
 
-		if (xpos < scene->viewportX || ypos < 40)
+		if (xpos < scene->viewportX + 3 || ypos < 40)
 			return;
 	}
 
