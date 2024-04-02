@@ -70,14 +70,62 @@ vec2 vec2fFromStream(std::istream & aStream)
 
 vec2* MeshModel::GetBuffer(MODEL_OBJECT obj)
 {
-	//switch (obj)
-	//{
-	//case V_NORMAL:
-	//	return buffer2d_v_normals;
-	//case F_NORMAL:
-	//	return buffer2d_f_normals;
-	//}
+
 	return nullptr;
+}
+
+void MeshModel::SetCanonicalTextureCoordsToPlaneProjection()
+{
+	float w = max_x - min_x;
+	float h = max_y - min_y;
+	verticesTextures_canonical_gpu.clear();
+
+	for (auto vertexIndex : faces_v_indices)
+	{
+		vec3 vPos = vertex_positions_raw[vertexIndex];
+		
+		//Project the vertex on to the XY-Plane
+		vec2 st = vec2(vPos.x, vPos.y);	
+		
+		//Normalize the st coordinate to [0, 1]
+		st.x = (st.x - min_x) / w;
+		st.y = (st.y - min_y) / h;
+		
+		//Add the st coordinate to the vector
+		verticesTextures_canonical_gpu.push_back(st);
+	}
+}
+
+void MeshModel::SetCanonicalTextureCoordsToSphereProjection()
+{
+
+	verticesTextures_canonical_gpu.clear();
+
+	vec3 centerOfSphere = vec3(0, 0, 0);
+	float radius = 0;
+	for (auto vertexIndex : faces_v_indices)
+	{
+		vec3 v = vertex_positions_raw[vertexIndex];
+		centerOfSphere += v;
+		radius = max(length(v), radius);
+	}
+	centerOfSphere /= faces_v_indices.size();
+
+	for (auto vertexIndex : faces_v_indices)
+	{
+		vec3 c = centerOfSphere;
+		vec3 v = vertex_positions_raw[vertexIndex];
+
+		
+		float theta = atan2(-(v.z - c.z), v.x - c.x);
+		float s = (theta + M_PI) / 2 * M_PI;
+
+		float phi = acos(-(v.y - c.y) / radius);
+		float t = phi / M_PI;
+
+		//Add the st coordinate to the vector
+		verticesTextures_canonical_gpu.push_back(vec2(s, t));
+	}
 }
 
 unsigned int MeshModel::GetBuffer_len(MODEL_OBJECT obj)
@@ -193,17 +241,19 @@ void MeshModel::GenerateVBO_Triangles()
 
 	/* TEXTURE_MAP */
 	{
-		if (verticesTextures_gpu.size() > 0)
+		if (verticesTextures_original_gpu.size() > 0)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_TEXTURE_MAP]);
-			int lenInBytes = verticesTextures_gpu.size() * 2 * sizeof(float);
-			glBufferData(GL_ARRAY_BUFFER, lenInBytes, verticesTextures_gpu.data(), GL_STATIC_DRAW);
-			GLint texcoord = glGetAttribLocation(renderer->program, "texcoord");
-			glVertexAttribPointer(texcoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-			glEnableVertexAttribArray(texcoord);
+			UpdateTextureCoordsInGPU();
 		}
 	}
 
+	UpdateTangentSpaceInGPU();
+
+	glBindVertexArray(0);
+}
+
+void MeshModel::UpdateTangentSpaceInGPU()
+{
 	/* TANGENT */
 	if (verticesTextures_gpu.size() > 0)
 	{
@@ -226,9 +276,41 @@ void MeshModel::GenerateVBO_Triangles()
 		glVertexAttribPointer(bitangent, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(bitangent);
 	}
+}
 
+void MeshModel::UpdateTextureCoordsInGPU()
+{
+	vector<vec2>* dataToUse = nullptr;
 
-	glBindVertexArray(0);
+	if (textureMode == TEXTURE_FROM_FILE)
+	{
+		dataToUse = &verticesTextures_original_gpu;
+	}
+	else if (textureMode == TEXTURE_CANONICAL_1)
+	{
+		SetCanonicalTextureCoordsToPlaneProjection();
+		dataToUse = &verticesTextures_canonical_gpu;
+	}
+	else if (textureMode == TEXTURE_CANONICAL_2)
+	{
+		SetCanonicalTextureCoordsToSphereProjection();
+		dataToUse = &verticesTextures_canonical_gpu;
+	}
+	if (dataToUse->size() == 0)
+		return;
+
+	glUseProgram(renderer->program);
+	glBindVertexArray(VAOs[VAO_VERTEX_TRIANGLE]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_VERTEX_TEXTURE_MAP]);
+	int lenInBytes = dataToUse->size() * sizeof((*dataToUse)[0]);
+	glBufferData(GL_ARRAY_BUFFER, lenInBytes, dataToUse->data(), GL_STATIC_DRAW);
+	GLint texcoord = glGetAttribLocation(renderer->program, "texcoord");
+	glVertexAttribPointer(texcoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(texcoord);
+
+	calculateTangentSpace();
+	UpdateTangentSpaceInGPU();
 }
 
 void MeshModel::GenerateVBO_BBox()
@@ -272,10 +354,6 @@ void MeshModel::GenerateVBO_vNormals()
 	glBindVertexArray(0);
 }
 
-
-
-
-
 void MeshModel::GenerateVBO_fNormals()
 {
 	glBindVertexArray(VAOs[VAO_VERTEX_FNORMAL]);
@@ -311,7 +389,6 @@ void MeshModel::GenerateAllGPU_Stuff()
 	GenerateVBO_BBox();
 	GenerateVBO_fNormals();
 	GenerateVBO_vNormals();
-	//GenerateTexture();
 }
 
 MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
@@ -326,7 +403,17 @@ MeshModel::MeshModel(string fileName, Renderer* rend) : MeshModel(rend)
 
 MeshModel::~MeshModel(void)
 {
+	if (textureLoaded && tex > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glDeleteTextures(1, &tex);
+	}
 
+	if (normalMapLoaded && nmap > 0)
+	{
+		glBindTexture(GL_TEXTURE_2D, nmap);
+		glDeleteTextures(1, &nmap);
+	}
 }
 
 vector<vec3> MeshModel::duplicateEachElement(const vector<vec3>& v, const int duplicateNumber)
@@ -345,6 +432,12 @@ void MeshModel::GenerateTexture()
 	if (textureMap.image_data != nullptr)
 	{
 		glActiveTexture(GL_TEXTURE0);
+		if (tex > 0)
+		{
+			glBindTexture(GL_TEXTURE_2D, tex);
+			glDeleteTextures(1, &tex);
+		}
+
 		glGenTextures(1, &tex);
 		glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -354,19 +447,27 @@ void MeshModel::GenerateTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+		if(textureMap.channels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
+		else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureMap.width, textureMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureMap.image_data);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureMap.width, textureMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureMap.image_data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-
 		stbi_image_free(textureMap.image_data);
 	}
 }
+
 void MeshModel::GenerateNMap()
 {
 	// Normal Map
 	if (normalMap.image_data != nullptr)
 	{
 		glActiveTexture(GL_TEXTURE1);
+		if (nmap > 0)
+		{
+			glBindTexture(GL_TEXTURE_2D, nmap);
+			glDeleteTextures(1, &nmap);
+		}
 		glGenTextures(1, &nmap);
 		glBindTexture(GL_TEXTURE_2D, nmap);
 
@@ -375,13 +476,15 @@ void MeshModel::GenerateNMap()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, normalMap.width, normalMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, normalMap.image_data);
+		if (textureMap.channels == 3)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, normalMap.width, normalMap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, normalMap.image_data);
+		else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, normalMap.width, normalMap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, normalMap.image_data);
 		glGenerateMipmap(GL_TEXTURE_2D); 
 
 		stbi_image_free(normalMap.image_data);
 	}
 }
-
 
 void MeshModel::loadFile(string fileName)
 {
@@ -448,7 +551,7 @@ void MeshModel::loadFile(string fileName)
 			faces_v_indices.push_back(vertIndex);
 			vertex_faces_neighbors[vertIndex].push_back(face_id);
 			if(verticesTextures_raw.size() > 0)
-				verticesTextures_gpu.push_back(verticesTextures_raw[vertIndex_Texture]);
+				verticesTextures_original_gpu.push_back(verticesTextures_raw[vertIndex_Texture]);
 		}
 
 		face_id++;
@@ -473,35 +576,30 @@ void MeshModel::loadFile(string fileName)
 
 void MeshModel::loadTextureFromFile()
 {
-	if (verticesTextures_gpu.size() > 0)
+	CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
+	if (dlg.DoModal() == IDOK)
 	{
-		CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
-		if (dlg.DoModal() == IDOK)
-		{
-			std::string filePath((LPCTSTR)dlg.GetPathName());
-			stbi_set_flip_vertically_on_load(true);
-			textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
-
-		}
+		std::string filePath((LPCTSTR)dlg.GetPathName());
+		stbi_set_flip_vertically_on_load(true);
+		textureMap.image_data = stbi_load(filePath.c_str(), &textureMap.width, &textureMap.height, &textureMap.channels, 0);
 		GenerateTexture();
+		textureLoaded = true;
 	}
 }
 
 void MeshModel::loadNMapFromFile()
 {
-	if (verticesTextures_gpu.size() > 0)
+	CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
+	if (dlg.DoModal() == IDOK)
 	{
-		CFileDialog dlg(TRUE, _T(".png"), NULL, NULL, _T("(*.png)|*.png|All Files (*.*)|*.*||"));
-		if (dlg.DoModal() == IDOK)
-		{
-			std::string filePath((LPCTSTR)dlg.GetPathName());
-			stbi_set_flip_vertically_on_load(true);
-			normalMap.image_data = stbi_load(filePath.c_str(), &normalMap.width, &normalMap.height, &normalMap.channels, 0);
-		}
+		std::string filePath((LPCTSTR)dlg.GetPathName());
+		stbi_set_flip_vertically_on_load(true);
+		normalMap.image_data = stbi_load(filePath.c_str(), &normalMap.width, &normalMap.height, &normalMap.channels, 0);
 		GenerateNMap();
+		normalMapLoaded = true;
 	}
-}
 
+}
 
 void MeshModel::initBoundingBox()
 {
@@ -653,7 +751,7 @@ void MeshModel::CreateVertexVectorForGPU()
 	vertex_fn_triangle_gpu				= duplicateEachElement(tmpFaceDirections, 3);
 
 	PopulateNonUniformColorVectorForGPU();
-	if(verticesTextures_gpu.size() > 0)
+	if(verticesTextures_original_gpu.size() > 0)
 		calculateTangentSpace();
 	generateMarbleTexture();
 
@@ -998,19 +1096,30 @@ void MeshModel::GenerateMaterials()
 
 void MeshModel::UpdateModelViewInGPU(mat4& Tc, mat4& Tc_for_normals)
 {
-	// Calculate model-view matrix:
-	model_view_mat = Tc * _world_transform * _model_transform;
+	// Calculate model view matrix:
+	mat4 model = _world_transform * _model_transform;
+	mat4 view = Tc;
+	//model_view_mat = view * model; //computed in GPU
 
-	// Calculate model-view-normals matrix:
-	model_view_mat_for_normals = Tc_for_normals * _world_transform_for_normals * _model_transform_for_normals;
+	// Calculate model view matrix:
+	mat4 model_normals = _world_transform_for_normals * _model_transform_for_normals;
+	mat4 view_normals = Tc_for_normals;
+	//model_view_mat_for_normals = view_normals * model_normals; //computed in GPU
 
-	/* Bind the model-view matrix*/
-	GLint matrixLocation = glGetUniformLocation(renderer->program, "modelview");
-	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat[0][0]));
 
-	/* Bind the model-view-normals matrix*/
-	matrixLocation = glGetUniformLocation(renderer->program, "modelview_normals");
-	glUniformMatrix4fv(matrixLocation, 1, GL_TRUE, &(model_view_mat_for_normals[0][0]));
+	/* Bind the model matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model"), 1, GL_TRUE, &(model[0][0]));
+
+	/* Bind the view matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view"), 1, GL_TRUE, &(view[0][0]));
+	
+	/* Bind the model_normals matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model_normals"), 1, GL_TRUE, &(model_normals[0][0]));
+
+	/* Bind the view_normals matrix*/
+	glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view_normals"), 1, GL_TRUE, &(view_normals[0][0]));
+
+
 }
 
 void MeshModel::UpdateMaterialinGPU()
@@ -1069,7 +1178,6 @@ void MeshModel::UpdateMaterialinGPU()
 void MeshModel::UpdateTextureInGPU()
 {
 	/* Bind the TextureMap enable / disable */
-	//int usingTexture = (verticesTextures_gpu.size() > 0);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingTexture"), (int)useTexture);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingNormalMap"), (int)useNormalMap);
 	glUniform1i(glGetUniformLocation(renderer->program, "usingMarbleTex"), (int)useProceduralTex);
@@ -1131,6 +1239,10 @@ void MeshModel::UpdateAnimationInGPU()
 
 void MeshModel::calculateTangentSpace()
 {
+	if (textureMode == TEXTURE_FROM_FILE && verticesTextures_original_gpu.size() == 0) return;
+
+	triangles_TangentV_gpu.clear();
+	triangles_BiTangentV_gpu.clear();
 	for (int i=0; i < vertex_positions_triangle_gpu.size(); i+=3)
 	{
 		// Face's vertex positions
@@ -1143,9 +1255,21 @@ void MeshModel::calculateTangentSpace()
 		vec3 e2 = vertex3 - vertex1;
 
 		// Texture coordinates
-		vec2 uv1 = verticesTextures_gpu[i + 0];
-		vec2 uv2 = verticesTextures_gpu[i + 1];
-		vec2 uv3 = verticesTextures_gpu[i + 2];
+		vec2 uv1;
+		vec2 uv2;
+		vec2 uv3;
+		if (textureMode == TEXTURE_FROM_FILE)
+		{
+			uv1 = verticesTextures_original_gpu[i + 0];
+			uv2 = verticesTextures_original_gpu[i + 1];
+			uv3 = verticesTextures_original_gpu[i + 2];
+		}
+		else
+		{
+			uv1 = verticesTextures_canonical_gpu[i + 0];
+			uv2 = verticesTextures_canonical_gpu[i + 1];
+			uv3 = verticesTextures_canonical_gpu[i + 2];
+		}
 		
 		// Delta of coordinates 
 		vec2 delta1 = uv2 - uv1;

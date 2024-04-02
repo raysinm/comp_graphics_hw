@@ -48,7 +48,8 @@ protected:
 	vector<vec3> vertex_directions_Vnormals_gpu;
 	vector<vec3> vertex_positions_Fnormals_gpu;
 	vector<vec3> vertex_directions_Fnormals_gpu;
-	vector<vec2> verticesTextures_gpu;
+	vector<vec2> verticesTextures_original_gpu;
+	vector<vec2> verticesTextures_canonical_gpu;
 	vector<vec3> triangles_TangentV_gpu;
 	vector<vec3> triangles_BiTangentV_gpu;
 
@@ -94,8 +95,9 @@ protected:
 	void calculateFaceNormals();
 	void estimateVertexNormals();
 	void CreateVertexVectorForGPU();
-	
-
+	void SetCanonicalTextureCoordsToPlaneProjection();
+	void SetCanonicalTextureCoordsToSphereProjection();
+	void UpdateTangentSpaceInGPU();
 	Renderer* renderer;
 
 public:
@@ -104,6 +106,9 @@ public:
 	GLuint tex = 0, nmap=0, marbletex = 0;
 	STB_Image textureMap = { 0 }, normalMap = { 0 };
 	ColorAnimationType colorAnimationType = COLOR_ANIMATION_STATIC;
+	bool textureLoaded = false;
+	bool normalMapLoaded = false;
+	TextureMode textureMode = TEXTURE_FROM_FILE;
 	// Marble
 	vec3 mcolor1 = vec3(0.8,0.8,0.8), mcolor2 = vec3(0.165, 0.094, 0.561);
 	//vec3 mcolor1 = vec3(1,0,0), mcolor2 = vec3(0,0,1);
@@ -126,7 +131,7 @@ public:
 
 	MeshModel(string fileName, Renderer* rend = nullptr);
 	~MeshModel(void);
-
+	void UpdateTextureCoordsInGPU();
 	vector<vec3>* getVertexNormals() { return &vertex_normals; }
 	vector<vec3>* getVertexNormalsViewSpace() { return &vertex_normals_viewspace; }
 	vector<vec3>* getFaceNormals() { return   &face_normals; }

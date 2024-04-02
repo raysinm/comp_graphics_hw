@@ -107,6 +107,7 @@ void Renderer::drawModel(DrawAlgo draw_algo, Model* model, mat4& cTransform)
 	pModel->UpdateTextureInGPU();
 	pModel->UpdateAnimationInGPU();
 
+	glActiveTexture(GL_TEXTURE0);
 	if (draw_algo == WIRE_FRAME) {
 		glBindVertexArray(pModel->VAOs[VAO_VERTEX_WIREFRAME]);
 		glDrawArrays(GL_LINES, 0, pModel->GetBuffer_len(MODEL_WIREFRAME));

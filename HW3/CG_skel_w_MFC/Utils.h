@@ -239,10 +239,9 @@ typedef enum ColorAnimationType
 	COLOR_ANIMATION_2,
 } ColorAnimationType;
 
-//typedef enum MaterialType
-//{
-//	MATERIAL_TYPE_UNIFORM,
-//	MATERIAL_TYPE_NONUNIFORM,
-//	MATERIAL_TYPE_MARBLE,
-//	MATERIAL_TYPE_COUNT
-//};
+typedef enum TextureMode
+{
+	TEXTURE_FROM_FILE = 0,
+	TEXTURE_CANONICAL_1,		// Project on XY place
+	TEXTURE_CANONICAL_2,		// Spherical 
+} TextureMode;
