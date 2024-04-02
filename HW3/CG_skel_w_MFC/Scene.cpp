@@ -852,6 +852,7 @@ void Scene::drawModelTab()
 
 		ImGui::SeparatorText("Other Materials");
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
+		Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 		if (activeMesh->isUniformMaterial)
 		{
 			vec3& emis_real = meshMaterial.getEmissive();

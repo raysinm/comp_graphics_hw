@@ -23,7 +23,7 @@ flat in vec3 flat_outputColor;
 flat in vec3 interpolatedTangent;
 flat in vec3 interpolatedbBitangent;  
 flat in vec3 nmN;
-flat in mat3 TBN;
+in mat3 TBN;
 in vec3      outputColor;
 in vec4      interpolated_normal;
 in vec4      interpolated_position;
@@ -62,11 +62,8 @@ uniform float smoothTime;
 uniform float minX, minY;
 uniform float maxX, maxY;
 
-uniform vec3 cameraPos;
 uniform vec2 resolution;
 uniform vec3 mcolor1, mcolor2;
-uniform float minX;
-uniform float maxX;
 uniform int   algo_shading;
 uniform int   displayBBox;
 uniform int   displayVnormal;
@@ -175,30 +172,10 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
-mat3 calcTBN(vec3 N)
+vec4 calcNormalTangent()
 {
-    return mat3(interpolatedTangent, interpolatedbBitangent, N);
-}
-
-mat3 calcTBN(vec4 N)
-{
-    return mat3(interpolatedTangent, interpolatedbBitangent, vec3(N)); // MAYBE WRONG
-}
-
-vec3 calcNormalTangent(vec3 N)
-{
-    mat3 _TBN = calcTBN(N);
-        // Normal map calcs
-    vec3 normal_from_map = texture(normalMap, st).rgb; // Check if useNormalMap is true?
-    normal_from_map.y = 1 - normal_from_map.y;
-    normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
-   return normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
-
-}
-
-vec4 calcNormalTangent(vec4 N)
-{
-    return vec4(calcNormalTangent(vec3(N)), 1.0);
+    vec3 normal_from_map = texture2D(normalMap, st).rgb * 2.0 - 1.0; // Normalize to [-1,1]
+    return vec4(normalize(TBN * normal_from_map), 1);
 }
 
 vec3 marbleColor(float x)
@@ -286,12 +263,9 @@ void main()
             vec4 N = interpolated_normal;   //Interpolated Normal in CameraSpace
             if(usingNormalMap)
             {
-                mat3 _TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
-                vec3 normal_from_map = texture2D(normalMap, st).rgb; // Check if useNormalMap is true?
-                //normal_from_map.y = 1 - normal_from_map.y;
-                normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
-                vec3 _N = -normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
-                N = vec4(_N, 1.0);
+                //vec3 normal_from_map = texture2D(normalMap, st).rgb * 2.0 - 1.0; // Normalize to [-1,1]
+                //N = vec4(normalize(TBN * normal_from_map), 1);
+                N = calcNormalTangent();
             }
 
 

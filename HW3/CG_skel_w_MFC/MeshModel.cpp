@@ -255,7 +255,7 @@ void MeshModel::GenerateVBO_Triangles()
 void MeshModel::UpdateTangentSpaceInGPU()
 {
 	/* TANGENT */
-	if (verticesTextures_gpu.size() > 0)
+	if (verticesTextures_original_gpu.size() > 0)
 	{
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_TANGENT]);
@@ -267,7 +267,7 @@ void MeshModel::UpdateTangentSpaceInGPU()
 	}
 
 	/* BITANGENT */
-	if (verticesTextures_gpu.size() > 0)
+	if (verticesTextures_original_gpu.size() > 0)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, VBOs[VAO_VERTEX_TRIANGLE][VBO_FACE_BITANGENT]);
 		int lenInBytes = triangles_BiTangentV_gpu.size() * 3 * sizeof(float);

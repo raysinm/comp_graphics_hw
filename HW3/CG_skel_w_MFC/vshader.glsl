@@ -85,10 +85,10 @@ flat out float interpolated_EmissiveFactor;
 flat out int   interpolated_COS_ALPHA;
 out vec2 st;
 out vec3 vertPos;
-flat out vec3      interpolatedTangent;
-flat out vec3      interpolatedbBitangent;  
+flat out vec3      tangentVec;
+flat out vec3      bitangentVec;  
 flat out vec3      nmN;
-flat out mat3      TBN;
+out mat3      TBN;
 out vec3 vertPos_worldspace;
 out vec3 normal_worldspace;
 out vec3 skyboxCoords;
@@ -188,30 +188,24 @@ vec3 getColor(vec4 point, vec4 normal)
     return clamp(result, vec3(0), vec3(1));
 }
 
-mat3 calcTBN(vec3 N)
+void calcTBN(vec3 N)
 {
-    return mat3(interpolatedTangent, interpolatedbBitangent, N);
+    nmN = normalize(N);
+    bitangentVec = normalize(cross(tangent, nmN));
+    TBN = mat3(tangentVec, bitangentVec, nmN);
 }
 
-mat3 calcTBN(vec4 N)
+void calcTBN(vec4 N)
 {
-    return mat3(interpolatedTangent, interpolatedbBitangent, vec3(N)); // MAYBE WRONG
+    nmN = normalize(vec3(N/N.w));
+    bitangentVec = normalize(cross(tangent, nmN));
+    TBN = mat3(tangentVec, bitangentVec, nmN);
 }
 
-vec3 calcNormalTangent(vec3 N)
+vec4 calcNormalTangent()
 {
-    mat3 _TBN = calcTBN(N);
-        // Normal map calcs
-    vec3 normal_from_map = texture(normalMap, st).rgb; // Check if useNormalMap is true?
-    normal_from_map.y = 1 - normal_from_map.y;
-    normal_from_map = normal_from_map*2.0 -1.0;  // Normalize to [-1,1]
-   return normalize(_TBN * normal_from_map); // Transform from tangent space to modelview space
-
-}
-
-vec4 calcNormalTangent(vec4 N)
-{
-    return vec4(calcNormalTangent(vec3(N)), 1.0);
+    vec3 normal_from_map = texture2D(normalMap, st).rgb * 2.0 - 1.0; // Normalize to [-1,1]
+    return vec4(normalize(TBN * normal_from_map), 1);
 }
 
 void main()
@@ -248,23 +242,22 @@ void main()
    
    
    // Normal map calculations
-    //interpolatedTangent   = normalize(vec3(modelview_normals* vec4(tangent,0)));
-    //interpolatedbBitangent = normalize(vec3(modelview_normals* vec4(bitangent,0)));
+    //tangentVec   = normalize(vec3(modelview_normals* vec4(tangent,0)));
+    //bitangentVec = normalize(vec3(modelview_normals* vec4(bitangent,0)));
     //nmN                    = normalize(vec3(modelview_normals* vec4(fn,0)));
     vec4 temp_tangent = vec4(tangent,1);
     temp_tangent = modelview_normals * temp_tangent;
-    interpolatedTangent = normalize(vec3(temp_tangent/temp_tangent.w));
+    tangentVec = normalize(vec3(temp_tangent/temp_tangent.w));
 
-    vec4 temp_bitangent = vec4(bitangent,1);
-    temp_bitangent = modelview_normals * temp_bitangent;
-    interpolatedbBitangent = normalize(vec3(temp_bitangent/temp_bitangent.w));
+    //vec4 temp_bitangent = vec4(bitangent,1);
+    //temp_bitangent = modelview_normals * temp_bitangent;
+    //bitangentVec = normalize(vec3(temp_bitangent/temp_bitangent.w));
 
      
-    vec4 temp_nmN = vec4(fn,1);
-    temp_nmN = modelview_normals * temp_nmN;
-    nmN = normalize(vec3(temp_nmN/temp_nmN.w));
+    //vec4 temp_nmN = vec4(fn,1);
 
-    TBN = mat3(interpolatedTangent, interpolatedbBitangent, nmN);
+
+
 
 
     if(displayBBox == 1)
@@ -316,13 +309,16 @@ void main()
                 vec4 N = modelview_normals * vec4(fn, 1);
                 
                 if(usingNormalMap)
-                    N = calcNormalTangent(N);
+                {
+                    calcTBN(N);
+                    N = calcNormalTangent();
+                }
 
                 if(isUniformMaterial == false)
                     current_Color_diffuse  = non_uniformColor_diffuse_FLAT;
 
                 flat_outputColor = getColor(P, N);
-                interpolated_normal = N;
+
 
                 if(applyEnviornmentShading == 1)
                     normal_worldspace = (model_normals * vec4(fn, 1)).xyz;
@@ -331,18 +327,21 @@ void main()
             {
                 vec4 P = vPos_Cameraspace;                //Vertex Position in CameraSpace
                 vec4 N = modelview_normals * vec4(vn, 1); //Vertex Normal in CameraSpace
+
                 if(usingNormalMap)
-                    N = calcNormalTangent(N);
+                {
+                    calcTBN(N);
+                    N = calcNormalTangent();
+                }
 
         		outputColor = getColor(P, N);
-                interpolated_normal = N;
 
                 if(applyEnviornmentShading == 1)
                     normal_worldspace = (model_normals * vec4(vn, 1)).xyz;
             }
             else if(algo_shading == 3) //Phong shading
             {
-                interpolated_normal = modelview_normals * vec4(vn, 1);
+                interpolated_normal =  modelview_normals * vec4(vn, 1);
                 interpolated_position = vPos_Cameraspace;
                 interpolated_emissive = current_Color_emissive;
                 interpolated_diffuse  = current_Color_diffuse;
@@ -352,13 +351,23 @@ void main()
                 interpolated_Ks = current_Ks;
                 interpolated_EmissiveFactor = current_EmissiveFactor;
                 interpolated_COS_ALPHA = current_COS_ALPHA;
+                
+                if(usingNormalMap)
+                {
+                    calcTBN(interpolated_normal);
+                }
 
                 if(applyEnviornmentShading == 1)
                     normal_worldspace = (model_normals * vec4(vn, 1)).xyz;
             }
         }
+
     }
 
+    
+    
     gl_Position = resultPosition;
     vertPos = vPosition;
+
+
 }
