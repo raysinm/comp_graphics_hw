@@ -1131,7 +1131,7 @@ void MeshModel::UpdateMaterialinGPU()
 	glUniform1i(glGetUniformLocation(renderer->program, "COS_ALPHA"), userDefinedMaterial.COS_ALPHA);
 
 	/* Bind the isUniformMaterial */
-	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), isUniformMaterial);
+	glUniform1i(glGetUniformLocation(renderer->program, "isUniformMaterial"), (int)isUniformMaterial);
 
 	if (!isUniformMaterial && !nonUniformDataUpdated)
 	{
@@ -1212,10 +1212,7 @@ void MeshModel::UpdateTextureInGPU()
 		glUniform3f(glGetUniformLocation(renderer->program, "mcolor1"), mcolor1.x, mcolor1.y, mcolor1.z);
 		glUniform3f(glGetUniformLocation(renderer->program, "mcolor2"), mcolor2.x, mcolor2.y, mcolor2.z);
 
-
 	}
-
-	// TOOD: Add update for tangent vectors if normal map enabled
 }
 
 void MeshModel::UpdateAnimationInGPU()
@@ -1293,7 +1290,6 @@ void MeshModel::calculateTangentSpace()
 
 	}
 }
-
 
 void saveTextureToPNG(const std::vector<float>& data, int width, int height, const char* filename) {
 	// Convert texture data to unsigned char

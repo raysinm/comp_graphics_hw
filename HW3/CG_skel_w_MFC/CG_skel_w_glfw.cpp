@@ -15,7 +15,7 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "MeshModel.h"
 
 using namespace std;
 
@@ -31,6 +31,8 @@ Scene* scene;
 Renderer* renderer;
 bool lb_down, rb_down, mb_down; //mouse buttons (left/right/middle)
 bool cam_mode;	// Camera mode ON/OFF
+bool ctrlPressing = false;
+bool r_key_Pressing = false;
 vec2 mouse_pos, mouse_pos_prev;
 float mouse_scroll;
 
@@ -52,6 +54,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
 
 	//Our callback:
+	if (!renderer || !scene)
+		return;
+
 	if (action == GLFW_PRESS)
 	{
 		switch (key)
@@ -62,6 +67,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 					scene->GetActiveCamera()->LookAt(scene->GetActiveModel());
 				}
 				break;
+			case GLFW_KEY_LEFT_CONTROL:
+				ctrlPressing = true;
+				break;
+			case GLFW_KEY_R:
+				r_key_Pressing = true;
+				break;
+		}
+	}
+	
+	if (action == GLFW_RELEASE)
+	{
+		switch (key)
+		{
+		case GLFW_KEY_LEFT_CONTROL:
+			ctrlPressing = false;
+			break;
+		case GLFW_KEY_R:
+			r_key_Pressing = false;
+			break;
 		}
 	}
 }
@@ -72,9 +96,38 @@ void mouse_move_callback(GLFWwindow* window, double x, double y)
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_CursorPosCallback(window, x, y);
 
+	if (!scene || !renderer)
+		return;
+
 	//Our callback:
 	mouse_pos_prev = mouse_pos;
 	mouse_pos = vec2(x, y);
+	vec2 delta = mouse_pos - mouse_pos_prev;
+
+	float dampingFactor = 0.2f;
+
+	if (lb_down)
+	{
+		if (scene->activeModel != NOT_SELECTED)
+		{
+			//Rotate the selected model:
+			MeshModel* p = (MeshModel*) scene->GetActiveModel();
+		
+			p->_rot.x +=  delta.y * dampingFactor;
+			p->_rot.y += -delta.x * dampingFactor;
+
+		}
+	}
+
+	else if (rb_down)
+	{
+		Camera* c = scene->GetActiveCamera();
+		
+		c->c_rot.x += -delta.y * (dampingFactor/5);
+		c->c_rot.y +=  delta.x * (dampingFactor/5);
+
+		c->updateTransform();
+	}
 }
 
 //mouse click
@@ -82,6 +135,20 @@ void mouse_click_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	// Let ImGui handle the callback first:
 	ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+
+	if (!renderer || !scene)
+		return;
+
+	if (action == GLFW_PRESS)
+	{
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		//cout << "xpos = " << xpos << endl << "ypos = " << ypos << endl;
+		//cout << "X viewport = " << scene->viewportX << endl;
+
+		if (xpos < scene->viewportX + 3 || ypos < 40)
+			return;
+	}
 
 	//Our callback:
 	switch (button)
@@ -105,6 +172,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	ImGui_ImplGlfw_ScrollCallback(window, xoffset,yoffset);
 
 	//Our callback:
+	if (!ctrlPressing)
+		return;
+
 	scene->zoom(yoffset);
 }
 

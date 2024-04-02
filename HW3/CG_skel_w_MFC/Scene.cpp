@@ -781,15 +781,13 @@ void Scene::drawModelTab()
 		}
 		
 		
-		ImGui::SeparatorText("Colors");
+		ImGui::SeparatorText("Marble Effect");
 
 		ImGui::Checkbox("Use Marble Texture", &(activeMesh->useProceduralTex));
 		if (activeMesh->useProceduralTex)
 		{
 			activeMesh->useTexture = false;
 			activeMesh->useNormalMap = false;
-			//activeMesh->nonUniformDataUpdated = false;
-			//activeMesh->isUniformMaterial = false;
 
 			float* vein_freq = &(activeMesh->vein_freq);
 			int* vein_thickness = &(activeMesh->vein_thickness);
@@ -804,7 +802,7 @@ void Scene::drawModelTab()
 			ImGui::Text("Vein Frequency"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 			ImGui::DragFloat("##V_freq", vein_freq, 0.1f, 0, 30, "%.1f");
 
-			ImGui::Text("Vein Thickness"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+			ImGui::Text("Vein Thinness"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
 			ImGui::DragInt("##V_thickness", vein_thickness, 1, 0, 5);
 
 			ImGui::Text("Noise Frequency"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
@@ -844,6 +842,8 @@ void Scene::drawModelTab()
 				*noise_freq = DEF_NOISE_FREQ;
 				*noise_octaves = DEF_NOISE_OCTAVES;
 				*noise_amplitude = DEF_NOISE_AMPLITUDE;
+				*vein_thickness = DEF_VEIN_THICKNESS;
+				*mix_factor = DEF_COL_MIX_FACTOR;
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Regenerate texture"))
@@ -851,15 +851,11 @@ void Scene::drawModelTab()
 				activeMesh->generateMarbleTexture();
 			}
 				
-			//activeMesh->PopulateNonUniformColorVectorForGPU();	// For updating VBOs
-
-		}
-		else
-		{
-			activeMesh->isUniformMaterial = true;
 		}
 
-		ImGui::SeparatorText("Other Materials");
+
+		ImGui::SeparatorText("Material Color");
+
 		ImGui::Checkbox("Uniform Material##uni_mat", &activeMesh->isUniformMaterial);
 		Material& meshMaterial = activeMesh->getUserDefinedMaterial();
 		if (activeMesh->isUniformMaterial)
@@ -888,35 +884,6 @@ void Scene::drawModelTab()
 			spec_real.y = spec_local.y;
 			spec_real.z = spec_local.z;
 
-			float* ka = &(meshMaterial.Ka);
-			float* kd = &(meshMaterial.Kd);
-			float* ks = &(meshMaterial.Ks);
-			float* emissivefactor = &(meshMaterial.EmissiveFactor);
-			int* alphaFactor = &(meshMaterial.COS_ALPHA);
-
-			ImGui::SeparatorText("Intensity");
-			ImGui::Text("Ambient Intensity (Ka)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
-
-			ImGui::Text("Diffuse Intensity (Kd)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
-
-			ImGui::Text("Specular Intensity (Ks)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
-
-			ImGui::Text("Emissive factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
-
-			ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
-			ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 100);
-			if (ImGui::Button("Reset all##RK"))
-			{
-				*ka = DEFUALT_LIGHT_Ka_VALUE;
-				*kd = DEFUALT_LIGHT_Kd_VALUE;
-				*ks = DEFUALT_LIGHT_Ks_VALUE;
-				*emissivefactor = DEFUALT_EMIS_FACTOR;
-				*alphaFactor = DEFUALT_LIGHT_ALPHA;
-			}
 		}
 		else
 		{
@@ -925,6 +892,37 @@ void Scene::drawModelTab()
 				activeMesh->GenerateMaterials();
 			}
 		}
+		
+		float* ka = &(meshMaterial.Ka);
+		float* kd = &(meshMaterial.Kd);
+		float* ks = &(meshMaterial.Ks);
+		float* emissivefactor = &(meshMaterial.EmissiveFactor);
+		int* alphaFactor = &(meshMaterial.COS_ALPHA);
+
+		ImGui::SeparatorText("Intensity");
+		ImGui::Text("Ambient Intensity (Ka)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##K_amb", ka, 0.001f, 0, 10, "%.3f");
+
+		ImGui::Text("Diffuse Intensity (Kd)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##K_dif", kd, 0.001f, 0, 10, "%.3f");
+
+		ImGui::Text("Specular Intensity (Ks)"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##K_spc", ks, 0.001f, 0, 10, "%.3f");
+
+		ImGui::Text("Emissive factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragFloat("##K_emsv", emissivefactor, 0.001f, 0, 1, "%.3f");
+
+		ImGui::Text("ALPHA factor"); ImGui::SameLine(ImGui::GetContentRegionAvail().x / 2, 0);
+		ImGui::DragInt("##K_alpha", alphaFactor, 0.01f, 0, 100);
+		if (ImGui::Button("Reset all##RK"))
+		{
+			*ka = DEFUALT_LIGHT_Ka_VALUE;
+			*kd = DEFUALT_LIGHT_Kd_VALUE;
+			*ks = DEFUALT_LIGHT_Ks_VALUE;
+			*emissivefactor = DEFUALT_EMIS_FACTOR;
+			*alphaFactor = DEFUALT_LIGHT_ALPHA;
+		}
+
 		
 	}
 
@@ -1617,7 +1615,7 @@ void Scene::drawGUI()
 		closedTransfWindowFlag = false;
 		float mainMenuBarHeight = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.0f;
 		ImGui::SetNextWindowPos(ImVec2(0, mainMenuBarHeight), ImGuiCond_Always);
-		ImGui::SetNextWindowSizeConstraints(ImVec2(310, m_renderer->GetWindowSize().y - mainMenuBarHeight),\
+		ImGui::SetNextWindowSizeConstraints(ImVec2(350, m_renderer->GetWindowSize().y - mainMenuBarHeight),\
 											ImVec2(m_renderer->GetWindowSize().x / 2, m_renderer->GetWindowSize().y - mainMenuBarHeight));
 		if (ImGui::Begin("Transformations Window", &showTransWindow, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove))
 		{
