@@ -34,6 +34,7 @@ uniform int displayBBox;
 uniform int displayVnormal;
 uniform int displayFnormal;
 uniform int displaySkyBox;
+uniform int displayCameraIcon;
 uniform int numLights;
 uniform float vnFactor;
 uniform float fnFactor;
@@ -204,7 +205,7 @@ void main()
 
     st = texcoord;
     vPos = vec4(vPosition, 1);
-    if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0 && displaySkyBox == 0)
+    if(vertexAnimationEnable == 1 && displayBBox == 0 && displayFnormal == 0 && displayVnormal == 0 && displaySkyBox == 0 && displayCameraIcon == 0)
     {
         float PI = 3.14159265359f;
         
@@ -270,6 +271,10 @@ void main()
             gl_Position = (projection * modelview * vec4(vPosition, 1)).xyww;
             return;
         }
+    }
+    else if(displayCameraIcon == 1)
+    {
+        outputColor = vec3(0, 1, 0);  // green
     }
     else // draw shading algos
     {

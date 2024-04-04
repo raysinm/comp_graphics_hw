@@ -73,28 +73,28 @@ void Camera::iconInit()
 
 bool Camera::iconDraw( mat4& active_cTransform, mat4& active_projection)
 {
-	for (int i = 0; i < num_icon_vertices; i++)
-	{
-		
-		vec4 v_i(icon[i]);
+	//for (int i = 0; i < num_icon_vertices; i++)
+	//{
+	//	
+	//	vec4 v_i(icon[i]);
 
-		//Apply transformations:
-		v_i = active_cTransform * (transform_mid_worldspace * v_i);
+	//	//Apply transformations:
+	//	v_i = active_cTransform * (transform_mid_worldspace * v_i);
 
-		//Project:
-		v_i = active_projection * v_i;
-		
-		v_i /= v_i.w;
+	//	//Project:
+	//	v_i = active_projection * v_i;
+	//	
+	//	v_i /= v_i.w;
 
-		//Clip it:
-		if (v_i.x < -1 || v_i.x > 1 || v_i.y < -1 || v_i.y > 1 || v_i.z < -1 || v_i.z > 1)
-		{
-			return false;
-		}
+	//	//Clip it:
+	//	if (v_i.x < -1 || v_i.x > 1 || v_i.y < -1 || v_i.y > 1 || v_i.z < -1 || v_i.z > 1)
+	//	{
+	//		return false;
+	//	}
 
-		//Add to buffer:
-		iconBuffer[i] = vec2(v_i.x, v_i.y);
-	}
+	//	//Add to buffer:
+	//	iconBuffer[i] = vec2(v_i.x, v_i.y);
+	//}
 	
 	return true;
 }
@@ -108,7 +108,7 @@ mat4 Camera::LookAt(const vec4& eye, const vec4& at, const vec4& up)
 	if (vec3(n.x, n.y, n.z) == vec3(up.x, up.y, up.z) || vec3(n.x, n.y, n.z) == -vec3(up.x, up.y, up.z))
 	{
 		/* Add little noise so it won't divide by 0 ;) */
-		n.x += 0.001f;
+		n.x += 0.1f;
 	}
 	
 	u = normalize(cross(up, n));
@@ -419,22 +419,62 @@ void Scene::draw()
 
 	// ------------------------------------------------ TODO:
 	//4. Render cameras as 3D plus signs
-	//for (auto camera : cameras)
-	//{
-	//	if (camera->renderCamera && camera != cameras[activeCamera])
-	//	{
-	//		if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
-	//		{
-	//			vec2* icon_vertices = camera->getIconBuffer();
-	//			unsigned int len = camera->getIconBufferSize();
-	//			if (icon_vertices)
-	//			{
-	//				m_renderer->SetBufferLines(icon_vertices, len-2, vec4(0.75, 0, 0.8));
-	//				m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 0.8, 0.15));
-	//			}
-	//		}
-	//	}
-	//}
+	for (auto camera : cameras)
+	{
+		if (camera->renderCamera && camera != cameras[activeCamera])
+		{
+			if (camera->VAO == 0)
+			{
+				glGenVertexArrays(1, &camera->VAO);
+
+				glBindVertexArray(camera->VAO);
+				glGenBuffers(1, &camera->VBO);
+				glBindBuffer(GL_ARRAY_BUFFER, camera->VBO);
+
+
+				int lenInBytes = camera->getIconBufferSize() * 3 * sizeof(float);
+				glBufferData(GL_ARRAY_BUFFER, lenInBytes, camera->icon, GL_STATIC_DRAW);
+
+				GLint vPosition = glGetAttribLocation(renderer->program, "vPosition");
+				glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(vPosition);
+			}
+
+			// Calculate model view matrix:
+			mat4 model = camera->transform_mid_worldspace;
+			mat4 view = cameras[activeCamera]->cTransform;
+			
+			/* Bind the model matrix*/
+			glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model"), 1, GL_TRUE, &(model[0][0]));
+
+			/* Bind the view matrix*/
+			glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view"), 1, GL_TRUE, &(view[0][0]));
+
+			///* Bind the model_normals matrix*/
+			//glUniformMatrix4fv(glGetUniformLocation(renderer->program, "model_normals"), 1, GL_TRUE, &(model_normals[0][0]));
+			///* Bind the view_normals matrix*/
+			//glUniformMatrix4fv(glGetUniformLocation(renderer->program, "view_normals"), 1, GL_TRUE, &(view_normals[0][0]));
+
+
+
+
+			glBindVertexArray(camera->VAO);
+			glUniform1i(glGetUniformLocation(m_renderer->program, "displayCameraIcon"), 1);
+			glDrawArrays(GL_LINES, 0, camera->getIconBufferSize()); //3 lines
+			glUniform1i(glGetUniformLocation(m_renderer->program, "displayCameraIcon"), 0);
+
+			//if (camera->iconDraw(cameras[activeCamera]->cTransform, cameras[activeCamera]->projection))
+			//{
+			//	//vec2* icon_vertices = camera->getIconBuffer();
+			//	//unsigned int len = camera->getIconBufferSize();
+			//	//if (icon_vertices)
+			//	//{
+			//	//	m_renderer->SetBufferLines(icon_vertices, len-2, vec4(0.75, 0, 0.8));
+			//	//	m_renderer->SetBufferLines((icon_vertices + len - 2), 2, vec4(0, 0.8, 0.15));
+			//	//}
+			//}
+		}
+	}
 	
 	//5. Draw skybox (if enabled)
 	if (applyEnviornmentShading)
@@ -512,7 +552,7 @@ void Scene::drawCameraTab()
 	string name(cameras[activeCamera]->getName());
 	ImGui::SeparatorText(name.c_str());
 
-	//ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera); ImGui::SameLine();
+	ImGui::Checkbox("Render Camera", &cameras[activeCamera]->renderCamera);
 	//bool* g_allowClipping = &(cameras[activeCamera]->allowClipping);
 	//ImGui::Checkbox("Allow clipping", g_allowClipping);
 
